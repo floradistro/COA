@@ -1,0 +1,150 @@
+import { useState, useCallback } from 'react';
+import { COAData, ProductType, CannabinoidProfile } from '@/types';
+import { 
+  generateDefaultCOAData, 
+  updateCOAWithProfile,
+  generateTHCAComplianceProfile,
+  getTodayString
+} from '@/utils';
+import { BATCH_LIMITS } from '@/constants';
+
+export interface UseCOAGenerationReturn {
+  // Single COA
+  coaData: COAData;
+  setCOAData: (data: COAData) => void;
+  generateNewCOA: (strain: string, dateReceived: string, productType: ProductType) => void;
+  updateProfile: (profileType: CannabinoidProfile) => void;
+  generateComplianceProfile: () => void;
+  
+  // Multiple COAs
+  generatedCOAs: COAData[];
+  currentCOAIndex: number;
+  isGeneratingBatch: boolean;
+  generateMultipleCOAs: (strains: string[], dateReceived: string, productType: ProductType) => Promise<void>;
+  goToCOA: (index: number) => void;
+  clearGeneratedCOAs: () => void;
+}
+
+export const useCOAGeneration = (
+  initialStrain: string = 'Sample Strain',
+  initialDate: string = getTodayString(),
+  initialProductType: ProductType = 'flower'
+): UseCOAGenerationReturn => {
+  // Single COA state
+  const [coaData, setCOAData] = useState<COAData>(() => 
+    generateDefaultCOAData(initialStrain, initialDate, initialProductType)
+  );
+  
+  // Multiple COAs state
+  const [generatedCOAs, setGeneratedCOAs] = useState<COAData[]>([]);
+  const [currentCOAIndex, setCurrentCOAIndex] = useState(0);
+  const [isGeneratingBatch, setIsGeneratingBatch] = useState(false);
+  
+  // Generate a new single COA
+  const generateNewCOA = useCallback((
+    strain: string, 
+    dateReceived: string, 
+    productType: ProductType
+  ) => {
+    const newData = generateDefaultCOAData(
+      strain || 'Sample Strain', 
+      dateReceived, 
+      productType
+    );
+    setCOAData(newData);
+  }, []);
+  
+  // Update cannabinoid profile
+  const updateProfile = useCallback((profileType: CannabinoidProfile) => {
+    setCOAData(current => updateCOAWithProfile(current, profileType));
+  }, []);
+  
+  // Generate compliance profile
+  const generateComplianceProfile = useCallback(() => {
+    const complianceProfile = generateTHCAComplianceProfile();
+    setCOAData(current => ({
+      ...current,
+      cannabinoids: complianceProfile.cannabinoids,
+      totalTHC: complianceProfile.totalTHC,
+      totalCBD: complianceProfile.totalCBD,
+      totalCannabinoids: complianceProfile.totalCannabinoids
+    }));
+  }, []);
+  
+  // Generate multiple COAs for batch processing
+  const generateMultipleCOAs = useCallback(async (
+    strains: string[], 
+    dateReceived: string, 
+    productType: ProductType
+  ): Promise<void> => {
+    // Validate input
+    if (strains.length === 0) {
+      throw new Error('No strains provided for batch generation');
+    }
+    
+    if (strains.length > BATCH_LIMITS.maxCOAs) {
+      throw new Error(`Cannot generate more than ${BATCH_LIMITS.maxCOAs} COAs at once`);
+    }
+    
+    setIsGeneratingBatch(true);
+    
+    try {
+      // Generate COAs with slight delay to show progress
+      const newCOAs: COAData[] = [];
+      
+      for (let i = 0; i < strains.length; i++) {
+        const strainName = strains[i].trim();
+        if (strainName) {
+          const newCOA = generateDefaultCOAData(strainName, dateReceived, productType);
+          newCOAs.push(newCOA);
+          
+          // Small delay for UI feedback
+          if (i < strains.length - 1) {
+            await new Promise(resolve => setTimeout(resolve, 50));
+          }
+        }
+      }
+      
+      setGeneratedCOAs(newCOAs);
+      setCurrentCOAIndex(0);
+      
+      // Set the first COA as the current one
+      if (newCOAs.length > 0) {
+        setCOAData(newCOAs[0]);
+      }
+    } finally {
+      setIsGeneratingBatch(false);
+    }
+  }, []);
+  
+  // Navigate to a specific COA in the batch
+  const goToCOA = useCallback((index: number) => {
+    if (index >= 0 && index < generatedCOAs.length) {
+      setCurrentCOAIndex(index);
+      setCOAData(generatedCOAs[index]);
+    }
+  }, [generatedCOAs]);
+  
+  // Clear generated COAs
+  const clearGeneratedCOAs = useCallback(() => {
+    setGeneratedCOAs([]);
+    setCurrentCOAIndex(0);
+  }, []);
+  
+  return {
+    // Single COA
+    coaData,
+    setCOAData,
+    generateNewCOA,
+    updateProfile,
+    generateComplianceProfile,
+    
+    // Multiple COAs
+    generatedCOAs,
+    currentCOAIndex,
+    isGeneratingBatch,
+    generateMultipleCOAs,
+    goToCOA,
+    clearGeneratedCOAs
+  };
+}; 

@@ -1,0 +1,205 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+  
+  /* Force RGB colors instead of oklch for html2canvas compatibility */
+  --color-gray-50: rgb(249, 250, 251);
+  --color-gray-100: rgb(243, 244, 246);
+  --color-gray-200: rgb(229, 231, 235);
+  --color-gray-300: rgb(209, 213, 219);
+  --color-gray-400: rgb(156, 163, 175);
+  --color-gray-500: rgb(107, 114, 128);
+  --color-gray-600: rgb(75, 85, 99);
+  --color-gray-700: rgb(55, 65, 81);
+  --color-gray-800: rgb(31, 41, 55);
+  --color-gray-900: rgb(17, 24, 39);
+  
+  --color-green-50: rgb(240, 253, 244);
+  --color-green-500: rgb(34, 197, 94);
+  --color-green-600: rgb(22, 163, 74);
+  --color-green-700: rgb(21, 128, 61);
+  
+  --color-blue-50: rgb(239, 246, 255);
+  --color-blue-500: rgb(59, 130, 246);
+  --color-blue-600: rgb(37, 99, 235);
+  --color-blue-700: rgb(29, 78, 216);
+  
+  --color-purple-50: rgb(250, 245, 255);
+  --color-purple-500: rgb(168, 85, 247);
+  --color-purple-600: rgb(147, 51, 234);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Improved placeholder text contrast - More aggressive styling */
+input::placeholder,
+textarea::placeholder {
+  color: #4b5563 !important; /* Gray-600 for even better contrast */
+  opacity: 1 !important;
+  font-weight: 400 !important;
+}
+
+input::-webkit-input-placeholder,
+textarea::-webkit-input-placeholder {
+  color: #4b5563 !important;
+  opacity: 1 !important;
+  font-weight: 400 !important;
+}
+
+input::-moz-placeholder,
+textarea::-moz-placeholder {
+  color: #4b5563 !important;
+  opacity: 1 !important;
+  font-weight: 400 !important;
+}
+
+input:-ms-input-placeholder,
+textarea:-ms-input-placeholder {
+  color: #4b5563 !important;
+  opacity: 1 !important;
+  font-weight: 400 !important;
+}
+
+input:-moz-placeholder,
+textarea:-moz-placeholder {
+  color: #4b5563 !important;
+  opacity: 1 !important;
+  font-weight: 400 !important;
+}
+
+/* Special styling for date inputs when empty */
+input[type="date"]:invalid {
+  color: #4b5563 !important;
+}
+
+input[type="date"]:focus:invalid {
+  color: #111827 !important;
+}
+
+/* Enhanced select styling */
+select {
+  color: #111827 !important;
+}
+
+select:invalid {
+  color: #4b5563 !important;
+}
+
+/* Make sure all form inputs have proper text color */
+input[type="text"],
+input[type="number"],
+input[type="date"],
+textarea,
+select {
+  color: #111827 !important;
+}
+
+input[type="text"]:placeholder-shown,
+input[type="number"]:placeholder-shown,
+textarea:placeholder-shown {
+  color: #4b5563 !important;
+}
+
+/* PDF Generation specific styles */
+.coa-template {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  background: white !important;
+  color: black !important;
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+.coa-template * {
+  box-sizing: border-box !important;
+}
+
+/* Hide any elements that might interfere with PDF generation */
+.pdf-hidden {
+  display: none !important;
+}
+
+/* Simplified print styles - component handles the main layout */
+@media print {
+  body {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  
+  /* Hide non-print elements */
+  .no-print {
+    display: none !important;
+  }
+}
+
+/* Screen-specific styles - minimal to avoid conflicts */
+@media screen {
+  .coa-template {
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1) !important;
+  }
+}
+
+/* Override Tailwind colors with RGB values for PDF export to avoid oklch issues */
+.pdf-export .bg-white { background-color: rgb(255, 255, 255) !important; }
+.pdf-export .bg-gray-50 { background-color: rgb(249, 250, 251) !important; }
+.pdf-export .bg-gray-100 { background-color: rgb(243, 244, 246) !important; }
+.pdf-export .bg-gray-200 { background-color: rgb(229, 231, 235) !important; }
+.pdf-export .bg-gray-300 { background-color: rgb(209, 213, 219) !important; }
+.pdf-export .bg-green-50 { background-color: rgb(240, 253, 244) !important; }
+
+.pdf-export .text-gray-700 { color: rgb(55, 65, 81) !important; }
+.pdf-export .text-gray-800 { color: rgb(31, 41, 55) !important; }
+.pdf-export .text-gray-900 { color: rgb(17, 24, 39) !important; }
+.pdf-export .text-green-700 { color: rgb(21, 128, 61) !important; }
+.pdf-export .text-black { color: rgb(0, 0, 0) !important; }
+
+.pdf-export .border-gray-200 { border-color: rgb(229, 231, 235) !important; }
+.pdf-export .border-gray-300 { border-color: rgb(209, 213, 219) !important; }
+.pdf-export .border-green-500 { border-color: rgb(34, 197, 94) !important; }
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+@keyframes slide-in {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-in {
+  animation: slide-in 0.3s ease-out;
+}
