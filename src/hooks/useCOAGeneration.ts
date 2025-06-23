@@ -3,7 +3,6 @@ import { COAData, ProductType, CannabinoidProfile } from '@/types';
 import { 
   generateDefaultCOAData, 
   updateCOAWithProfile,
-  generateTHCAComplianceProfile,
   getTodayString
 } from '@/utils';
 import { BATCH_LIMITS } from '@/constants';
@@ -14,15 +13,15 @@ export interface UseCOAGenerationReturn {
   setCOAData: (data: COAData) => void;
   generateNewCOA: (strain: string, dateReceived: string, productType: ProductType) => void;
   updateProfile: (profileType: CannabinoidProfile) => void;
-  generateComplianceProfile: () => void;
   
   // Multiple COAs
   generatedCOAs: COAData[];
   currentCOAIndex: number;
   isGeneratingBatch: boolean;
-  generateMultipleCOAs: (strains: string[], dateReceived: string, productType: ProductType) => Promise<void>;
+  generateMultipleCOAs: (strains: string[], dateReceived: string, productType: ProductType, profileType?: CannabinoidProfile) => Promise<void>;
   goToCOA: (index: number) => void;
   clearGeneratedCOAs: () => void;
+  burnAllData: () => void;
 }
 
 export const useCOAGeneration = (
@@ -59,23 +58,14 @@ export const useCOAGeneration = (
     setCOAData(current => updateCOAWithProfile(current, profileType));
   }, []);
   
-  // Generate compliance profile
-  const generateComplianceProfile = useCallback(() => {
-    const complianceProfile = generateTHCAComplianceProfile();
-    setCOAData(current => ({
-      ...current,
-      cannabinoids: complianceProfile.cannabinoids,
-      totalTHC: complianceProfile.totalTHC,
-      totalCBD: complianceProfile.totalCBD,
-      totalCannabinoids: complianceProfile.totalCannabinoids
-    }));
-  }, []);
+
   
   // Generate multiple COAs for batch processing
   const generateMultipleCOAs = useCallback(async (
     strains: string[], 
     dateReceived: string, 
-    productType: ProductType
+    productType: ProductType,
+    profileType?: CannabinoidProfile
   ): Promise<void> => {
     // Validate input
     if (strains.length === 0) {
@@ -95,7 +85,8 @@ export const useCOAGeneration = (
       for (let i = 0; i < strains.length; i++) {
         const strainName = strains[i].trim();
         if (strainName) {
-          const newCOA = generateDefaultCOAData(strainName, dateReceived, productType);
+          const newCOA = generateDefaultCOAData(strainName, dateReceived, productType, profileType, i);
+          
           newCOAs.push(newCOA);
           
           // Small delay for UI feedback
@@ -130,6 +121,17 @@ export const useCOAGeneration = (
     setGeneratedCOAs([]);
     setCurrentCOAIndex(0);
   }, []);
+
+  // Complete session burn - clears everything
+  const burnAllData = useCallback(() => {
+    // Clear all generated COAs
+    setGeneratedCOAs([]);
+    setCurrentCOAIndex(0);
+    
+    // Reset current COA to default
+    const defaultData = generateDefaultCOAData(initialStrain, initialDate, initialProductType);
+    setCOAData(defaultData);
+  }, [initialStrain, initialDate, initialProductType]);
   
   return {
     // Single COA
@@ -137,7 +139,6 @@ export const useCOAGeneration = (
     setCOAData,
     generateNewCOA,
     updateProfile,
-    generateComplianceProfile,
     
     // Multiple COAs
     generatedCOAs,
@@ -145,6 +146,7 @@ export const useCOAGeneration = (
     isGeneratingBatch,
     generateMultipleCOAs,
     goToCOA,
-    clearGeneratedCOAs
+    clearGeneratedCOAs,
+    burnAllData
   };
 }; 

@@ -5,6 +5,7 @@ import {
   percentToMgPerG
 } from '@/utils';
 import { DECARB_FACTOR } from '@/constants';
+import { FOOTER_PHRASES } from '@/constants/defaults';
 
 interface COATemplateProps {
   data: COAData;
@@ -18,22 +19,57 @@ const CannabinoidPieChart = memo(({ data }: { data: COAData }) => {
     const d9thc = data.cannabinoids.find(c => c.name === 'Δ9-THC')?.percentWeight || 0;
     const cbd = data.cannabinoids.find(c => c.name === 'CBD')?.percentWeight || 0;
     const cbda = data.cannabinoids.find(c => c.name === 'CBDa')?.percentWeight || 0;
-    const totalCBD = cbd + cbda;
     
-    // Calculate other cannabinoids (everything except THCA, D9-THC, CBD, CBDa)
+    // Calculate total CBD using the formula
+    const totalCBD = cbd + (cbda * DECARB_FACTOR);
+    
+    // Calculate other cannabinoids (everything else that's detected)
     const otherCannabinoids = data.cannabinoids
       .filter(c => !['THCa', 'Δ9-THC', 'CBD', 'CBDa'].includes(c.name))
-      .reduce((sum, c) => sum + (c.percentWeight || 0), 0);
+      .reduce((sum, c) => {
+        // Only include if it's actually detected (not ND or < LOQ)
+        if (c.result === 'detected' && c.percentWeight > 0) {
+          return sum + c.percentWeight;
+        }
+        return sum;
+      }, 0);
     
     const total = thca + d9thc + totalCBD + otherCannabinoids;
     
     if (total === 0) return [];
     
+    // Add slight variations to slice angles
+    const angleVariation = () => (Math.random() - 0.5) * 2; // -1 to 1 degree variation
+    
     return [
-      { name: 'THCA', value: thca, percentage: (thca / total * 100), color: '#10B981' },
-      { name: 'D9 THC', value: d9thc, percentage: (d9thc / total * 100), color: '#F59E0B' },
-      { name: 'CBD', value: totalCBD, percentage: (totalCBD / total * 100), color: '#3B82F6' },
-      { name: 'Other', value: otherCannabinoids, percentage: (otherCannabinoids / total * 100), color: '#8B5CF6' }
+      { 
+        name: 'THCA', 
+        value: thca, 
+        percentage: (thca / total * 100) + angleVariation(),
+        displayValue: thca > 0 ? `${thca.toFixed(2)}%` : 'ND',
+        color: '#10B981' 
+      },
+      { 
+        name: 'D9 THC', 
+        value: d9thc, 
+        percentage: (d9thc / total * 100) + angleVariation(),
+        displayValue: d9thc > 0 ? `${d9thc.toFixed(2)}%` : 'ND',
+        color: '#F59E0B' 
+      },
+      { 
+        name: 'Total CBD', 
+        value: totalCBD, 
+        percentage: (totalCBD / total * 100) + angleVariation(),
+        displayValue: totalCBD > 0 ? `${totalCBD.toFixed(2)}%` : 'ND',
+        color: '#3B82F6' 
+      },
+      { 
+        name: 'Other', 
+        value: otherCannabinoids, 
+        percentage: (otherCannabinoids / total * 100) + angleVariation(),
+        displayValue: otherCannabinoids > 0 ? `${otherCannabinoids.toFixed(2)}%` : 'ND',
+        color: '#8B5CF6' 
+      }
     ].filter(item => item.value > 0);
   };
 
@@ -102,7 +138,7 @@ const CannabinoidPieChart = memo(({ data }: { data: COAData }) => {
             <div className="text-xs">
               <span className="font-medium text-gray-900">{item.name}</span>
               <div className="text-gray-600 text-xs">
-                {item.value.toFixed(2)}%
+                {item.displayValue}
               </div>
             </div>
           </div>
@@ -132,6 +168,14 @@ const COATemplate = forwardRef<HTMLDivElement, COATemplateProps>(({ data }, ref)
       sumOfCannabinoids
     };
   }, [data.cannabinoids]);
+  
+  // Get random footer phrase based on sample ID for consistency
+  const footerPhrase = useMemo(() => {
+    const index = data.sampleId ? 
+      data.sampleId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % FOOTER_PHRASES.length 
+      : 0;
+    return FOOTER_PHRASES[index];
+  }, [data.sampleId]);
   
   const formatMgPerG = (percentValue: number | string) => {
     const numValue = typeof percentValue === 'string' ? parseFloat(percentValue) : percentValue;
@@ -461,10 +505,14 @@ const COATemplate = forwardRef<HTMLDivElement, COATemplateProps>(({ data }, ref)
                   <div className="w-[15%] px-2 border-r border-gray-200 text-center text-gray-800 flex items-center justify-center" style={{ height: '24px', paddingTop: '4px', paddingBottom: '4px' }}>{cannabinoid.lod.toFixed(2)}</div>
                   <div className="w-[15%] px-2 border-r border-gray-200 text-center text-gray-800 flex items-center justify-center" style={{ height: '24px', paddingTop: '4px', paddingBottom: '4px' }}>{cannabinoid.loq.toFixed(2)}</div>
                   <div className="w-[20%] px-2 border-r border-gray-200 text-center font-medium text-gray-900 flex items-center justify-center" style={{ height: '24px', paddingTop: '4px', paddingBottom: '4px' }}>
-                    {cannabinoid.result === 'ND' ? 'ND' : cannabinoid.result === '< LOQ' ? '< LOQ' : cannabinoid.percentWeight.toFixed(2)}
+                    {cannabinoid.result === 'ND' ? 'ND' : 
+                     cannabinoid.result === '< LOQ' ? `<${cannabinoid.loq.toFixed(1)}` : 
+                     cannabinoid.percentWeight.toFixed(2)}
                   </div>
                   <div className="w-[20%] px-2 text-center text-gray-800 flex items-center justify-center" style={{ height: '24px', paddingTop: '4px', paddingBottom: '4px' }}>
-                    {cannabinoid.result === 'ND' ? 'ND' : cannabinoid.result === '< LOQ' ? '< LOQ' : cannabinoid.mgPerG.toFixed(2)}
+                    {cannabinoid.result === 'ND' ? 'ND' : 
+                     cannabinoid.result === '< LOQ' ? `<${(cannabinoid.loq * 10).toFixed(1)}` : 
+                     cannabinoid.mgPerG.toFixed(2)}
                   </div>
                 </div>
               ))}
@@ -578,7 +626,7 @@ const COATemplate = forwardRef<HTMLDivElement, COATemplateProps>(({ data }, ref)
               <div className="text-center text-[9px] text-gray-800 mt-0.5 leading-tight">QR Code</div>
             </div>
             <div className="text-gray-800 leading-tight" style={{fontSize: '8px', lineHeight: '11px'}}>
-              <div>Analytical testing performed using validated methodologies and quality systems. All test results relate only to the samples tested. Quantix Analytics makes no claims as to the efficacy, safety, or other risks associated with any detected or non-detected levels of any compounds reported herein. This Certificate shall not be reproduced except in full without the written approval of Quantix Analytics.</div>
+              <div>Analytical testing performed using validated methodologies and quality systems. All test results relate only to the samples tested. Quantix Analytics makes no claims as to the efficacy, safety, or other risks associated with any detected or non-detected levels of any compounds reported herein. This Certificate shall not be reproduced except in full without the written approval of Quantix Analytics. Analysis {footerPhrase}.</div>
               <div className="mt-1">For questions regarding this report, please contact support@quantixanalytics.com</div>
             </div>
           </div>

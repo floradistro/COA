@@ -1,17 +1,16 @@
 import React from 'react';
-import { COAData, CustomRanges, CannabinoidProfile } from '@/types';
+import { COAData, CustomRanges, CannabinoidProfile, ComprehensiveValidationResult } from '@/types';
 import { 
   generateTHCProfile, 
   generateFullCannabinoidProfile,
-  generateTHCAComplianceProfile,
-  percentToMgPerG
+  percentToMgPerG,
+  validateCOAComprehensive
 } from '@/utils';
 import {
   CANNABINOID_NAMES,
   CANNABINOID_LIMITS
 } from '@/constants';
-
-
+import ValidationPanel from './ValidationPanel';
 
 interface COAFormProps {
   data: COAData;
@@ -39,6 +38,9 @@ const COAForm: React.FC<COAFormProps> = ({
   showCustomRanges = false,
   onShowCustomRangesChange
 }) => {
+  const [validationResult, setValidationResult] = React.useState<ComprehensiveValidationResult | null>(null);
+  const [showValidation, setShowValidation] = React.useState(false);
+
   const updateField = (field: keyof COAData, value: string | number | boolean) => {
     onChange({ ...data, [field]: value });
   };
@@ -70,6 +72,12 @@ const COAForm: React.FC<COAFormProps> = ({
   const removeCannabinoid = (index: number) => {
     const newCannabinoids = data.cannabinoids.filter((_, i) => i !== index);
     onChange({ ...data, cannabinoids: newCannabinoids });
+  };
+
+  const validateCurrentCOA = () => {
+    const result = validateCOAComprehensive(data);
+    setValidationResult(result);
+    setShowValidation(true);
   };
 
   const generateTHCRanges = () => {
@@ -148,18 +156,6 @@ const COAForm: React.FC<COAFormProps> = ({
     });
   };
 
-  const generateTHCACompliance = () => {
-    const profile = generateTHCAComplianceProfile();
-    
-    onChange({ 
-      ...data, 
-      cannabinoids: profile.cannabinoids,
-      totalTHC: profile.totalTHC,
-      totalCBD: profile.totalCBD,
-      totalCannabinoids: profile.totalCannabinoids
-    });
-  };
-
   const handleProfileChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newProfile = e.target.value as CannabinoidProfile;
     if (onProfileChange) {
@@ -193,11 +189,11 @@ const COAForm: React.FC<COAFormProps> = ({
               onChange={handleProfileChange}
               className="w-full px-3 py-2 border border-blue-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
             >
-              <option value="high-thc">High THC (20-30% THCA, 0.3-1.5% D9-THC)</option>
-              <option value="medium-thc">Medium THC (10-20% THCA, 0.2-1.0% D9-THC)</option>
-              <option value="low-thc">Low THC (1-10% THCA, 0.1-0.5% D9-THC)</option>
-              <option value="hemp">Hemp/CBD (0.1-0.3% THCA, 0.05-0.2% D9-THC)</option>
-              <option value="decarbed">Decarbed/Concentrate (1-5% THCA, 15-25% D9-THC)</option>
+              <option value="high-thc">High THCA (22-30% THCA, 0.05-0.29% D9-THC)</option>
+              <option value="medium-thc">Medium THCA (15-20% THCA, 0.05-0.29% D9-THC)</option>
+              <option value="low-thc">Low THCA (0-15% THCA, 0.05-0.29% D9-THC)</option>
+              <option value="hemp">Hemp/CBD (0.1-0.3% THCA, 0.05-0.29% D9-THC)</option>
+              <option value="decarbed">Decarbed (1-5% THCA, 0.05-0.29% D9-THC)</option>
             </select>
           </div>
 
@@ -272,12 +268,7 @@ const COAForm: React.FC<COAFormProps> = ({
             >
               Generate Full Profile
             </button>
-            <button
-              onClick={generateTHCACompliance}
-              className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors font-medium"
-            >
-              THCA Compliance
-            </button>
+
           </div>
         </div>
       </div>
@@ -589,6 +580,33 @@ const COAForm: React.FC<COAFormProps> = ({
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>
+      </div>
+
+      {/* Validation */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between border-b border-gray-200 pb-2">
+          <h3 className="text-lg font-medium text-gray-900">COA Validation</h3>
+          <div className="flex gap-2">
+            <button
+              onClick={validateCurrentCOA}
+              className="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 transition-colors font-medium text-sm"
+            >
+              Validate COA
+            </button>
+            {showValidation && (
+              <button
+                onClick={() => setShowValidation(false)}
+                className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors font-medium text-sm"
+              >
+                Hide Results
+              </button>
+            )}
+          </div>
+        </div>
+        
+        {showValidation && validationResult && (
+          <ValidationPanel validationResult={validationResult} />
+        )}
       </div>
     </div>
   );

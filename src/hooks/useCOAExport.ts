@@ -18,7 +18,7 @@ export interface UseCOAExportReturn {
   componentRef: React.RefObject<HTMLDivElement>;
   handlePrint: () => void;
   exportSinglePDF: (coaData: COAData) => Promise<void>;
-  exportAllCOAs: (coaDataArray: COAData[], renderCOACallback?: (coaData: COAData) => Promise<HTMLDivElement>) => Promise<void>;
+  exportAllCOAs: (coaDataArray: COAData[], currentCOAData: COAData, updateCurrentCOA: (data: COAData) => void) => Promise<void>;
   isExporting: boolean;
   exportProgress: number;
 }
@@ -180,13 +180,18 @@ export const useCOAExport = (): UseCOAExportReturn => {
     }
   }, []);
   
-  // Export multiple COAs as ZIP
+  // Export multiple COAs as ZIP - NEW IMPLEMENTATION
   const exportAllCOAs = useCallback(async (
     coaDataArray: COAData[], 
-    renderCOACallback?: (coaData: COAData) => Promise<HTMLDivElement>
+    currentCOAData: COAData,
+    updateCurrentCOA: (data: COAData) => void
   ): Promise<void> => {
     if (coaDataArray.length === 0) {
       throw new COAError('No COAs to export', ErrorType.VALIDATION);
+    }
+    
+    if (!componentRef.current) {
+      throw new COAError('COA component not found', ErrorType.EXPORT);
     }
     
     setIsExporting(true);
@@ -199,84 +204,112 @@ export const useCOAExport = (): UseCOAExportReturn => {
       throw new COAError('Failed to create ZIP folder', ErrorType.EXPORT);
     }
     
+    // Store the original COA data to restore later
+    const originalCOAData = currentCOAData;
+    
     try {
       const progressPerCOA = 80 / coaDataArray.length;
       
-      // Process each COA
+      // Process each COA by updating the visible component
       for (let i = 0; i < coaDataArray.length; i++) {
         const coaData = coaDataArray[i];
         
         // Update progress
         setExportProgress(Math.floor(i * progressPerCOA));
         
-        if (renderCOACallback) {
-          // Use the callback to render the COA properly
-          try {
-            const element = await renderCOACallback(coaData);
-            const canvas = await renderCOAToCanvas(element);
-            
-            // Convert to PDF
-            const imgData = canvas.toDataURL('image/png', 1.0);
-            const pdf = new jsPDF({
-              ...EXPORT_CONFIG.pdf,
-              format: [210, 297]
-            });
-            
-            // Calculate dimensions to fit A4
-            const pdfWidth = pdf.internal.pageSize.getWidth();
-            const pdfHeight = pdf.internal.pageSize.getHeight();
-            const imgWidth = canvas.width;
-            const imgHeight = canvas.height;
-            const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
-            const scaledWidth = imgWidth * ratio;
-            const scaledHeight = imgHeight * ratio;
-            const x = (pdfWidth - scaledWidth) / 2;
-            const y = 0;
-            
-            pdf.addImage(imgData, 'PNG', x, y, scaledWidth, scaledHeight);
-            
-            const fileName = `COA_${coaData.sampleName.replace(/[^a-z0-9]/gi, '_')}_${coaData.sampleId}.pdf`;
-            const pdfBlob = pdf.output('blob');
-            coaFolder.file(fileName, pdfBlob);
-          } catch (error) {
-            // If individual COA fails, log and continue
-            logError(error, `Failed to export COA for ${coaData.sampleName}`);
-            // Add a placeholder PDF
-            const pdf = new jsPDF({
-              ...EXPORT_CONFIG.pdf,
-              format: [210, 297]
-            });
-            pdf.text(`Error exporting COA for ${coaData.sampleName}`, 20, 20);
-            pdf.text(`Sample ID: ${coaData.sampleId}`, 20, 30);
-            pdf.text(`Please export this COA individually.`, 20, 40);
-            
-            const fileName = `COA_${coaData.sampleName.replace(/[^a-z0-9]/gi, '_')}_${coaData.sampleId}_ERROR.pdf`;
-            const pdfBlob = pdf.output('blob');
-            coaFolder.file(fileName, pdfBlob);
+        try {
+          console.log(`Processing COA ${i + 1}/${coaDataArray.length}: ${coaData.sampleName}`);
+          
+          // Update the visible COA template with this COA's data
+          updateCurrentCOA(coaData);
+          
+          // Wait for React to re-render with the new data
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          // Additional wait to ensure DOM is fully updated
+          await new Promise(resolve => requestAnimationFrame(() => {
+            requestAnimationFrame(resolve);
+          }));
+          
+          // Verify the component has the correct data
+          const element = componentRef.current;
+          if (!element) {
+            throw new Error('Component ref lost during export');
           }
-        } else {
-          // Fallback to placeholder if no callback provided
+          
+          const textContent = element.textContent || '';
+          const hasCorrectData = textContent.includes(coaData.sampleId) && 
+                                textContent.includes(coaData.strain);
+          
+          if (!hasCorrectData) {
+            console.warn(`COA content verification failed for ${coaData.sampleName}, retrying...`);
+            // Give it more time
+            await new Promise(resolve => setTimeout(resolve, 1500));
+          }
+          
+          // Capture the current COA as canvas
+          const canvas = await renderCOAToCanvas(element);
+          
+          // Convert to PDF
+          const imgData = canvas.toDataURL('image/png', 1.0);
           const pdf = new jsPDF({
             ...EXPORT_CONFIG.pdf,
             format: [210, 297]
           });
           
-          pdf.text(`Certificate of Analysis for ${coaData.sampleName}`, 20, 20);
-          pdf.text(`Sample ID: ${coaData.sampleId}`, 20, 30);
-          pdf.text(`Please re-export this COA individually for full details.`, 20, 40);
+          // Calculate dimensions to fit A4
+          const pdfWidth = pdf.internal.pageSize.getWidth();
+          const pdfHeight = pdf.internal.pageSize.getHeight();
+          const imgWidth = canvas.width;
+          const imgHeight = canvas.height;
+          const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+          const scaledWidth = imgWidth * ratio;
+          const scaledHeight = imgHeight * ratio;
+          const x = (pdfWidth - scaledWidth) / 2;
+          const y = 0;
+          
+          pdf.addImage(imgData, 'PNG', x, y, scaledWidth, scaledHeight);
           
           const fileName = `COA_${coaData.sampleName.replace(/[^a-z0-9]/gi, '_')}_${coaData.sampleId}.pdf`;
           const pdfBlob = pdf.output('blob');
           coaFolder.file(fileName, pdfBlob);
+          
+          console.log(`Successfully exported COA for ${coaData.sampleName}`);
+          
+        } catch (error) {
+          console.error(`Failed to export COA for ${coaData.sampleName}:`, error);
+          logError(error, `Failed to export COA for ${coaData.sampleName}`);
+          
+          // Add an error PDF
+          const pdf = new jsPDF({
+            ...EXPORT_CONFIG.pdf,
+            format: [210, 297]
+          });
+          pdf.setFontSize(16);
+          pdf.text(`Error Exporting COA`, 20, 30);
+          pdf.setFontSize(12);
+          pdf.text(`Sample: ${coaData.sampleName}`, 20, 50);
+          pdf.text(`Sample ID: ${coaData.sampleId}`, 20, 60);
+          pdf.text(`Strain: ${coaData.strain}`, 20, 70);
+          pdf.text(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`, 20, 90);
+          pdf.text(`Please try exporting this COA individually.`, 20, 110);
+          
+          const fileName = `COA_${coaData.sampleName.replace(/[^a-z0-9]/gi, '_')}_${coaData.sampleId}_ERROR.pdf`;
+          const pdfBlob = pdf.output('blob');
+          coaFolder.file(fileName, pdfBlob);
         }
         
-        // Small delay to prevent browser freezing
+        // Small delay between COAs to prevent browser freezing
         if (i < coaDataArray.length - 1) {
-          await new Promise(resolve => setTimeout(resolve, 100));
+          await new Promise(resolve => setTimeout(resolve, 500));
         }
       }
       
       setExportProgress(90);
+      
+      // Restore the original COA data
+      updateCurrentCOA(originalCOAData);
+      await new Promise(resolve => setTimeout(resolve, 500));
       
       // Generate and save ZIP
       const content = await zip.generateAsync({ 
@@ -289,7 +322,12 @@ export const useCOAExport = (): UseCOAExportReturn => {
       saveAs(content, `COA_Batch_${date}.zip`);
       
       setExportProgress(100);
+      console.log('Bulk export completed successfully');
+      
     } catch (error) {
+      // Restore original COA on error
+      updateCurrentCOA(originalCOAData);
+      
       logError(error, 'Export all COAs');
       throw new COAError(
         'Failed to export COAs. Please try again.',

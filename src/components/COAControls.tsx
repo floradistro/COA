@@ -11,8 +11,6 @@ interface COAControlsProps {
   setProductType: (type: ProductType) => void;
   selectedProfile: CannabinoidProfile;
   setSelectedProfile: (profile: CannabinoidProfile) => void;
-  isTHCACompliance: boolean;
-  setIsTHCACompliance: (compliance: boolean) => void;
   isMultiStrain: boolean;
   setIsMultiStrain: (multi: boolean) => void;
   strainList: string;
@@ -31,8 +29,6 @@ export const COAControls: React.FC<COAControlsProps> = ({
   setProductType,
   selectedProfile,
   setSelectedProfile,
-  isTHCACompliance,
-  setIsTHCACompliance,
   isMultiStrain,
   setIsMultiStrain,
   strainList,
@@ -134,30 +130,17 @@ export const COAControls: React.FC<COAControlsProps> = ({
               onChange={(e) => setSelectedProfile(e.target.value as CannabinoidProfile)}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all bg-white text-gray-900"
             >
-              <option value="high-thc">High THC (20-30%)</option>
-              <option value="medium-thc">Medium THC (10-20%)</option>
-              <option value="low-thc">Low THC (1-10%)</option>
-              <option value="hemp">Hemp/CBD (&lt;0.3% THC)</option>
-              <option value="decarbed">Decarbed/Concentrate</option>
+              <option value="high-thc">High THCA (22-30%)</option>
+              <option value="medium-thc">Medium THCA (15-20%)</option>
+              <option value="low-thc">Low THCA (0-15%)</option>
+              <option value="hemp">Hemp/CBD (0.1-0.3% THCA)</option>
+              <option value="decarbed">Decarbed (1-5% THCA)</option>
             </select>
           </div>
         </div>
 
-        {/* THCA Compliance Checkbox */}
-        <div className="mt-6 flex items-center justify-between">
-          <label className="flex items-center cursor-pointer">
-            <input
-              type="checkbox"
-              checked={isTHCACompliance}
-              onChange={(e) => setIsTHCACompliance(e.target.checked)}
-              className="rounded border-gray-300 text-purple-600 focus:ring-purple-500 mr-2"
-            />
-            <span className="text-sm text-gray-700">
-              Generate THCA Compliance (Total THC &lt; 0.3%)
-            </span>
-          </label>
-
-          {/* Generate Button */}
+        {/* Generate Button */}
+        <div className="mt-6 flex justify-end">
           {isMultiStrain ? (
             <button
               onClick={onGenerateBatch}

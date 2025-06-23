@@ -4,4 +4,5 @@ export * from './coaDataGeneration';
 export * from './colorConversion';
 export * from './dateUtils';
 export * from './errorHandling';
-export * from './idGeneration'; 
+export * from './idGeneration';
+export * from './coaValidation'; 

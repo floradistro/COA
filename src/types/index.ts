@@ -125,4 +125,54 @@ export interface MultiStrainState {
   generatedCOAs: COAData[];
   currentCOAIndex: number;
   isGeneratingBatch: boolean;
+}
+
+// Validation Types
+export interface ValidationError {
+  type: 'cannabinoid-formula' | 'logic-consistency' | 'data-uniqueness';
+  severity: 'error' | 'warning';
+  message: string;
+  field?: string;
+  expectedValue?: number;
+  actualValue?: number;
+}
+
+export interface ValidationResult {
+  isValid: boolean;
+  errors: ValidationError[];
+  warnings: ValidationError[];
+}
+
+export interface CannabinoidFormulaCheck {
+  totalTHCCalculated: number;
+  totalTHCReported: number;
+  totalCBDCalculated: number;
+  totalCBDReported: number;
+  sumOfCannabinoidsCalculated: number;
+  sumOfCannabinoidsReported: number;
+  thcMismatch: number;
+  cbdMismatch: number;
+  sumMismatch: number;
+}
+
+export interface LogicConsistencyCheck {
+  ndOrLowQPresent: boolean;
+  totalCannabiniodsGteTotalTHC: boolean;
+  cbdSliceExists: boolean;
+  moistureInRange: boolean;
+  delta8THCFlagged: boolean;
+}
+
+export interface DataUniquenessCheck {
+  duplicateCannabinoidsFound: boolean;
+  duplicateMoistureFound: boolean;
+  duplicateBatchIdFound: boolean;
+  duplicateSampleIdFound: boolean;
+  previousCOAData?: COAData[];
+}
+
+export interface ComprehensiveValidationResult extends ValidationResult {
+  cannabinoidFormulaCheck: CannabinoidFormulaCheck;
+  logicConsistencyCheck: LogicConsistencyCheck;
+  dataUniquenessCheck: DataUniquenessCheck;
 } 

@@ -9,6 +9,35 @@ export const LAB_DEFAULTS = {
   methodReference: 'HPLC-DAD, SOP QA-001'
 };
 
+// Analyst names pool for rotation
+export const ANALYST_NAMES = [
+  'Dr. Sarah Mitchell',
+  'Dr. Michael Chen',
+  'Dr. Emily Rodriguez',
+  'Dr. James Thompson',
+  'Dr. Laura Martinez',
+  'J. Anderson',
+  'K. Patel'
+];
+
+// Footer phrase variations
+export const FOOTER_PHRASES = [
+  'validated under SOP QA-001',
+  'SOP QA-001 applied',
+  'per validated method SOP QA-001',
+  'following SOP QA-001 protocols',
+  'in accordance with SOP QA-001'
+];
+
+// Method reference variations
+export const METHOD_REFERENCES = [
+  'HPLC-DAD, SOP QA-001',
+  'High Performance Liquid Chromatography with Diode Array Detection per SOP QA-001',
+  'HPLC-DAD Method (SOP QA-001)',
+  'Validated HPLC-DAD, SOP QA-001',
+  'HPLC with DAD Detection, SOP QA-001'
+];
+
 // Client information defaults
 export const CLIENT_DEFAULTS = {
   clientName: 'Flora Distribution Group LLC',

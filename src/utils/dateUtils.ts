@@ -14,7 +14,7 @@ export const formatDate = (date: Date): string => {
 };
 
 /**
- * Generates a set of dates based on the received date
+ * Generates a set of dates based on the received date with random variations
  * @param receivedDate Date the sample was received (in YYYY-MM-DD format)
  * @returns Object with formatted dates
  */
@@ -22,15 +22,22 @@ export const generateDates = (receivedDate: string): FormattedDates => {
   // Parse the received date
   const received = new Date(receivedDate);
   
-  // Calculate other dates based on offsets
+  // Add random variation of ±1-2 days for more realistic dates
+  const receiveVariation = Math.floor(Math.random() * 5) - 2; // -2 to +2 days
+  received.setDate(received.getDate() + receiveVariation);
+  
+  // Calculate other dates based on offsets with variations
   const collected = new Date(received);
-  collected.setDate(collected.getDate() - DATE_OFFSETS.collectedBeforeReceived);
+  const collectedOffset = DATE_OFFSETS.collectedBeforeReceived + Math.floor(Math.random() * 2); // 1-2 days before
+  collected.setDate(collected.getDate() - collectedOffset);
   
   const tested = new Date(received);
-  tested.setDate(tested.getDate() + DATE_OFFSETS.testedAfterReceived);
+  const testedOffset = DATE_OFFSETS.testedAfterReceived + Math.floor(Math.random() * 2); // 2-3 days after
+  tested.setDate(tested.getDate() + testedOffset);
   
   const reported = new Date(tested);
-  reported.setDate(reported.getDate() + DATE_OFFSETS.reportedAfterTested);
+  const reportedOffset = DATE_OFFSETS.reportedAfterTested + Math.floor(Math.random() * 2); // 1-2 days after
+  reported.setDate(reported.getDate() + reportedOffset);
   
   return {
     collected: formatDate(collected),

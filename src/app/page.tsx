@@ -1,19 +1,20 @@
 'use client';
 
-import { useState, useCallback, useRef, useEffect } from 'react';
-import { ProductType, CannabinoidProfile, COAData } from '@/types';
+import { useState, useCallback, useEffect } from 'react';
+import { ProductType, CannabinoidProfile, ComprehensiveValidationResult } from '@/types';
 import { useCOAGeneration, useCOAExport } from '@/hooks';
 import { 
   getTodayString,
   getUserFriendlyMessage,
-  setNotificationCallback
+  setNotificationCallback,
+  validateCOAComprehensive
 } from '@/utils';
 import COATemplate from '@/components/COATemplate';
 import COAForm from '@/components/COAForm';
 import { COAControls } from '@/components/COAControls';
 import { COAActions } from '@/components/COAActions';
-import BatchExportRenderer, { BatchExportRendererHandle } from '@/components/BatchExportRenderer';
 import { useNotifications } from '@/components/NotificationSystem';
+import ValidationPanel from '@/components/ValidationPanel';
 
 export default function Home() {
   // Notification system
@@ -29,7 +30,7 @@ export default function Home() {
   const [dateReceived, setDateReceived] = useState(getTodayString());
   const [selectedProfile, setSelectedProfile] = useState<CannabinoidProfile>('high-thc');
   const [productType, setProductType] = useState<ProductType>('flower');
-  const [isTHCACompliance, setIsTHCACompliance] = useState(false);
+
   const [isPreview, setIsPreview] = useState(true);
   
   // COAForm state
@@ -46,8 +47,9 @@ export default function Home() {
   const [isMultiStrain, setIsMultiStrain] = useState(false);
   const [strainList, setStrainList] = useState('');
   
-  // Refs
-  const batchExportRef = useRef<BatchExportRendererHandle>(null);
+  // Validation state
+  const [validationResult, setValidationResult] = useState<ComprehensiveValidationResult | null>(null);
+  const [showValidation, setShowValidation] = useState(true);
   
   // Use custom hooks
   const {
@@ -55,12 +57,12 @@ export default function Home() {
     setCOAData,
     generateNewCOA,
     updateProfile,
-    generateComplianceProfile,
     generatedCOAs,
     currentCOAIndex,
     isGeneratingBatch,
     generateMultipleCOAs,
-    goToCOA
+    goToCOA,
+    burnAllData
   } = useCOAGeneration('Sample Strain', dateReceived, productType);
   
   const {
@@ -72,15 +74,42 @@ export default function Home() {
     exportProgress
   } = useCOAExport();
   
+  // Validation effect - run validation whenever COA data changes
+  useEffect(() => {
+    if (coaData && coaData.cannabinoids.length > 0) {
+      try {
+        // Filter out the current COA from the comparison to avoid false positives
+        // Only exclude the exact same COA (same sample ID), but allow comparison with other COAs
+        const previousCOAs = generatedCOAs.filter(coa => 
+          coa.sampleId !== coaData.sampleId
+        );
+        
+        const result = validateCOAComprehensive(coaData, previousCOAs);
+        setValidationResult(result);
+        
+        // Show notification for critical errors
+        if (result.errors.length > 0) {
+          const criticalErrors = result.errors.filter(e => e.severity === 'error');
+          if (criticalErrors.length > 0) {
+            showNotification('warning', `Validation found ${criticalErrors.length} critical error(s)`);
+          }
+        }
+      } catch (error) {
+        console.error('Validation error:', error);
+        setValidationResult(null);
+      }
+    } else {
+      setValidationResult(null);
+    }
+  }, [coaData, generatedCOAs, showNotification]);
+  
   // Generate single COA
   const handleGenerateSingle = useCallback(() => {
     try {
       generateNewCOA(strain || 'Sample Strain', dateReceived, productType);
       
-      // Apply profile or compliance
-      if (isTHCACompliance) {
-        setTimeout(generateComplianceProfile, 100);
-      } else if (selectedProfile !== 'high-thc') {
+      // Apply profile if not default
+      if (selectedProfile !== 'high-thc') {
         setTimeout(() => updateProfile(selectedProfile), 100);
       }
       
@@ -90,7 +119,7 @@ export default function Home() {
       const message = getUserFriendlyMessage(error);
       showNotification('error', message);
     }
-  }, [strain, dateReceived, productType, isTHCACompliance, selectedProfile, generateNewCOA, generateComplianceProfile, updateProfile, showNotification]);
+  }, [strain, dateReceived, productType, selectedProfile, generateNewCOA, updateProfile, showNotification]);
   
   // Generate multiple COAs
   const handleGenerateBatch = useCallback(async () => {
@@ -106,13 +135,7 @@ export default function Home() {
         return;
       }
       
-      await generateMultipleCOAs(strains, dateReceived, productType);
-      
-      // Apply profile or compliance to each COA if needed
-      if (isTHCACompliance || selectedProfile !== 'high-thc') {
-        // This would need to be implemented in the hook
-        // For now, the profile is applied during generation
-      }
+      await generateMultipleCOAs(strains, dateReceived, productType, selectedProfile);
       
       setIsPreview(true);
       showNotification('success', `Generated ${strains.length} COAs successfully`);
@@ -120,33 +143,119 @@ export default function Home() {
       const message = getUserFriendlyMessage(error);
       showNotification('error', message);
     }
-  }, [strainList, dateReceived, productType, isTHCACompliance, selectedProfile, generateMultipleCOAs, showNotification]);
+  }, [strainList, dateReceived, productType, selectedProfile, generateMultipleCOAs, showNotification]);
   
   // Export handlers
   const handleExportPDF = useCallback(async () => {
     try {
+      // Check validation before export
+      if (validationResult && validationResult.errors.length > 0) {
+        const confirmed = window.confirm(
+          `This COA has ${validationResult.errors.length} validation error(s). Do you want to export anyway?`
+        );
+        if (!confirmed) return;
+      }
+      
       await exportSinglePDF(coaData);
       showNotification('success', 'PDF exported successfully');
     } catch (error) {
       const message = getUserFriendlyMessage(error);
       showNotification('error', message);
     }
-  }, [coaData, exportSinglePDF, showNotification]);
+  }, [coaData, exportSinglePDF, showNotification, validationResult]);
   
   const handleExportAllCOAs = useCallback(async () => {
     try {
-      // Use the batch export renderer for proper rendering
-      const renderCallback = batchExportRef.current 
-        ? (coaData: COAData) => batchExportRef.current!.renderCOA(coaData)
-        : undefined;
-        
-      await exportAllCOAs(generatedCOAs, renderCallback);
+      // Use the current COA data and update function for bulk export
+      await exportAllCOAs(generatedCOAs, coaData, setCOAData);
       showNotification('success', 'All COAs exported successfully');
     } catch (error) {
       const message = getUserFriendlyMessage(error);
       showNotification('error', message);
     }
-  }, [generatedCOAs, exportAllCOAs, showNotification]);
+  }, [generatedCOAs, coaData, setCOAData, exportAllCOAs, showNotification]);
+
+  // BURN batch handler
+  const handleBurnBatch = useCallback(async () => {
+    try {
+      const confirmed = window.confirm(
+        `Are you sure you want to BURN all session data? This will erase all ${generatedCOAs.length} COA(s) and reset all forms. This action cannot be undone.`
+      );
+      if (!confirmed) return;
+      
+      const coaCount = generatedCOAs.length;
+      
+      // Show burning notification
+      showNotification('info', 'Burning all session data...');
+      
+      // Clear all COA data
+      burnAllData();
+      
+      // Reset all form states to defaults
+      setStrain('');
+      setDateReceived(getTodayString());
+      setSelectedProfile('high-thc');
+      setProductType('flower');
+      setFormProfile('high-thc');
+      setCustomRanges({
+        thcaMin: 15,
+        thcaMax: 25,
+        d9thcMin: 0.2,
+        d9thcMax: 1.2
+      });
+      setShowCustomRanges(false);
+      setIsMultiStrain(false);
+      setStrainList('');
+      setValidationResult(null);
+      setIsPreview(true);
+      
+      // Show success notification after a brief delay
+      setTimeout(() => {
+        showNotification('success', `Successfully burned ${coaCount > 0 ? coaCount + ' COA(s) and' : ''} all session data`);
+      }, 500);
+      
+    } catch (error) {
+      const message = getUserFriendlyMessage(error);
+      showNotification('error', message);
+    }
+  }, [
+    generatedCOAs.length, 
+    burnAllData, 
+    showNotification,
+    setStrain,
+    setDateReceived,
+    setSelectedProfile,
+    setProductType,
+    setFormProfile,
+    setCustomRanges,
+    setShowCustomRanges,
+    setIsMultiStrain,
+    setStrainList,
+    setValidationResult,
+    setIsPreview
+  ]);
+
+  // PUSH TO LAB handler
+  const handlePushToLab = useCallback(async () => {
+    try {
+      const confirmed = window.confirm(
+        `Are you sure you want to push ${generatedCOAs.length} COA(s) to the lab?`
+      );
+      if (!confirmed) return;
+      
+      // Simulate pushing to lab
+      showNotification('info', 'Pushing COAs to lab...');
+      
+      // Add a delay to simulate the lab push process
+      setTimeout(() => {
+        showNotification('success', `Successfully pushed ${generatedCOAs.length} COA(s) to lab`);
+      }, 2000);
+      
+    } catch (error) {
+      const message = getUserFriendlyMessage(error);
+      showNotification('error', message);
+    }
+  }, [generatedCOAs.length, showNotification]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
@@ -171,8 +280,6 @@ export default function Home() {
           setProductType={setProductType}
           selectedProfile={selectedProfile}
           setSelectedProfile={setSelectedProfile}
-          isTHCACompliance={isTHCACompliance}
-          setIsTHCACompliance={setIsTHCACompliance}
           isMultiStrain={isMultiStrain}
           setIsMultiStrain={setIsMultiStrain}
           strainList={strainList}
@@ -195,7 +302,31 @@ export default function Home() {
           onNavigateCOA={goToCOA}
           isExporting={isExporting}
           exportProgress={exportProgress}
+          onBurnBatch={handleBurnBatch}
+          onPushToLab={handlePushToLab}
         />
+
+        {/* Validation Panel */}
+        {showValidation && validationResult && (
+          <div className="mb-8">
+            <div className="bg-white rounded-2xl shadow-xl border border-gray-100">
+              <div className="p-6 border-b border-gray-200">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-2xl font-bold text-gray-900">COA Validation</h2>
+                  <button
+                    onClick={() => setShowValidation(!showValidation)}
+                    className="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
+                  >
+                    {showValidation ? 'Hide' : 'Show'} Validation
+                  </button>
+                </div>
+              </div>
+              <div className="p-6">
+                <ValidationPanel validationResult={validationResult} />
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Main Content */}
         <div className={`grid ${isPreview ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-2'} gap-8`}>
@@ -219,7 +350,27 @@ export default function Home() {
           {/* Preview */}
           <div className={isPreview ? 'col-span-full' : ''}>
             <div className="bg-white rounded-2xl shadow-xl p-4 border border-gray-100">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">COA Preview</h2>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-bold text-gray-900">COA Preview</h2>
+                {validationResult && (
+                  <div className="flex items-center gap-2">
+                    {validationResult.isValid ? (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        ✅ Valid
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                        ❌ {validationResult.errors.length} Error(s)
+                      </span>
+                    )}
+                    {validationResult.warnings.length > 0 && (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                        ⚠️ {validationResult.warnings.length} Warning(s)
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
               <div className="border-2 border-gray-200 rounded-xl overflow-hidden bg-gray-50 p-2">
                 <div className="bg-white mx-auto shadow-lg max-w-full overflow-x-auto">
                   <COATemplate ref={componentRef} data={coaData} />
@@ -228,9 +379,6 @@ export default function Home() {
             </div>
           </div>
         </div>
-        
-        {/* Hidden batch export renderer */}
-        <BatchExportRenderer ref={batchExportRef} />
       </div>
     </div>
   );

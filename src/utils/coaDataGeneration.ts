@@ -4,7 +4,9 @@ import {
   CLIENT_DEFAULTS, 
   PRODUCT_CONFIGS, 
   PRODUCT_NOTES,
-  DEFAULT_TEST_STATUS
+  DEFAULT_TEST_STATUS,
+  ANALYST_NAMES,
+  METHOD_REFERENCES
 } from '@/constants/defaults';
 import { generateSampleId, generateBatchId } from './idGeneration';
 import { generateDates } from './dateUtils';
@@ -19,13 +21,15 @@ import {
  * @param dateReceived - Date sample was received (YYYY-MM-DD format)
  * @param productType - Type of product
  * @param profileType - Optional cannabinoid profile type (uses product default if not specified)
+ * @param sampleIndex - Optional sample index for batch generation
  * @returns Complete COA data object
  */
 export const generateDefaultCOAData = (
   strain: string = 'Sample Strain',
   dateReceived: string = new Date().toISOString().split('T')[0],
   productType: ProductType = 'flower',
-  profileType?: CannabinoidProfile
+  profileType?: CannabinoidProfile,
+  sampleIndex?: number
 ): COAData => {
   // Get product configuration
   const productConfig = PRODUCT_CONFIGS[productType];
@@ -34,25 +38,32 @@ export const generateDefaultCOAData = (
   // Generate dates
   const dates = generateDates(dateReceived);
   
-  // Generate cannabinoid profile
-  const profile = generateFullCannabinoidProfile(effectiveProfile);
+  // Generate cannabinoid profile with sample index
+  const profile = generateFullCannabinoidProfile(effectiveProfile, undefined, sampleIndex);
   
   // Generate moisture content
-  const moisture = generateMoistureContent();
+  const moisture = generateMoistureContent(sampleIndex);
+  
+  // Select random analyst name
+  const randomAnalyst = ANALYST_NAMES[Math.floor(Math.random() * ANALYST_NAMES.length)];
+  
+  // Select random method reference
+  const randomMethodReference = METHOD_REFERENCES[Math.floor(Math.random() * METHOD_REFERENCES.length)];
   
   // Create COA data object
   return {
     // Lab Information
     ...LAB_DEFAULTS,
+    labDirector: randomAnalyst,
+    methodReference: randomMethodReference,
     approvalDate: dates.reported,
     
     // Sample Information
     sampleName: strain,
-    sampleId: generateSampleId(),
+    sampleId: generateSampleId(sampleIndex),
     strain: strain,
-    batchId: generateBatchId(),
+    batchId: generateBatchId(sampleIndex),
     sampleType: productConfig.sampleType,
-    methodReference: LAB_DEFAULTS.methodReference,
     
     // Client Information
     ...CLIENT_DEFAULTS,

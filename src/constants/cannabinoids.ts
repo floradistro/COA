@@ -4,26 +4,26 @@ export const DECARB_FACTOR = 0.877;
 // Cannabinoid profile ranges
 export const CANNABINOID_RANGES = {
   highTHC: {
-    thca: { min: 20, max: 30 },
-    d9thc: { min: 0.3, max: 1.5 },
-    cbga: { min: 0, max: 2 },
-    cbg: { min: 0, max: 0.3 }
+    thca: { min: 22, max: 30 },
+    d9thc: { min: 0.05, max: 0.29 },
+    cbga: { min: 0.1, max: 1.5 },
+    cbg: { min: 0.01, max: 1.0 }
   },
   mediumTHC: {
-    thca: { min: 10, max: 20 },
-    d9thc: { min: 0.2, max: 1.0 },
-    cbga: { min: 0, max: 3 },
-    cbg: { min: 0, max: 0.5 }
+    thca: { min: 15, max: 20 },
+    d9thc: { min: 0.05, max: 0.29 },
+    cbga: { min: 0.1, max: 1.5 },
+    cbg: { min: 0.01, max: 1.0 }
   },
   lowTHC: {
-    thca: { min: 1, max: 10 },
-    d9thc: { min: 0.1, max: 0.5 },
-    cbga: { min: 0, max: 4 },
-    cbg: { min: 0, max: 0.8 }
+    thca: { min: 0, max: 15 },
+    d9thc: { min: 0.05, max: 0.29 },
+    cbga: { min: 0.1, max: 1.5 },
+    cbg: { min: 0.01, max: 1.0 }
   },
   hemp: {
     thca: { min: 0.1, max: 0.3 },
-    d9thc: { min: 0.05, max: 0.2 },
+    d9thc: { min: 0.05, max: 0.29 },
     cbda: { min: 10, max: 20 },
     cbd: { min: 0.1, max: 1.1 },
     cbga: { min: 0, max: 1 },
@@ -31,14 +31,14 @@ export const CANNABINOID_RANGES = {
   },
   decarbed: {
     thca: { min: 1, max: 5 },
-    d9thc: { min: 15, max: 25 },
+    d9thc: { min: 0.05, max: 0.29 },
     cbga: { min: 0, max: 1 },
     cbg: { min: 0, max: 2 }
   }
 };
 
 // Moisture content range
-export const MOISTURE_RANGE = { min: 8, max: 16 };
+export const MOISTURE_RANGE = { min: 8.5, max: 12.5 };
 
 // LOD (Limit of Detection) and LOQ (Limit of Quantification) values
 export const CANNABINOID_LIMITS = {
@@ -71,16 +71,16 @@ export const CANNABINOID_NAMES = {
 // Minor cannabinoid detection probabilities
 export const MINOR_CANNABINOID_PROBABILITIES = {
   default: {
-    cbd: 0.2,
-    cbc: 0.15,
-    cbn: 0.1,
-    thcv: 0.1
+    cbd: 0.6,
+    cbc: 0.5,
+    cbn: 0.4,
+    thcv: 0.3
   },
   hemp: {
     cbd: 1.0, // Always present in hemp
-    cbc: 0.3,
-    cbn: 0.2,
-    thcv: 0.05
+    cbc: 0.6,
+    cbn: 0.5,
+    thcv: 0.2
   }
 };
 
