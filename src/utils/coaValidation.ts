@@ -7,7 +7,7 @@ import {
   DataUniquenessCheck,
   Cannabinoid 
 } from '@/types';
-import { DECARB_FACTOR, MOISTURE_RANGE } from '@/constants/cannabinoids';
+import { DECARB_FACTOR } from '@/constants/cannabinoids';
 
 /**
  * Debug logging for validation

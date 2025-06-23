@@ -178,7 +178,7 @@ export const useCOAExport = (): UseCOAExportReturn => {
         setExportProgress(0);
       }, 500);
     }
-  }, []);
+  }, [renderCOAToCanvas]);
   
   // Export multiple COAs as ZIP - NEW IMPLEMENTATION
   const exportAllCOAs = useCallback(async (
@@ -341,7 +341,7 @@ export const useCOAExport = (): UseCOAExportReturn => {
         setExportProgress(0);
       }, 500);
     }
-  }, []);
+  }, [renderCOAToCanvas]);
   
   // Wrap functions with error handling
   const safeHandlePrint = withErrorHandling(
