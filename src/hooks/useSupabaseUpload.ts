@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback } from 'react';
 import { COAData } from '@/types';
 import { generateQrCode } from '@/lib/generateQrCode';
 import { uploadPdfToSupabase } from '@/lib/uploadPdfToSupabase';
@@ -58,8 +58,10 @@ export const useSupabaseUpload = (componentRef: React.RefObject<HTMLDivElement>)
     }
   };
 
+
+
   // Helper function to render COA to canvas
-  const renderCOAToCanvas = async (element: HTMLElement): Promise<HTMLCanvasElement> => {
+  const renderCOAToCanvas = useCallback(async (element: HTMLElement): Promise<HTMLCanvasElement> => {
     const cleanup = prepareForPdfExport(element);
     
     try {
@@ -83,7 +85,7 @@ export const useSupabaseUpload = (componentRef: React.RefObject<HTMLDivElement>)
     } finally {
       cleanup();
     }
-  };
+  }, []);
 
   // Upload single COA to Supabase with QR code
   const uploadSingleCOA = useCallback(async (coaData: COAData): Promise<string> => {
@@ -170,7 +172,7 @@ export const useSupabaseUpload = (componentRef: React.RefObject<HTMLDivElement>)
         setUploadProgress(0);
       }, 500);
     }
-  }, [componentRef]);
+  }, [componentRef, renderCOAToCanvas]);
 
   // Upload all COAs to Supabase
   const uploadAllCOAs = useCallback(async (
@@ -307,7 +309,7 @@ export const useSupabaseUpload = (componentRef: React.RefObject<HTMLDivElement>)
         setUploadProgress(0);
       }, 500);
     }
-  }, [componentRef]);
+  }, [componentRef, renderCOAToCanvas]);
 
   // Wrap functions with error handling
   const safeUploadSingleCOA = withErrorHandling(

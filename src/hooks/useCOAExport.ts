@@ -89,7 +89,7 @@ export const useCOAExport = (): UseCOAExportReturn => {
   };
   
   // Helper function to render COA to canvas with improved timing
-  const renderCOAToCanvas = async (element: HTMLElement): Promise<HTMLCanvasElement> => {
+  const renderCOAToCanvas = useCallback(async (element: HTMLElement): Promise<HTMLCanvasElement> => {
     // Prepare element for export
     const cleanup = prepareForPdfExport(element);
     
@@ -121,7 +121,7 @@ export const useCOAExport = (): UseCOAExportReturn => {
       // Clean up color conversions
       cleanup();
     }
-  };
+  }, []);
   
   // Export single COA as PDF
   const exportSinglePDF = useCallback(async (coaData: COAData): Promise<void> => {

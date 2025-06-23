@@ -75,9 +75,9 @@ export default function TestQRUpload() {
         pdfUrl: finalUrl
       })
       
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Test failed:', err)
-      setError(err.message || 'Test failed')
+      setError(err instanceof Error ? err.message : 'Test failed')
     } finally {
       setLoading(false)
     }
@@ -105,6 +105,7 @@ export default function TestQRUpload() {
         <div className="mt-6 space-y-4">
           <div>
             <h3 className="font-semibold mb-2">Generated QR Code:</h3>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={result.qrCode} alt="QR Code" className="w-48 h-48 border border-gray-300" />
           </div>
           
