@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { ProductType, CannabinoidProfile, ComprehensiveValidationResult } from '@/types';
 import { useCOAGeneration, useCOAExport } from '@/hooks';
+import { useSupabaseUpload } from '@/hooks/useSupabaseUpload';
 import { 
   getTodayString,
   getUserFriendlyMessage,
@@ -73,6 +74,13 @@ export default function Home() {
     isExporting,
     exportProgress
   } = useCOAExport();
+  
+  const {
+    uploadSingleCOA,
+    uploadAllCOAs,
+    isUploading,
+    uploadProgress
+  } = useSupabaseUpload(componentRef);
   
   // Validation effect - run validation whenever COA data changes
   useEffect(() => {
@@ -174,6 +182,35 @@ export default function Home() {
       showNotification('error', message);
     }
   }, [generatedCOAs, coaData, setCOAData, exportAllCOAs, showNotification]);
+
+  // Supabase upload handlers
+  const handleUploadToSupabase = useCallback(async () => {
+    try {
+      // Check validation before upload
+      if (validationResult && validationResult.errors.length > 0) {
+        const confirmed = window.confirm(
+          `This COA has ${validationResult.errors.length} validation error(s). Do you want to upload anyway?`
+        );
+        if (!confirmed) return;
+      }
+      
+      const uploadedUrl = await uploadSingleCOA(coaData);
+      showNotification('success', `COA uploaded successfully! URL: ${uploadedUrl}`);
+    } catch (error) {
+      const message = getUserFriendlyMessage(error);
+      showNotification('error', message);
+    }
+  }, [coaData, uploadSingleCOA, showNotification, validationResult]);
+  
+  const handleUploadAllToSupabase = useCallback(async () => {
+    try {
+      const uploadedUrls = await uploadAllCOAs(generatedCOAs, coaData, setCOAData);
+      showNotification('success', `${uploadedUrls.length} COAs uploaded successfully to cloud storage`);
+    } catch (error) {
+      const message = getUserFriendlyMessage(error);
+      showNotification('error', message);
+    }
+  }, [generatedCOAs, coaData, setCOAData, uploadAllCOAs, showNotification]);
 
   // BURN batch handler
   const handleBurnBatch = useCallback(async () => {
@@ -296,12 +333,16 @@ export default function Home() {
           onPrint={handlePrint}
           onExportPDF={handleExportPDF}
           onExportAllCOAs={generatedCOAs.length > 0 ? handleExportAllCOAs : undefined}
+          onUploadToSupabase={handleUploadToSupabase}
+          onUploadAllToSupabase={generatedCOAs.length > 0 ? handleUploadAllToSupabase : undefined}
           isMultiStrain={isMultiStrain}
           generatedCOAs={generatedCOAs}
           currentCOAIndex={currentCOAIndex}
           onNavigateCOA={goToCOA}
           isExporting={isExporting}
           exportProgress={exportProgress}
+          isUploading={isUploading}
+          uploadProgress={uploadProgress}
           onBurnBatch={handleBurnBatch}
           onPushToLab={handlePushToLab}
         />

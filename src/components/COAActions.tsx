@@ -11,12 +11,16 @@ interface COAActionsProps {
   onExportAllCOAs?: () => void;
   onBurnBatch?: () => void;
   onPushToLab?: () => void;
+  onUploadToSupabase?: () => void;
+  onUploadAllToSupabase?: () => void;
   isMultiStrain: boolean;
   generatedCOAs: COAData[];
   currentCOAIndex: number;
   onNavigateCOA: (index: number) => void;
   isExporting: boolean;
   exportProgress: number;
+  isUploading?: boolean;
+  uploadProgress?: number;
 }
 
 export const COAActions: React.FC<COAActionsProps> = ({
@@ -27,12 +31,16 @@ export const COAActions: React.FC<COAActionsProps> = ({
   onExportAllCOAs,
   onBurnBatch,
   onPushToLab,
+  onUploadToSupabase,
+  onUploadAllToSupabase,
   isMultiStrain,
   generatedCOAs,
   currentCOAIndex,
   onNavigateCOA,
   isExporting,
-  exportProgress
+  exportProgress,
+  isUploading = false,
+  uploadProgress = 0
 }) => {
   return (
     <div className="mb-8 space-y-4">
@@ -43,6 +51,18 @@ export const COAActions: React.FC<COAActionsProps> = ({
             progress={exportProgress}
             label="Exporting COAs..."
             color="blue"
+            height="md"
+          />
+        </div>
+      )}
+      
+      {/* Upload Progress */}
+      {isUploading && (
+        <div className="bg-white rounded-lg shadow-md p-4">
+          <ProgressBar
+            progress={uploadProgress}
+            label="Uploading COAs to cloud storage..."
+            color="indigo"
             height="md"
           />
         </div>
@@ -172,14 +192,60 @@ export const COAActions: React.FC<COAActionsProps> = ({
           </button>
         )}
 
+        {/* UPLOAD TO SUPABASE Button */}
+        {onUploadToSupabase && (
+          <button
+            onClick={onUploadToSupabase}
+            disabled={isExporting || isUploading}
+            className="px-6 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center gap-2"
+          >
+            {isUploading ? (
+              <>
+                <LoadingSpinner size="sm" color="white" />
+                Uploading...
+              </>
+            ) : (
+              <>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+                Upload to Cloud
+              </>
+            )}
+          </button>
+        )}
+
+        {/* UPLOAD ALL TO SUPABASE Button */}
+        {onUploadAllToSupabase && generatedCOAs.length > 1 && (
+          <button
+            onClick={onUploadAllToSupabase}
+            disabled={isExporting || isUploading}
+            className="px-6 py-2 bg-cyan-600 text-white rounded-md hover:bg-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center gap-2"
+          >
+            {isUploading ? (
+              <>
+                <LoadingSpinner size="sm" color="white" />
+                Uploading All...
+              </>
+            ) : (
+              <>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 12l2 2 4-4" />
+                </svg>
+                Upload All to Cloud
+              </>
+            )}
+          </button>
+        )}
+
         {/* PUSH TO LAB Button */}
         {onPushToLab && generatedCOAs.length > 0 && (
           <button
             onClick={onPushToLab}
-            disabled={isExporting}
+            disabled={isExporting || isUploading}
             className="px-6 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center gap-2"
           >
-            {isExporting ? (
+            {isExporting || isUploading ? (
               <>
                 <LoadingSpinner size="sm" color="white" />
                 Pushing...

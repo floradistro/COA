@@ -1,10 +1,9 @@
-import React, { useRef, useCallback, useState } from 'react';
-import { useReactToPrint } from 'react-to-print';
+import { useState, useCallback, useRef } from 'react';
+import { COAData } from '@/types';
+import { generateQrCode } from '@/lib/generateQrCode';
+import { uploadPdfToSupabase } from '@/lib/uploadPdfToSupabase';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
-import JSZip from 'jszip';
-import { saveAs } from 'file-saver';
-import { COAData } from '@/types';
 import { prepareForPdfExport } from '@/utils/colorConversion';
 import { EXPORT_CONFIG } from '@/constants/defaults';
 import { 
@@ -13,45 +12,18 @@ import {
   withErrorHandling,
   logError 
 } from '@/utils/errorHandling';
-import { generateQrCode } from '@/lib/generateQrCode';
-import { uploadPdfToSupabase } from '@/lib/uploadPdfToSupabase';
 
-export interface UseCOAExportReturn {
-  componentRef: React.RefObject<HTMLDivElement>;
-  handlePrint: () => void;
-  exportSinglePDF: (coaData: COAData) => Promise<void>;
-  exportAllCOAs: (coaDataArray: COAData[], currentCOAData: COAData, updateCurrentCOA: (data: COAData) => void) => Promise<void>;
-  isExporting: boolean;
-  exportProgress: number;
+export interface UseSupabaseUploadReturn {
+  uploadSingleCOA: (coaData: COAData) => Promise<string>;
+  uploadAllCOAs: (coaDataArray: COAData[], currentCOAData: COAData, updateCurrentCOA: (data: COAData) => void) => Promise<string[]>;
+  isUploading: boolean;
+  uploadProgress: number;
 }
 
-export const useCOAExport = (): UseCOAExportReturn => {
-  const componentRef = useRef<HTMLDivElement>(null);
-  const [isExporting, setIsExporting] = useState(false);
-  const [exportProgress, setExportProgress] = useState(0);
-  
-  // Print functionality using react-to-print
-  const handlePrint = useReactToPrint({
-    contentRef: componentRef,
-    documentTitle: 'Certificate of Analysis',
-    pageStyle: `
-      @page {
-        size: A4;
-        margin: 0;
-      }
-      @media print {
-        body {
-          -webkit-print-color-adjust: exact;
-          print-color-adjust: exact;
-        }
-      }
-    `,
-    onPrintError: (error) => {
-      logError(error, 'Print operation');
-      throw new COAError('Failed to print COA', ErrorType.EXPORT, error);
-    }
-  });
-  
+export const useSupabaseUpload = (componentRef: React.RefObject<HTMLDivElement>): UseSupabaseUploadReturn => {
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+
   // Helper function to wait for images to load
   const waitForImagesLoaded = async (element: HTMLElement): Promise<void> => {
     const images = element.querySelectorAll('img');
@@ -65,7 +37,7 @@ export const useCOAExport = (): UseCOAExportReturn => {
       return new Promise<void>((resolve, reject) => {
         const timeout = setTimeout(() => {
           reject(new Error(`Image failed to load: ${img.src}`));
-        }, 5000); // 5 second timeout
+        }, 5000);
         
         img.onload = () => {
           clearTimeout(timeout);
@@ -74,8 +46,7 @@ export const useCOAExport = (): UseCOAExportReturn => {
         
         img.onerror = () => {
           clearTimeout(timeout);
-          // Don't reject for image errors, just resolve to continue
-          resolve();
+          resolve(); // Don't reject, just continue
         };
       });
     });
@@ -84,26 +55,18 @@ export const useCOAExport = (): UseCOAExportReturn => {
       await Promise.all(imagePromises);
     } catch (error) {
       console.warn('Some images failed to load:', error);
-      // Continue anyway
     }
   };
-  
-  // Helper function to render COA to canvas with improved timing
+
+  // Helper function to render COA to canvas
   const renderCOAToCanvas = async (element: HTMLElement): Promise<HTMLCanvasElement> => {
-    // Prepare element for export
     const cleanup = prepareForPdfExport(element);
     
     try {
-      // Wait for images to load
       await waitForImagesLoaded(element);
-      
-      // Additional delay to ensure all styles are applied
       await new Promise(resolve => setTimeout(resolve, 300));
-      
-      // Use requestAnimationFrame for better timing
       await new Promise(resolve => requestAnimationFrame(resolve));
       
-      // Capture the component as canvas
       const canvas = await html2canvas(element, {
         ...EXPORT_CONFIG.image,
         logging: false,
@@ -118,32 +81,31 @@ export const useCOAExport = (): UseCOAExportReturn => {
       
       return canvas;
     } finally {
-      // Clean up color conversions
       cleanup();
     }
   };
-  
-  // Export single COA as PDF
-  const exportSinglePDF = useCallback(async (coaData: COAData): Promise<void> => {
+
+  // Upload single COA to Supabase with QR code
+  const uploadSingleCOA = useCallback(async (coaData: COAData): Promise<string> => {
     if (!componentRef.current) {
       throw new COAError('COA component not found', ErrorType.EXPORT);
     }
     
-    setIsExporting(true);
-    setExportProgress(0);
+    setIsUploading(true);
+    setUploadProgress(0);
     
     try {
-      setExportProgress(20);
+      setUploadProgress(20);
       
       const canvas = await renderCOAToCanvas(componentRef.current);
       
-      setExportProgress(40);
+      setUploadProgress(40);
       
       // Convert to PDF
       const imgData = canvas.toDataURL('image/png', 1.0);
       const pdf = new jsPDF({
         ...EXPORT_CONFIG.pdf,
-        format: [210, 297] // A4 size in mm
+        format: [210, 297]
       });
       
       // Calculate dimensions to fit A4
@@ -159,7 +121,7 @@ export const useCOAExport = (): UseCOAExportReturn => {
       
       pdf.addImage(imgData, 'PNG', x, y, scaledWidth, scaledHeight);
       
-      setExportProgress(60);
+      setUploadProgress(60);
       
       // Generate filename
       const fileName = `COA_${coaData.sampleName.replace(/[^a-z0-9]/gi, '_')}_${coaData.sampleId}.pdf`;
@@ -169,129 +131,109 @@ export const useCOAExport = (): UseCOAExportReturn => {
       const pdfBuffer = Buffer.from(await pdfBlob.arrayBuffer());
       const publicUrl = await uploadPdfToSupabase(fileName, pdfBuffer);
       
-      setExportProgress(80);
+      setUploadProgress(80);
       
       // Generate QR code for the public URL
       const qrCodeDataUrl = await generateQrCode(publicUrl);
       
       // Add QR code to the PDF
-      const qrSize = 80; // Size of QR code in PDF units
-      const qrX = pdfWidth - qrSize - 10; // Position 10 units from right edge
-      const qrY = 10; // Position 10 units from top
+      const qrSize = 80;
+      const qrX = pdfWidth - qrSize - 10;
+      const qrY = 10;
       
       pdf.addImage(qrCodeDataUrl, 'PNG', qrX, qrY, qrSize, qrSize);
       
-      // Add small text under QR code
+      // Add text under QR code
       pdf.setFontSize(8);
       pdf.text('Scan for digital copy', qrX + qrSize/2, qrY + qrSize + 5, { align: 'center' });
       
-      setExportProgress(90);
-      
-      // Save the PDF with QR code
-      pdf.save(fileName);
-      
-      // Also upload the version with QR code to Supabase (overwrite)
+      // Upload the final PDF with QR code
       const finalPdfBlob = pdf.output('blob');
       const finalPdfBuffer = Buffer.from(await finalPdfBlob.arrayBuffer());
-      await uploadPdfToSupabase(fileName, finalPdfBuffer);
+      const finalUrl = await uploadPdfToSupabase(fileName, finalPdfBuffer);
       
-      setExportProgress(100);
+      setUploadProgress(100);
       
-      console.log(`COA uploaded to Supabase: ${publicUrl}`);
+      console.log(`COA uploaded to Supabase: ${finalUrl}`);
+      return finalUrl;
+      
     } catch (error) {
-      logError(error, 'Export single PDF');
+      logError(error, 'Upload single COA to Supabase');
       throw new COAError(
-        'Failed to export PDF. Please try again.',
+        'Failed to upload COA to cloud storage. Please try again.',
         ErrorType.EXPORT,
         error
       );
     } finally {
-      // Reset state after a delay
       setTimeout(() => {
-        setIsExporting(false);
-        setExportProgress(0);
+        setIsUploading(false);
+        setUploadProgress(0);
       }, 500);
     }
-  }, [renderCOAToCanvas]);
-  
-  // Export multiple COAs as ZIP - NEW IMPLEMENTATION
-  const exportAllCOAs = useCallback(async (
+  }, [componentRef]);
+
+  // Upload all COAs to Supabase
+  const uploadAllCOAs = useCallback(async (
     coaDataArray: COAData[], 
     currentCOAData: COAData,
     updateCurrentCOA: (data: COAData) => void
-  ): Promise<void> => {
+  ): Promise<string[]> => {
     if (coaDataArray.length === 0) {
-      throw new COAError('No COAs to export', ErrorType.VALIDATION);
+      throw new COAError('No COAs to upload', ErrorType.VALIDATION);
     }
     
     if (!componentRef.current) {
       throw new COAError('COA component not found', ErrorType.EXPORT);
     }
     
-    setIsExporting(true);
-    setExportProgress(0);
+    setIsUploading(true);
+    setUploadProgress(0);
     
-    const zip = new JSZip();
-    const coaFolder = zip.folder('COA_Batch');
-    
-    if (!coaFolder) {
-      throw new COAError('Failed to create ZIP folder', ErrorType.EXPORT);
-    }
-    
-    // Store the original COA data to restore later
     const originalCOAData = currentCOAData;
+    const uploadedUrls: string[] = [];
     
     try {
       const progressPerCOA = 80 / coaDataArray.length;
       
-      // Process each COA by updating the visible component
       for (let i = 0; i < coaDataArray.length; i++) {
         const coaData = coaDataArray[i];
         
-        // Update progress
-        setExportProgress(Math.floor(i * progressPerCOA));
+        setUploadProgress(Math.floor(i * progressPerCOA));
         
         try {
-          console.log(`Processing COA ${i + 1}/${coaDataArray.length}: ${coaData.sampleName}`);
+          console.log(`Uploading COA ${i + 1}/${coaDataArray.length}: ${coaData.sampleName}`);
           
-          // Update the visible COA template with this COA's data
+          // Update the visible COA template
           updateCurrentCOA(coaData);
-          
-          // Wait for React to re-render with the new data
           await new Promise(resolve => setTimeout(resolve, 1000));
-          
-          // Additional wait to ensure DOM is fully updated
           await new Promise(resolve => requestAnimationFrame(() => {
             requestAnimationFrame(resolve);
           }));
           
-          // Verify the component has the correct data
           const element = componentRef.current;
           if (!element) {
-            throw new Error('Component ref lost during export');
+            throw new Error('Component ref lost during upload');
           }
           
+          // Verify correct data is displayed
           const textContent = element.textContent || '';
           const hasCorrectData = textContent.includes(coaData.sampleId) && 
                                 textContent.includes(coaData.strain);
           
           if (!hasCorrectData) {
             console.warn(`COA content verification failed for ${coaData.sampleName}, retrying...`);
-            // Give it more time
             await new Promise(resolve => setTimeout(resolve, 1500));
           }
           
-          // Capture the current COA as canvas
+          // Render and upload this COA
           const canvas = await renderCOAToCanvas(element);
           
-          // Convert to PDF
           const imgData = canvas.toDataURL('image/png', 1.0);
           const pdf = new jsPDF({
             ...EXPORT_CONFIG.pdf,
             format: [210, 297]
           });
           
-          // Calculate dimensions to fit A4
           const pdfWidth = pdf.internal.pageSize.getWidth();
           const pdfHeight = pdf.internal.pageSize.getHeight();
           const imgWidth = canvas.width;
@@ -306,124 +248,82 @@ export const useCOAExport = (): UseCOAExportReturn => {
           
           const fileName = `COA_${coaData.sampleName.replace(/[^a-z0-9]/gi, '_')}_${coaData.sampleId}.pdf`;
           
-          // Upload to Supabase to get public URL
+          // Upload to get public URL
           const pdfBlob = pdf.output('blob');
           const pdfBuffer = Buffer.from(await pdfBlob.arrayBuffer());
           const publicUrl = await uploadPdfToSupabase(fileName, pdfBuffer);
           
-          // Generate QR code for the public URL
+          // Generate QR code and add to PDF
           const qrCodeDataUrl = await generateQrCode(publicUrl);
-          
-          // Add QR code to the PDF
-          const qrSize = 80; // Size of QR code in PDF units
-          const qrX = pdfWidth - qrSize - 10; // Position 10 units from right edge
-          const qrY = 10; // Position 10 units from top
+          const qrSize = 80;
+          const qrX = pdfWidth - qrSize - 10;
+          const qrY = 10;
           
           pdf.addImage(qrCodeDataUrl, 'PNG', qrX, qrY, qrSize, qrSize);
-          
-          // Add small text under QR code
           pdf.setFontSize(8);
           pdf.text('Scan for digital copy', qrX + qrSize/2, qrY + qrSize + 5, { align: 'center' });
           
-          // Get the final PDF with QR code
+          // Upload final version with QR code
           const finalPdfBlob = pdf.output('blob');
-          coaFolder.file(fileName, finalPdfBlob);
-          
-          // Also upload the version with QR code to Supabase (overwrite)
           const finalPdfBuffer = Buffer.from(await finalPdfBlob.arrayBuffer());
-          await uploadPdfToSupabase(fileName, finalPdfBuffer);
+          const finalUrl = await uploadPdfToSupabase(fileName, finalPdfBuffer);
           
-          console.log(`Successfully exported COA for ${coaData.sampleName} with QR code`);
+          uploadedUrls.push(finalUrl);
+          console.log(`Successfully uploaded COA for ${coaData.sampleName}`);
           
         } catch (error) {
-          console.error(`Failed to export COA for ${coaData.sampleName}:`, error);
-          logError(error, `Failed to export COA for ${coaData.sampleName}`);
-          
-          // Add an error PDF
-          const pdf = new jsPDF({
-            ...EXPORT_CONFIG.pdf,
-            format: [210, 297]
-          });
-          pdf.setFontSize(16);
-          pdf.text(`Error Exporting COA`, 20, 30);
-          pdf.setFontSize(12);
-          pdf.text(`Sample: ${coaData.sampleName}`, 20, 50);
-          pdf.text(`Sample ID: ${coaData.sampleId}`, 20, 60);
-          pdf.text(`Strain: ${coaData.strain}`, 20, 70);
-          pdf.text(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`, 20, 90);
-          pdf.text(`Please try exporting this COA individually.`, 20, 110);
-          
-          const fileName = `COA_${coaData.sampleName.replace(/[^a-z0-9]/gi, '_')}_${coaData.sampleId}_ERROR.pdf`;
-          const pdfBlob = pdf.output('blob');
-          coaFolder.file(fileName, pdfBlob);
+          console.error(`Failed to upload COA for ${coaData.sampleName}:`, error);
+          logError(error, `Failed to upload COA for ${coaData.sampleName}`);
+          // Continue with other COAs even if one fails
         }
         
-        // Small delay between COAs to prevent browser freezing
         if (i < coaDataArray.length - 1) {
           await new Promise(resolve => setTimeout(resolve, 500));
         }
       }
       
-      setExportProgress(90);
+      setUploadProgress(90);
       
-      // Restore the original COA data
+      // Restore original COA
       updateCurrentCOA(originalCOAData);
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      // Generate and save ZIP
-      const content = await zip.generateAsync({ 
-        type: 'blob',
-        compression: 'DEFLATE',
-        compressionOptions: { level: 6 }
-      });
+      setUploadProgress(100);
+      console.log(`Bulk upload completed. ${uploadedUrls.length}/${coaDataArray.length} COAs uploaded successfully.`);
       
-      const date = new Date().toISOString().split('T')[0];
-      saveAs(content, `COA_Batch_${date}.zip`);
-      
-      setExportProgress(100);
-      console.log('Bulk export completed successfully');
+      return uploadedUrls;
       
     } catch (error) {
-      // Restore original COA on error
       updateCurrentCOA(originalCOAData);
-      
-      logError(error, 'Export all COAs');
+      logError(error, 'Upload all COAs to Supabase');
       throw new COAError(
-        'Failed to export COAs. Please try again.',
+        'Failed to upload COAs to cloud storage. Please try again.',
         ErrorType.EXPORT,
         error
       );
     } finally {
-      // Reset state after a delay
       setTimeout(() => {
-        setIsExporting(false);
-        setExportProgress(0);
+        setIsUploading(false);
+        setUploadProgress(0);
       }, 500);
     }
-  }, [renderCOAToCanvas]);
-  
+  }, [componentRef]);
+
   // Wrap functions with error handling
-  const safeHandlePrint = withErrorHandling(
-    async () => handlePrint(),
-    'Print COA'
+  const safeUploadSingleCOA = withErrorHandling(
+    uploadSingleCOA,
+    'Upload single COA to Supabase'
   );
   
-  const safeExportSinglePDF = withErrorHandling(
-    exportSinglePDF,
-    'Export single PDF'
+  const safeUploadAllCOAs = withErrorHandling(
+    uploadAllCOAs,
+    'Upload all COAs to Supabase'
   );
-  
-  const safeExportAllCOAs = withErrorHandling(
-    exportAllCOAs,
-    'Export all COAs'
-  );
-  
+
   return {
-    componentRef: componentRef as React.RefObject<HTMLDivElement>,
-    handlePrint: safeHandlePrint as () => void,
-    exportSinglePDF: safeExportSinglePDF,
-    exportAllCOAs: safeExportAllCOAs,
-    isExporting,
-    exportProgress
+    uploadSingleCOA: safeUploadSingleCOA,
+    uploadAllCOAs: safeUploadAllCOAs,
+    isUploading,
+    uploadProgress
   };
 }; 
