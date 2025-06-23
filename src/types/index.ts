@@ -8,6 +8,9 @@ export interface Cannabinoid {
   result: string;
 }
 
+// Cannabinoid result types
+export type CannabinoidResult = 'detected' | 'ND' | '< LOQ' | 'Complete' | 'Not Submitted' | 'Not Tested';
+
 // Main COA data structure
 export interface COAData {
   // Lab Information
