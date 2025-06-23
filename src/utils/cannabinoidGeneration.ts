@@ -60,13 +60,13 @@ const generateMinorCannabinoid = (
     // Detected - value between LOD and slightly above LOQ
     const value = lod + Math.random() * (loq - lod) * 1.5;
     if (value < loq) {
-      return { value: 0, result: TEST_RESULT.BELOW_LOQ };
+      return { value: 0, result: TEST_RESULT.BELOW_LOQ as CannabinoidResult };
     } else {
       return { value: parseFloat(value.toFixed(2)), result: 'detected' as CannabinoidResult };
     }
   } else {
     // Not detected
-    return { value: 0, result: TEST_RESULT.NOT_DETECTED };
+    return { value: 0, result: TEST_RESULT.NOT_DETECTED as CannabinoidResult };
   }
 };
 
@@ -172,10 +172,10 @@ const createCannabinoid = (
 ): Cannabinoid => {
   const mgPerG = parseFloat((percentWeight * 10).toFixed(2));
   const finalResult = result || (
-    percentWeight === 0 ? TEST_RESULT.NOT_DETECTED :
-    percentWeight < loq ? TEST_RESULT.BELOW_LOQ :
-    'detected'
-  ) as CannabinoidResult;
+    percentWeight === 0 ? TEST_RESULT.NOT_DETECTED as CannabinoidResult :
+    percentWeight < loq ? TEST_RESULT.BELOW_LOQ as CannabinoidResult :
+    'detected' as CannabinoidResult
+  );
 
   return {
     name,
@@ -242,8 +242,8 @@ export const generateFullCannabinoidProfile = (
       CANNABINOID_LIMITS.CBGa.loq, 
       CANNABINOID_LIMITS.CBGa.lod,
       baseProfile.cbga > CANNABINOID_LIMITS.CBGa.loq ? 'detected' as CannabinoidResult : 
-      baseProfile.cbga > CANNABINOID_LIMITS.CBGa.lod ? TEST_RESULT.BELOW_LOQ : 
-      TEST_RESULT.NOT_DETECTED
+      baseProfile.cbga > CANNABINOID_LIMITS.CBGa.lod ? TEST_RESULT.BELOW_LOQ as CannabinoidResult : 
+      TEST_RESULT.NOT_DETECTED as CannabinoidResult
     ),
     createCannabinoid(
       CANNABINOID_NAMES.CBG, 
@@ -251,8 +251,8 @@ export const generateFullCannabinoidProfile = (
       CANNABINOID_LIMITS.CBG.loq, 
       CANNABINOID_LIMITS.CBG.lod,
       baseProfile.cbg > CANNABINOID_LIMITS.CBG.loq ? 'detected' as CannabinoidResult : 
-      baseProfile.cbg > CANNABINOID_LIMITS.CBG.lod ? TEST_RESULT.BELOW_LOQ : 
-      TEST_RESULT.NOT_DETECTED
+      baseProfile.cbg > CANNABINOID_LIMITS.CBG.lod ? TEST_RESULT.BELOW_LOQ as CannabinoidResult : 
+      TEST_RESULT.NOT_DETECTED as CannabinoidResult
     ),
     createCannabinoid(CANNABINOID_NAMES.CBC, cbcData.value, CANNABINOID_LIMITS.CBC.loq, CANNABINOID_LIMITS.CBC.lod, cbcData.result),
   ];

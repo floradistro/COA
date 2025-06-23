@@ -5,7 +5,7 @@ export interface Cannabinoid {
   mgPerG: number;
   loq: number;
   lod: number;
-  result: string;
+  result: CannabinoidResult;
 }
 
 // Cannabinoid result types
@@ -108,7 +108,7 @@ export interface THCProfileResult {
 // Minor cannabinoid data
 export interface MinorCannabinoidData {
   value: number;
-  result: string;
+  result: CannabinoidResult;
 }
 
 // Form state
