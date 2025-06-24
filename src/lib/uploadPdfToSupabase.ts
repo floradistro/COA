@@ -11,7 +11,7 @@ export async function uploadPdfToSupabase(filename: string, fileBuffer: Buffer, 
     console.log('Upload path:', `pdfs/${finalFilename}`);
     console.log('Use provided filename:', useProvidedFilename);
     
-    // Upload to Supabase
+    // Upload to Supabase (now private bucket)
     const { data, error } = await supabase.storage
       .from('coas') // your bucket name
       .upload(`pdfs/${finalFilename}`, fileBuffer, {
@@ -23,21 +23,35 @@ export async function uploadPdfToSupabase(filename: string, fileBuffer: Buffer, 
     if (error) {
       console.error('Supabase upload error:', error)
       
+      // Enhanced error handling for private bucket
+      if (error.message?.includes('not authorized') || error.message?.includes('access denied') || error.message?.includes('Invalid JWT')) {
+        throw new Error(
+          'Access denied to private storage. Please check:\n' +
+          '1. Your Supabase authentication credentials are correct\n' +
+          '2. The bucket RLS policies allow authenticated uploads\n' +
+          '3. Your anon key has proper permissions'
+        )
+      }
+      
       // Provide specific error messages for common issues
       if (error.message?.includes('bucket') || error.message?.includes('not found')) {
         throw new Error(
           'Storage bucket "coas" not found. Please follow the setup instructions:\n' +
           '1. Go to your Supabase dashboard\n' +
           '2. Navigate to Storage → New bucket\n' +
-          '3. Create a PUBLIC bucket named "coas"\n' +
+          '3. Create a PRIVATE bucket named "coas"\n' +
           '4. Set file size limit to 50MB\n' +
-          '5. Allow only PDF files (application/pdf)'
+          '5. Allow only PDF files (application/pdf)\n' +
+          '6. Configure RLS policies for authenticated access'
         )
       }
       
       if (error.message?.includes('row-level security') || error.message?.includes('policy')) {
         throw new Error(
-          'Permission denied. The storage bucket needs proper policies.\n' +
+          'Permission denied. The storage bucket needs proper RLS policies.\n' +
+          'For a private bucket, ensure you have policies that allow:\n' +
+          '- Authenticated users to upload files\n' +
+          '- Service role or authenticated users to read files\n' +
           'Please check the SUPABASE_SETUP.md file for instructions.'
         )
       }
@@ -50,7 +64,7 @@ export async function uploadPdfToSupabase(filename: string, fileBuffer: Buffer, 
 
     // Generate lab site viewer URL instead of using getPublicUrl
     const cleanFilename = finalFilename.replace('.pdf', '');
-    const viewerUrl = `https://quantixanalytics.com/coa/${cleanFilename}`;
+    const viewerUrl = `https://www.quantixanalytics.com/coa/${cleanFilename}`;
 
     console.log('=== URL GENERATION ===');
     console.log('Storage path used for URL:', `pdfs/${finalFilename}`);
@@ -58,19 +72,9 @@ export async function uploadPdfToSupabase(filename: string, fileBuffer: Buffer, 
     console.log('Clean filename (without .pdf):', cleanFilename);
     console.log('=== END UPLOAD DEBUG ===');
     
-    // Test the URL accessibility immediately after upload
-    try {
-      console.log('Testing uploaded file accessibility...');
-      const testResponse = await fetch(viewerUrl, { method: 'HEAD' });
-      console.log('Upload URL test result:', testResponse.status, testResponse.statusText);
-      if (!testResponse.ok) {
-        console.warn('⚠️ Uploaded file is not immediately accessible via lab site viewer!');
-      } else {
-        console.log('✅ Uploaded file is accessible via lab site viewer');
-      }
-    } catch (testError) {
-      console.error('❌ Error testing uploaded file accessibility:', testError);
-    }
+    // Note: We cannot test the URL accessibility directly anymore since it requires
+    // the quantixanalytics.com backend to fetch from private Supabase
+    console.log('Note: COA will be accessible via quantixanalytics.com once their backend fetches it from private storage');
     
     return viewerUrl
   } catch (error) {

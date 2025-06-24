@@ -1,4 +1,8 @@
-# Supabase Setup Guide for COA Generator
+# Supabase Setup Instructions
+
+> **Note**: For private bucket configuration with quantixanalytics.com integration, see [PRIVATE_SUPABASE_SETUP.md](./PRIVATE_SUPABASE_SETUP.md)
+
+This document provides step-by-step instructions for setting up Supabase storage for the COA Generator application.
 
 ## Prerequisites
 - A Supabase account and project

@@ -1,5 +1,5 @@
 import React, { forwardRef, memo, useMemo } from 'react';
-import { COAData } from '@/types';
+import { COAData, ComprehensiveValidationResult } from '@/types';
 import { 
   calculateSumOfCannabinoids,
   percentToMgPerG
@@ -9,6 +9,15 @@ import { FOOTER_PHRASES } from '@/constants/defaults';
 
 interface COATemplateProps {
   data: COAData;
+  // Navigation props for multi-COA scenarios
+  isMultiStrain?: boolean;
+  generatedCOAs?: COAData[];
+  currentCOAIndex?: number;
+  onNavigateCOA?: (index: number) => void;
+  // Validation props
+  validationResult?: ComprehensiveValidationResult;
+  // Preview mode flag
+  isPreviewMode?: boolean;
 }
 
 // Pie Chart Component - Memoized
@@ -150,7 +159,15 @@ const CannabinoidPieChart = memo(({ data }: { data: COAData }) => {
 
 CannabinoidPieChart.displayName = 'CannabinoidPieChart';
 
-const COATemplate = forwardRef<HTMLDivElement, COATemplateProps>(({ data }, ref) => {
+const COATemplate = forwardRef<HTMLDivElement, COATemplateProps>(({ 
+  data, 
+  isMultiStrain = false,
+  generatedCOAs = [],
+  currentCOAIndex = 0,
+  onNavigateCOA,
+  validationResult,
+  isPreviewMode = false
+}, ref) => {
   // Memoize expensive calculations
   const calculatedValues = useMemo(() => {
     const thca = data.cannabinoids.find(c => c.name === 'THCa')?.percentWeight || 0;
@@ -187,6 +204,72 @@ const COATemplate = forwardRef<HTMLDivElement, COATemplateProps>(({ data }, ref)
 
   return (
     <div ref={ref} data-coa-template className="coa-template bg-white text-[10px] leading-tight">
+      {/* Preview Header Bar - Only show in preview mode */}
+      {isPreviewMode && (
+        <div className="preview-header-bar bg-gray-50 border-b border-gray-200 p-4 mb-4 rounded-t-lg" style={{ 
+          fontSize: '14px', 
+          lineHeight: '1.4',
+          fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+        }}>
+          <div className="flex items-center justify-between">
+            {/* Left side - Navigation for multiple COAs */}
+            <div className="flex items-center gap-4">
+              {isMultiStrain && generatedCOAs.length > 1 && onNavigateCOA && (
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => onNavigateCOA(currentCOAIndex - 1)}
+                    disabled={currentCOAIndex === 0}
+                    className="px-3 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+                  >
+                    Previous
+                  </button>
+                  <span className="text-sm font-medium text-gray-700 px-2">
+                    COA {currentCOAIndex + 1} of {generatedCOAs.length}
+                  </span>
+                  <button
+                    onClick={() => onNavigateCOA(currentCOAIndex + 1)}
+                    disabled={currentCOAIndex === generatedCOAs.length - 1}
+                    className="px-3 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+                  >
+                    Next
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Right side - Validation Status */}
+            <div className="flex items-center gap-3">
+              {validationResult && (
+                <div className="flex items-center gap-2">
+                  {validationResult.isValid ? (
+                    <div className="flex items-center gap-2 text-green-700">
+                      <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span className="font-medium">Valid COA</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 text-red-700">
+                      <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                      </svg>
+                      <span className="font-medium">
+                        {validationResult.errors.length} error{validationResult.errors.length !== 1 ? 's' : ''}
+                        {validationResult.warnings.length > 0 && (
+                          <span className="text-yellow-600 ml-1">
+                            , {validationResult.warnings.length} warning{validationResult.warnings.length !== 1 ? 's' : ''}
+                          </span>
+                        )}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       <style dangerouslySetInnerHTML={{__html: `
         .coa-template {
           width: 794px !important;
@@ -197,6 +280,8 @@ const COATemplate = forwardRef<HTMLDivElement, COATemplateProps>(({ data }, ref)
           line-height: 1.3 !important;
           background: white !important;
           text-align: center !important;
+          min-width: 794px !important;
+          flex-shrink: 0 !important;
         }
 
         @media print {

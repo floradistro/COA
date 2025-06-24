@@ -7,4 +7,15 @@ if (!supabaseUrl || !supabaseKey) {
   throw new Error('Missing Supabase environment variables')
 }
 
-export const supabase = createClient(supabaseUrl, supabaseKey) 
+export const supabase = createClient(supabaseUrl, supabaseKey, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+  },
+  global: {
+    headers: { 
+      'x-my-custom-header': 'quantix-coa-generator',
+      'x-client-info': 'coa-generator/1.0.0'
+    },
+  },
+}) 

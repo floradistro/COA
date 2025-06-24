@@ -13,17 +13,25 @@ import {
 import COATemplate from '@/components/COATemplate';
 import COAForm from '@/components/COAForm';
 import { COAControls } from '@/components/COAControls';
-import { COAActions } from '@/components/COAActions';
 import { useNotifications } from '@/components/NotificationSystem';
-import ValidationPanel from '@/components/ValidationPanel';
 import SupabaseStatus from '@/components/SupabaseStatus';
 
 export default function Home() {
+  // Client-side only rendering to prevent hydration issues
+  const [isClient, setIsClient] = useState(false);
+  
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+  
   // Notification system
   const { showNotification } = useNotifications();
   
   // Component ref for PDF generation
   const componentRef = useRef<HTMLDivElement>(null);
+  
+  // Preview scaling ref
+  const previewRef = useRef<HTMLDivElement>(null);
   
   // Set up error notification callback
   useEffect(() => {
@@ -54,7 +62,6 @@ export default function Home() {
   
   // Validation state
   const [validationResult, setValidationResult] = useState<ComprehensiveValidationResult | null>(null);
-  const [showValidation, setShowValidation] = useState(true);
   
   // Use custom hooks
   const {
@@ -76,7 +83,6 @@ export default function Home() {
   const {
     uploadSingleCOA,
     uploadAllCOAs,
-    generateQRCodeForPreview,
     syncQRCodesFromUploaded,
     refreshAllQRCodes,
     isUploading,
@@ -112,9 +118,42 @@ export default function Home() {
     }
   }, [coaData, generatedCOAs, showNotification]);
   
+  // Handle preview scaling for mobile
+  useEffect(() => {
+    const handleResize = () => {
+      if (previewRef.current && isPreview) {
+        const container = previewRef.current;
+        const containerWidth = container.offsetWidth;
+        const coaWidth = 794; // Fixed COA width
+        const scaleFactor = Math.min(1, containerWidth / coaWidth);
+        
+        container.style.setProperty('--scale-factor', scaleFactor.toString());
+        
+        // Adjust container height based on scale with a slight delay
+        setTimeout(() => {
+          const scaledContainer = container.querySelector('.transform-gpu') as HTMLElement;
+          if (scaledContainer) {
+            const originalHeight = scaledContainer.scrollHeight / scaleFactor;
+            container.style.height = `${originalHeight * scaleFactor}px`;
+          }
+        }, 100);
+      }
+    };
+
+    // Initial resize with delay to ensure DOM is ready
+    setTimeout(handleResize, 200);
+    
+    // Add resize listener
+    window.addEventListener('resize', handleResize);
+    
+    // Cleanup
+    return () => window.removeEventListener('resize', handleResize);
+  }, [isPreview, coaData]);
+  
   // Generate single COA
   const handleGenerateSingle = useCallback(() => {
     try {
+      console.log('Generating single COA with:', { strain, dateReceived, productType, selectedProfile });
       generateNewCOA(strain || 'Sample Strain', dateReceived, productType);
       
       // Apply profile if not default
@@ -124,11 +163,17 @@ export default function Home() {
       
       setIsPreview(true);
       showNotification('success', 'COA generated successfully');
+      
+      // Debug: Check COA data after generation
+      setTimeout(() => {
+        console.log('COA data after generation:', coaData);
+        console.log('Cannabinoids count:', coaData?.cannabinoids?.length);
+      }, 200);
     } catch (error) {
       const message = getUserFriendlyMessage(error);
       showNotification('error', message);
     }
-  }, [strain, dateReceived, productType, selectedProfile, generateNewCOA, updateProfile, showNotification, setIsPreview]);
+  }, [strain, dateReceived, productType, selectedProfile, generateNewCOA, updateProfile, showNotification, setIsPreview, coaData]);
   
   // Generate multiple COAs
   const handleGenerateBatch = useCallback(async () => {
@@ -155,19 +200,6 @@ export default function Home() {
   }, [strainList, dateReceived, productType, selectedProfile, generateMultipleCOAs, showNotification]);
   
 
-
-  // Generate QR code for preview
-  const handleGenerateQRCode = useCallback(async () => {
-    try {
-      console.log('Generating QR code for COA:', coaData.sampleId);
-      await generateQRCodeForPreview(coaData, setCOAData, generatedCOAs, setGeneratedCOAs, currentCOAIndex);
-      showNotification('success', 'QR code generated for preview!');
-    } catch (error) {
-      const message = getUserFriendlyMessage(error);
-      showNotification('error', message);
-      console.error('QR code generation failed:', error);
-    }
-  }, [coaData, generateQRCodeForPreview, setCOAData, generatedCOAs, setGeneratedCOAs, currentCOAIndex, showNotification]);
 
   // Sync QR code from uploaded COA
   const handleSyncQRCode = useCallback(async () => {
@@ -284,40 +316,32 @@ export default function Home() {
     setIsPreview
   ]);
 
-  // PUSH TO LAB handler
-  const handlePushToLab = useCallback(async () => {
-    try {
-      const confirmed = window.confirm(
-        `Are you sure you want to push ${generatedCOAs.length} COA(s) to the lab?`
-      );
-      if (!confirmed) return;
-      
-      // Simulate pushing to lab
-      showNotification('info', 'Pushing COAs to lab...');
-      
-      // Add a delay to simulate the lab push process
-      setTimeout(() => {
-        showNotification('success', `Successfully pushed ${generatedCOAs.length} COA(s) to lab`);
-      }, 2000);
-      
-    } catch (error) {
-      const message = getUserFriendlyMessage(error);
-      showNotification('error', message);
-    }
-  }, [generatedCOAs.length, showNotification]);
+
+
+  // Show loading state during hydration
+  if (!isClient) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <h1 className="text-2xl font-bold text-gray-900">Loading WhaleTools...</h1>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8">
         {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-5xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent mb-4">
-            COA Generator
+        <div className="text-center mb-8 sm:mb-12">
+          <h1 className="text-3xl sm:text-5xl font-bold bg-gradient-to-r from-blue-600 to-teal-600 bg-clip-text text-transparent mb-3 sm:mb-4" style={{ fontFamily: 'Lobster, cursive' }}>
+            WhaleTools
           </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Generate professional Certificate of Analysis documents with custom cannabinoid profiles
+          <p className="text-base sm:text-xl text-gray-600 max-w-2xl mx-auto px-2">
+            Professional cannabis testing and analysis tools for Certificate of Analysis generation
           </p>
-          <div className="mt-4 flex justify-center">
+          <div className="mt-3 sm:mt-4 flex justify-center">
             <SupabaseStatus />
           </div>
         </div>
@@ -339,18 +363,13 @@ export default function Home() {
           onGenerate={handleGenerateSingle}
           onGenerateBatch={handleGenerateBatch}
           isGeneratingBatch={isGeneratingBatch}
-        />
-
-        {/* Actions */}
-        <COAActions
+          // Action props
           isPreview={isPreview}
           setIsPreview={setIsPreview}
           onUploadToSupabase={handleUploadToSupabase}
           onUploadAllToSupabase={generatedCOAs.length > 0 ? handleUploadAllToSupabase : undefined}
-          onGenerateQRCode={handleGenerateQRCode}
           onSyncQRCode={handleSyncQRCode}
           onRefreshAllQRCodes={generatedCOAs.length > 0 ? handleRefreshAllQRCodes : undefined}
-          isMultiStrain={isMultiStrain}
           generatedCOAs={generatedCOAs}
           currentCOAIndex={currentCOAIndex}
           onNavigateCOA={goToCOA}
@@ -358,37 +377,15 @@ export default function Home() {
           uploadProgress={uploadProgress}
           hasUploadedCOAs={generatedCOAs.some(coa => coa.publicUrl)}
           onBurnBatch={handleBurnBatch}
-          onPushToLab={handlePushToLab}
+          validationResult={validationResult}
         />
 
-        {/* Validation Panel */}
-        {showValidation && validationResult && (
-          <div className="mb-8">
-            <div className="bg-white rounded-2xl shadow-xl border border-gray-100">
-              <div className="p-6 border-b border-gray-200">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-2xl font-bold text-gray-900">COA Validation</h2>
-                  <button
-                    onClick={() => setShowValidation(!showValidation)}
-                    className="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
-                  >
-                    {showValidation ? 'Hide' : 'Show'} Validation
-                  </button>
-                </div>
-              </div>
-              <div className="p-6">
-                <ValidationPanel validationResult={validationResult} />
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* Main Content */}
-        <div className={`grid ${isPreview ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-2'} gap-8`}>
+        <div className="grid grid-cols-1 gap-8">
           {/* Edit Form */}
           {!isPreview && (
-            <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Edit COA Information</h2>
+            <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-8 border border-gray-100">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Edit COA Information</h2>
               <COAForm 
                 data={coaData} 
                 onChange={setCOAData}
@@ -402,39 +399,70 @@ export default function Home() {
             </div>
           )}
           
-          {/* Preview */}
-          <div className={isPreview ? 'col-span-full' : ''}>
-            <div className="bg-white rounded-2xl shadow-xl p-4 border border-gray-100">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-2xl font-bold text-gray-900">COA Preview</h2>
-                {validationResult && (
-                  <div className="flex items-center gap-2">
-                    {validationResult.isValid ? (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                        ✅ Valid
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                        ❌ {validationResult.errors.length} Error(s)
-                      </span>
-                    )}
-                    {validationResult.warnings.length > 0 && (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                        ⚠️ {validationResult.warnings.length} Warning(s)
-                      </span>
-                    )}
+          {/* Preview Display */}
+          {isPreview && coaData && (
+            <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-8 border border-gray-100">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">COA Preview</h2>
+              <div className="border-2 border-gray-200 rounded-xl overflow-hidden bg-gray-50 p-1 sm:p-2 coa-preview-container">
+                <div ref={previewRef} className="bg-white mx-auto shadow-lg w-full overflow-hidden">
+                  <div className="w-full transform-gpu" style={{ 
+                    transformOrigin: 'top left',
+                    transform: 'scale(var(--scale-factor, 1))'
+                  }}>
+                    <COATemplate 
+                      data={coaData}
+                      isMultiStrain={isMultiStrain}
+                      generatedCOAs={generatedCOAs}
+                      currentCOAIndex={currentCOAIndex}
+                      onNavigateCOA={goToCOA}
+                      validationResult={validationResult || undefined}
+                      isPreviewMode={true}
+                    />
                   </div>
-                )}
-              </div>
-              <div className="border-2 border-gray-200 rounded-xl overflow-hidden bg-gray-50 p-2">
-                <div className="bg-white mx-auto shadow-lg max-w-full overflow-x-auto">
-                  <COATemplate ref={componentRef} data={coaData} />
                 </div>
               </div>
             </div>
-          </div>
+          )}
+        </div>
+      </div>
+
+      {/* Hidden COA Template for Export - Always rendered but hidden */}
+      <div 
+        className="coa-export-wrapper"
+        style={{ 
+          position: 'fixed',
+          bottom: 0,
+          left: 0,
+          width: '100%',
+          height: '0',
+          overflow: 'hidden',
+          pointerEvents: 'none',
+          zIndex: -1
+        }}
+      >
+        <div 
+          className="coa-export-container"
+          data-export-container="true"
+          style={{ 
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            width: '794px',
+            minHeight: '1123px',
+            backgroundColor: 'white',
+            transform: 'translateY(0)'
+          }}
+        >
+          {coaData && coaData.cannabinoids && coaData.cannabinoids.length > 0 && (
+            <div style={{ backgroundColor: 'white', padding: '8px' }}>
+              <COATemplate ref={componentRef} data={coaData} />
+            </div>
+          )}
         </div>
       </div>
     </div>
   );
-} 
+}
+
+// Force dynamic rendering to avoid hydration issues with ID generation
+export const dynamic = 'force-dynamic'; 

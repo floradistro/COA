@@ -92,7 +92,7 @@ export default function TestQRUpload() {
         <ul className="list-disc list-inside space-y-1 text-sm text-blue-800">
           <li>Creates a test PDF document</li>
           <li>Uploads it to Supabase storage</li>
-          <li>Gets the lab site viewer URL (quantixanalytics.com/coa/...)</li>
+          <li>Gets the lab site viewer URL (www.quantixanalytics.com/coa/...)</li>
           <li>Generates a QR code pointing to the lab site viewer</li>
           <li>Adds the QR code to the PDF and re-uploads</li>
         </ul>

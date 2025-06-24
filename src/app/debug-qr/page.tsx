@@ -11,7 +11,7 @@ export default function DebugQRPage() {
   const [urlTestResult, setUrlTestResult] = useState<{url: string, status: number, ok: boolean} | null>(null)
   
   // Example lab site viewer URL format
-  const exampleUrl = `https://quantixanalytics.com/coa/1234567890_TEST_COA_Sample_123`
+  const exampleUrl = `https://www.quantixanalytics.com/coa/1234567890_TEST_COA_Sample_123`
 
   const generateTestQR = async () => {
     try {
@@ -57,7 +57,7 @@ export default function DebugQRPage() {
       <div className="bg-gray-50 p-6 rounded-lg mb-8">
         <h2 className="text-xl font-semibold mb-4">Lab Site Viewer URL Format</h2>
         <div className="space-y-2 text-sm">
-          <div><span className="font-medium">URL Pattern:</span> https://quantixanalytics.com/coa/[filename-without-pdf]</div>
+          <div><span className="font-medium">URL Pattern:</span> https://www.quantixanalytics.com/coa/[filename-without-pdf]</div>
           <div><span className="font-medium">Example:</span> {exampleUrl}</div>
           <div className="text-gray-600 mt-2">
             Note: QR codes now point to the lab site viewer instead of direct Supabase storage URLs
