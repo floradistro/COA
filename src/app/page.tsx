@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { ProductType, CannabinoidProfile, ComprehensiveValidationResult } from '@/types';
-import { useCOAGeneration, useCOAExport } from '@/hooks';
+import { useCOAGeneration } from '@/hooks';
 import { useSupabaseUpload } from '@/hooks/useSupabaseUpload';
 import { 
   getTodayString,
@@ -21,6 +21,9 @@ import SupabaseStatus from '@/components/SupabaseStatus';
 export default function Home() {
   // Notification system
   const { showNotification } = useNotifications();
+  
+  // Component ref for PDF generation
+  const componentRef = useRef<HTMLDivElement>(null);
   
   // Set up error notification callback
   useEffect(() => {
@@ -60,6 +63,7 @@ export default function Home() {
     generateNewCOA,
     updateProfile,
     generatedCOAs,
+    setGeneratedCOAs,
     currentCOAIndex,
     isGeneratingBatch,
     generateMultipleCOAs,
@@ -67,18 +71,14 @@ export default function Home() {
     burnAllData
   } = useCOAGeneration('Sample Strain', dateReceived, productType);
   
-  const {
-    componentRef,
-    handlePrint,
-    exportSinglePDF,
-    exportAllCOAs,
-    isExporting,
-    exportProgress
-  } = useCOAExport();
+
   
   const {
     uploadSingleCOA,
     uploadAllCOAs,
+    generateQRCodeForPreview,
+    syncQRCodesFromUploaded,
+    refreshAllQRCodes,
     isUploading,
     uploadProgress
   } = useSupabaseUpload(componentRef);
@@ -154,35 +154,46 @@ export default function Home() {
     }
   }, [strainList, dateReceived, productType, selectedProfile, generateMultipleCOAs, showNotification]);
   
-  // Export handlers
-  const handleExportPDF = useCallback(async () => {
+
+
+  // Generate QR code for preview
+  const handleGenerateQRCode = useCallback(async () => {
     try {
-      // Check validation before export
-      if (validationResult && validationResult.errors.length > 0) {
-        const confirmed = window.confirm(
-          `This COA has ${validationResult.errors.length} validation error(s). Do you want to export anyway?`
-        );
-        if (!confirmed) return;
-      }
-      
-      await exportSinglePDF(coaData, setCOAData);
-      showNotification('success', 'PDF exported successfully');
+      console.log('Generating QR code for COA:', coaData.sampleId);
+      await generateQRCodeForPreview(coaData, setCOAData, generatedCOAs, setGeneratedCOAs, currentCOAIndex);
+      showNotification('success', 'QR code generated for preview!');
     } catch (error) {
       const message = getUserFriendlyMessage(error);
       showNotification('error', message);
+      console.error('QR code generation failed:', error);
     }
-  }, [coaData, exportSinglePDF, showNotification, validationResult]);
-  
-  const handleExportAllCOAs = useCallback(async () => {
+  }, [coaData, generateQRCodeForPreview, setCOAData, generatedCOAs, setGeneratedCOAs, currentCOAIndex, showNotification]);
+
+  // Sync QR code from uploaded COA
+  const handleSyncQRCode = useCallback(async () => {
     try {
-      // Use the current COA data and update function for bulk export
-      await exportAllCOAs(generatedCOAs, coaData, setCOAData);
-      showNotification('success', 'All COAs exported successfully');
+      console.log('Syncing QR code for COA:', coaData.sampleId);
+      await syncQRCodesFromUploaded(coaData, setCOAData, generatedCOAs, setGeneratedCOAs, currentCOAIndex);
+      showNotification('success', 'QR code synced from uploaded COA!');
     } catch (error) {
       const message = getUserFriendlyMessage(error);
       showNotification('error', message);
+      console.error('QR code sync failed:', error);
     }
-  }, [generatedCOAs, coaData, setCOAData, exportAllCOAs, showNotification]);
+  }, [coaData, syncQRCodesFromUploaded, setCOAData, generatedCOAs, setGeneratedCOAs, currentCOAIndex, showNotification]);
+
+  // Refresh all QR codes
+  const handleRefreshAllQRCodes = useCallback(async () => {
+    try {
+      console.log('Refreshing all QR codes...');
+      await refreshAllQRCodes(generatedCOAs, setGeneratedCOAs, coaData, setCOAData, currentCOAIndex);
+      showNotification('success', 'All QR codes refreshed successfully!');
+    } catch (error) {
+      const message = getUserFriendlyMessage(error);
+      showNotification('error', message);
+      console.error('QR codes refresh failed:', error);
+    }
+  }, [refreshAllQRCodes, generatedCOAs, setGeneratedCOAs, coaData, setCOAData, currentCOAIndex, showNotification]);
 
   // Supabase upload handlers
   const handleUploadToSupabase = useCallback(async () => {
@@ -195,23 +206,23 @@ export default function Home() {
         if (!confirmed) return;
       }
       
-      const uploadedUrl = await uploadSingleCOA(coaData, setCOAData);
+      const uploadedUrl = await uploadSingleCOA(coaData, setCOAData, generatedCOAs, setGeneratedCOAs, currentCOAIndex);
       showNotification('success', 'COA uploaded successfully to cloud storage!');
     } catch (error) {
       const message = getUserFriendlyMessage(error);
       showNotification('error', message);
     }
-  }, [coaData, uploadSingleCOA, showNotification, validationResult]);
+  }, [coaData, uploadSingleCOA, showNotification, validationResult, generatedCOAs, setGeneratedCOAs, currentCOAIndex]);
   
   const handleUploadAllToSupabase = useCallback(async () => {
     try {
-      const uploadedUrls = await uploadAllCOAs(generatedCOAs, coaData, setCOAData);
+      const uploadedUrls = await uploadAllCOAs(generatedCOAs, coaData, setCOAData, setGeneratedCOAs);
       showNotification('success', `${uploadedUrls.length} COAs uploaded successfully to cloud storage`);
     } catch (error) {
       const message = getUserFriendlyMessage(error);
       showNotification('error', message);
     }
-  }, [generatedCOAs, coaData, setCOAData, uploadAllCOAs, showNotification]);
+  }, [generatedCOAs, coaData, setCOAData, uploadAllCOAs, showNotification, setGeneratedCOAs]);
 
   // BURN batch handler
   const handleBurnBatch = useCallback(async () => {
@@ -334,19 +345,18 @@ export default function Home() {
         <COAActions
           isPreview={isPreview}
           setIsPreview={setIsPreview}
-          onPrint={handlePrint}
-          onExportPDF={handleExportPDF}
-          onExportAllCOAs={generatedCOAs.length > 0 ? handleExportAllCOAs : undefined}
           onUploadToSupabase={handleUploadToSupabase}
           onUploadAllToSupabase={generatedCOAs.length > 0 ? handleUploadAllToSupabase : undefined}
+          onGenerateQRCode={handleGenerateQRCode}
+          onSyncQRCode={handleSyncQRCode}
+          onRefreshAllQRCodes={generatedCOAs.length > 0 ? handleRefreshAllQRCodes : undefined}
           isMultiStrain={isMultiStrain}
           generatedCOAs={generatedCOAs}
           currentCOAIndex={currentCOAIndex}
           onNavigateCOA={goToCOA}
-          isExporting={isExporting}
-          exportProgress={exportProgress}
           isUploading={isUploading}
           uploadProgress={uploadProgress}
+          hasUploadedCOAs={generatedCOAs.some(coa => coa.publicUrl)}
           onBurnBatch={handleBurnBatch}
           onPushToLab={handlePushToLab}
         />

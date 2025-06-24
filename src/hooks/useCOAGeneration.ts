@@ -16,6 +16,7 @@ export interface UseCOAGenerationReturn {
   
   // Multiple COAs
   generatedCOAs: COAData[];
+  setGeneratedCOAs: (coas: COAData[]) => void;
   currentCOAIndex: number;
   isGeneratingBatch: boolean;
   generateMultipleCOAs: (strains: string[], dateReceived: string, productType: ProductType, profileType?: CannabinoidProfile) => Promise<void>;
@@ -38,6 +39,15 @@ export const useCOAGeneration = (
   const [generatedCOAs, setGeneratedCOAs] = useState<COAData[]>([]);
   const [currentCOAIndex, setCurrentCOAIndex] = useState(0);
   const [isGeneratingBatch, setIsGeneratingBatch] = useState(false);
+  
+  // Debug wrapper for setGeneratedCOAs
+  const debugSetGeneratedCOAs = useCallback((coas: COAData[]) => {
+    console.log('Updating generatedCOAs array with', coas.length, 'COAs');
+    coas.forEach((coa, index) => {
+      console.log(`COA ${index}: ${coa.sampleName} - Has QR: ${!!coa.qrCodeDataUrl}`);
+    });
+    setGeneratedCOAs(coas);
+  }, []);
   
   // Generate a new single COA
   const generateNewCOA = useCallback((
@@ -112,7 +122,11 @@ export const useCOAGeneration = (
   const goToCOA = useCallback((index: number) => {
     if (index >= 0 && index < generatedCOAs.length) {
       setCurrentCOAIndex(index);
-      setCOAData(generatedCOAs[index]);
+      const targetCOA = generatedCOAs[index];
+      console.log(`Navigating to COA ${index}: ${targetCOA.sampleName}`);
+      console.log('COA has QR code:', !!targetCOA.qrCodeDataUrl);
+      console.log('COA QR code URL:', targetCOA.qrCodeDataUrl ? targetCOA.qrCodeDataUrl.substring(0, 50) + '...' : 'none');
+      setCOAData(targetCOA);
     }
   }, [generatedCOAs]);
   
@@ -142,6 +156,7 @@ export const useCOAGeneration = (
     
     // Multiple COAs
     generatedCOAs,
+    setGeneratedCOAs: debugSetGeneratedCOAs,
     currentCOAIndex,
     isGeneratingBatch,
     generateMultipleCOAs,

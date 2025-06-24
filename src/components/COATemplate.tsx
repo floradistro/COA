@@ -620,26 +620,33 @@ const COATemplate = forwardRef<HTMLDivElement, COATemplateProps>(({ data }, ref)
       {/* Footer */}
       <div className="coa-section footer-section border-t border-gray-200 pt-2">
         <div className="flex justify-between items-start gap-3">
-                  <div className="flex-1">
-          <div className="float-left mr-2 mb-1">
-            {data.qrCodeDataUrl ? (
-              <>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img 
-                  src={data.qrCodeDataUrl} 
-                  alt="QR Code for COA" 
-                  className="w-11 h-11 border border-gray-300"
-                  style={{ imageRendering: 'pixelated' }}
-                />
-                <div className="text-center text-[9px] text-gray-800 mt-0.5 leading-tight">Scan for digital copy</div>
-              </>
-            ) : (
-              <>
-                <div className="w-11 h-11 bg-gray-200 border border-gray-300"></div>
-                <div className="text-center text-[9px] text-gray-800 mt-0.5 leading-tight">QR Code</div>
-              </>
-            )}
-          </div>
+          <div className="flex-1">
+            <div className="float-left mr-2 mb-1">
+              {data.qrCodeDataUrl ? (
+                <div className="flex flex-col items-center">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img 
+                    key={data.qrCodeDataUrl} 
+                    src={data.qrCodeDataUrl} 
+                    alt="QR Code for COA" 
+                    className="w-16 h-16 border border-gray-300 bg-white p-0.5"
+                    style={{ 
+                      imageRendering: 'auto',
+                      minWidth: '64px',
+                      minHeight: '64px',
+                      maxWidth: '64px',
+                      maxHeight: '64px'
+                    }}
+                  />
+                  <div className="text-center text-[9px] text-gray-800 mt-0.5 leading-tight">Scan for digital copy</div>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center">
+                  <div className="w-16 h-16 bg-gray-200 border border-gray-300"></div>
+                  <div className="text-center text-[9px] text-gray-800 mt-0.5 leading-tight">QR Code</div>
+                </div>
+              )}
+            </div>
             <div className="text-gray-800 leading-tight" style={{fontSize: '8px', lineHeight: '11px'}}>
               <div>Analytical testing performed using validated methodologies and quality systems. All test results relate only to the samples tested. Quantix Analytics makes no claims as to the efficacy, safety, or other risks associated with any detected or non-detected levels of any compounds reported herein. This Certificate shall not be reproduced except in full without the written approval of Quantix Analytics. Analysis {footerPhrase}.</div>
               <div className="mt-1">For questions regarding this report, please contact support@quantixanalytics.com</div>
