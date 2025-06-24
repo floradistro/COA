@@ -16,6 +16,7 @@ import { COAControls } from '@/components/COAControls';
 import { COAActions } from '@/components/COAActions';
 import { useNotifications } from '@/components/NotificationSystem';
 import ValidationPanel from '@/components/ValidationPanel';
+import SupabaseStatus from '@/components/SupabaseStatus';
 
 export default function Home() {
   // Notification system
@@ -164,7 +165,7 @@ export default function Home() {
         if (!confirmed) return;
       }
       
-      await exportSinglePDF(coaData);
+      await exportSinglePDF(coaData, setCOAData);
       showNotification('success', 'PDF exported successfully');
     } catch (error) {
       const message = getUserFriendlyMessage(error);
@@ -194,8 +195,8 @@ export default function Home() {
         if (!confirmed) return;
       }
       
-      const uploadedUrl = await uploadSingleCOA(coaData);
-      showNotification('success', `COA uploaded successfully! URL: ${uploadedUrl}`);
+      const uploadedUrl = await uploadSingleCOA(coaData, setCOAData);
+      showNotification('success', 'COA uploaded successfully to cloud storage!');
     } catch (error) {
       const message = getUserFriendlyMessage(error);
       showNotification('error', message);
@@ -305,6 +306,9 @@ export default function Home() {
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
             Generate professional Certificate of Analysis documents with custom cannabinoid profiles
           </p>
+          <div className="mt-4 flex justify-center">
+            <SupabaseStatus />
+          </div>
         </div>
 
         {/* Controls */}

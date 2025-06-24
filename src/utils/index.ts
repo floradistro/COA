@@ -5,4 +5,5 @@ export * from './colorConversion';
 export * from './dateUtils';
 export * from './errorHandling';
 export * from './idGeneration';
-export * from './coaValidation'; 
+export * from './coaValidation';
+export * from './supabaseUtils'; 

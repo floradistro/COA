@@ -57,6 +57,10 @@ export interface COAData {
   
   // Notes
   notes: string;
+  
+  // QR Code
+  qrCodeDataUrl?: string;
+  publicUrl?: string;
 }
 
 // Product types

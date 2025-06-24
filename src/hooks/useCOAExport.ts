@@ -19,7 +19,7 @@ import { uploadPdfToSupabase } from '@/lib/uploadPdfToSupabase';
 export interface UseCOAExportReturn {
   componentRef: React.RefObject<HTMLDivElement>;
   handlePrint: () => void;
-  exportSinglePDF: (coaData: COAData) => Promise<void>;
+  exportSinglePDF: (coaData: COAData, updateCOAData?: (data: COAData) => void) => Promise<void>;
   exportAllCOAs: (coaDataArray: COAData[], currentCOAData: COAData, updateCurrentCOA: (data: COAData) => void) => Promise<void>;
   isExporting: boolean;
   exportProgress: number;
@@ -124,7 +124,7 @@ export const useCOAExport = (): UseCOAExportReturn => {
   }, []);
   
   // Export single COA as PDF
-  const exportSinglePDF = useCallback(async (coaData: COAData): Promise<void> => {
+  const exportSinglePDF = useCallback(async (coaData: COAData, updateCOAData?: (data: COAData) => void): Promise<void> => {
     if (!componentRef.current) {
       throw new COAError('COA component not found', ErrorType.EXPORT);
     }
@@ -174,26 +174,51 @@ export const useCOAExport = (): UseCOAExportReturn => {
       // Generate QR code for the public URL
       const qrCodeDataUrl = await generateQrCode(publicUrl);
       
-      // Add QR code to the PDF
-      const qrSize = 80; // Size of QR code in PDF units
-      const qrX = pdfWidth - qrSize - 10; // Position 10 units from right edge
-      const qrY = 10; // Position 10 units from top
-      
-      pdf.addImage(qrCodeDataUrl, 'PNG', qrX, qrY, qrSize, qrSize);
-      
-      // Add small text under QR code
-      pdf.setFontSize(8);
-      pdf.text('Scan for digital copy', qrX + qrSize/2, qrY + qrSize + 5, { align: 'center' });
-      
-      setExportProgress(90);
-      
-      // Save the PDF with QR code
-      pdf.save(fileName);
-      
-      // Also upload the version with QR code to Supabase (overwrite)
-      const finalPdfBlob = pdf.output('blob');
-      const finalPdfBuffer = Buffer.from(await finalPdfBlob.arrayBuffer());
-      await uploadPdfToSupabase(fileName, finalPdfBuffer);
+      // Update the COA data with QR code information if callback provided
+      if (updateCOAData) {
+        const updatedCOAData = {
+          ...coaData,
+          qrCodeDataUrl,
+          publicUrl
+        };
+        updateCOAData(updatedCOAData);
+        
+        // Wait a moment for the UI to update with the QR code, then re-render
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Re-render the canvas with the QR code now in the template
+        const updatedCanvas = await renderCOAToCanvas(componentRef.current!);
+        const updatedImgData = updatedCanvas.toDataURL('image/png', 1.0);
+        
+        // Create a new PDF with the updated image that includes the QR code
+        const updatedPdf = new jsPDF({
+          ...EXPORT_CONFIG.pdf,
+          format: [210, 297]
+        });
+        
+        const updatedPdfWidth = updatedPdf.internal.pageSize.getWidth();
+        const updatedPdfHeight = updatedPdf.internal.pageSize.getHeight();
+        const updatedImgWidth = updatedCanvas.width;
+        const updatedImgHeight = updatedCanvas.height;
+        const updatedRatio = Math.min(updatedPdfWidth / updatedImgWidth, updatedPdfHeight / updatedImgHeight);
+        const updatedScaledWidth = updatedImgWidth * updatedRatio;
+        const updatedScaledHeight = updatedImgHeight * updatedRatio;
+        const updatedX = (updatedPdfWidth - updatedScaledWidth) / 2;
+        const updatedY = 0;
+        
+        updatedPdf.addImage(updatedImgData, 'PNG', updatedX, updatedY, updatedScaledWidth, updatedScaledHeight);
+        
+        // Save the updated PDF
+        updatedPdf.save(fileName);
+        
+        // Upload the final version to Supabase
+        const finalPdfBlob = updatedPdf.output('blob');
+        const finalPdfBuffer = Buffer.from(await finalPdfBlob.arrayBuffer());
+        await uploadPdfToSupabase(fileName, finalPdfBuffer);
+      } else {
+        // No callback provided, save the PDF without QR code
+        pdf.save(fileName);
+      }
       
       setExportProgress(100);
       
@@ -314,24 +339,51 @@ export const useCOAExport = (): UseCOAExportReturn => {
           // Generate QR code for the public URL
           const qrCodeDataUrl = await generateQrCode(publicUrl);
           
-          // Add QR code to the PDF
-          const qrSize = 80; // Size of QR code in PDF units
-          const qrX = pdfWidth - qrSize - 10; // Position 10 units from right edge
-          const qrY = 10; // Position 10 units from top
-          
-          pdf.addImage(qrCodeDataUrl, 'PNG', qrX, qrY, qrSize, qrSize);
-          
-          // Add small text under QR code
-          pdf.setFontSize(8);
-          pdf.text('Scan for digital copy', qrX + qrSize/2, qrY + qrSize + 5, { align: 'center' });
-          
-          // Get the final PDF with QR code
-          const finalPdfBlob = pdf.output('blob');
-          coaFolder.file(fileName, finalPdfBlob);
-          
-          // Also upload the version with QR code to Supabase (overwrite)
-          const finalPdfBuffer = Buffer.from(await finalPdfBlob.arrayBuffer());
-          await uploadPdfToSupabase(fileName, finalPdfBuffer);
+          // Re-render with QR code if this is the current COA
+          if (coaData.sampleId === currentCOAData.sampleId) {
+            // Update current COA to include QR code
+            const updatedCOAData = {
+              ...coaData,
+              qrCodeDataUrl,
+              publicUrl
+            };
+            updateCurrentCOA(updatedCOAData);
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // Re-render with QR code
+            const updatedCanvas = await renderCOAToCanvas(element);
+            const updatedImgData = updatedCanvas.toDataURL('image/png', 1.0);
+            
+            const updatedPdf = new jsPDF({
+              ...EXPORT_CONFIG.pdf,
+              format: [210, 297]
+            });
+            
+            const updatedPdfWidth = updatedPdf.internal.pageSize.getWidth();
+            const updatedPdfHeight = updatedPdf.internal.pageSize.getHeight();
+            const updatedImgWidth = updatedCanvas.width;
+            const updatedImgHeight = updatedCanvas.height;
+            const updatedRatio = Math.min(updatedPdfWidth / updatedImgWidth, updatedPdfHeight / updatedImgHeight);
+            const updatedScaledWidth = updatedImgWidth * updatedRatio;
+            const updatedScaledHeight = updatedImgHeight * updatedRatio;
+            const updatedX = (updatedPdfWidth - updatedScaledWidth) / 2;
+            const updatedY = 0;
+            
+            updatedPdf.addImage(updatedImgData, 'PNG', updatedX, updatedY, updatedScaledWidth, updatedScaledHeight);
+            
+            const finalPdfBlob = updatedPdf.output('blob');
+            coaFolder.file(fileName, finalPdfBlob);
+            
+            const finalPdfBuffer = Buffer.from(await finalPdfBlob.arrayBuffer());
+            await uploadPdfToSupabase(fileName, finalPdfBuffer);
+          } else {
+            // For non-current COAs, just save without re-rendering
+            const finalPdfBlob = pdf.output('blob');
+            coaFolder.file(fileName, finalPdfBlob);
+            
+            const finalPdfBuffer = Buffer.from(await finalPdfBlob.arrayBuffer());
+            await uploadPdfToSupabase(fileName, finalPdfBuffer);
+          }
           
           console.log(`Successfully exported COA for ${coaData.sampleName} with QR code`);
           
