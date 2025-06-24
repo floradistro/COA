@@ -7,7 +7,7 @@ import { PDFDocument, rgb } from 'pdf-lib'
 
 export default function TestQRUpload() {
   const [loading, setLoading] = useState(false)
-  const [result, setResult] = useState<{ qrCode?: string; pdfUrl?: string }>({})
+  const [result, setResult] = useState<{ qrCode?: string; viewerUrl?: string }>({})
   const [error, setError] = useState<string>('')
 
   const testQRAndUpload = async () => {
@@ -38,13 +38,13 @@ export default function TestQRUpload() {
       const pdfBytes = await pdfDoc.save()
       const fileName = `TEST_COA_${Date.now()}.pdf`
       
-      // Upload to Supabase
-      const publicUrl = await uploadPdfToSupabase(fileName, Buffer.from(pdfBytes))
-      console.log('Uploaded to:', publicUrl)
+      // Upload to Supabase - this now returns the lab site viewer URL
+      const viewerUrl = await uploadPdfToSupabase(fileName, Buffer.from(pdfBytes))
+      console.log('Uploaded to lab site viewer URL:', viewerUrl)
       
-      // Generate QR code
-      const qrCodeDataUrl = await generateQrCode(publicUrl)
-      console.log('QR code generated')
+      // Generate QR code for the lab site viewer URL
+      const qrCodeDataUrl = await generateQrCode(viewerUrl)
+      console.log('QR code generated for lab site viewer')
       
       // Add QR code to PDF
       const qrImageBytes = Buffer.from(qrCodeDataUrl.split(',')[1], 'base64')
@@ -68,11 +68,11 @@ export default function TestQRUpload() {
       const finalPdfBytes = await pdfDoc.save()
       
       // Re-upload the version with QR code
-      const finalUrl = await uploadPdfToSupabase(fileName, Buffer.from(finalPdfBytes))
+      const finalViewerUrl = await uploadPdfToSupabase(fileName, Buffer.from(finalPdfBytes))
       
       setResult({
         qrCode: qrCodeDataUrl,
-        pdfUrl: finalUrl
+        viewerUrl: finalViewerUrl
       })
       
     } catch (err: unknown) {
@@ -85,7 +85,18 @@ export default function TestQRUpload() {
 
   return (
     <div className="p-8 max-w-2xl mx-auto">
-      <h2 className="text-2xl font-bold mb-6">Test QR Code & Supabase Upload</h2>
+      <h2 className="text-2xl font-bold mb-6">Test QR Code & Lab Site Upload</h2>
+      
+      <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+        <h3 className="font-semibold text-blue-900 mb-2">What this test does:</h3>
+        <ul className="list-disc list-inside space-y-1 text-sm text-blue-800">
+          <li>Creates a test PDF document</li>
+          <li>Uploads it to Supabase storage</li>
+          <li>Gets the lab site viewer URL (quantixanalytics.com/coa/...)</li>
+          <li>Generates a QR code pointing to the lab site viewer</li>
+          <li>Adds the QR code to the PDF and re-uploads</li>
+        </ul>
+      </div>
       
       <button
         onClick={testQRAndUpload}
@@ -109,17 +120,20 @@ export default function TestQRUpload() {
             <img src={result.qrCode} alt="QR Code" className="w-48 h-48 border border-gray-300" />
           </div>
           
-          {result.pdfUrl && (
+          {result.viewerUrl && (
             <div>
-              <h3 className="font-semibold mb-2">PDF URL:</h3>
+              <h3 className="font-semibold mb-2">Lab Site Viewer URL:</h3>
               <a 
-                href={result.pdfUrl} 
+                href={result.viewerUrl} 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="text-blue-500 hover:underline break-all"
               >
-                {result.pdfUrl}
+                {result.viewerUrl}
               </a>
+              <p className="text-sm text-gray-600 mt-2">
+                This URL points to your lab site viewer instead of direct Supabase storage
+              </p>
             </div>
           )}
         </div>

@@ -14,10 +14,6 @@ import {
 } from '@/utils/errorHandling';
 import { ensureSupabaseReady } from '@/utils/supabaseUtils';
 
-// Use the hardcoded Supabase URL to avoid environment variable issues
-const SUPABASE_URL = 'https://elhsobjvwmjfminxxcwy.supabase.co';
-const SUPABASE_STORAGE_URL = `${SUPABASE_URL}/storage/v1/object/public/coas/`;
-
 export interface UseSupabaseUploadReturn {
   uploadSingleCOA: (coaData: COAData, updateCOAData?: (data: COAData) => void, generatedCOAs?: COAData[], updateGeneratedCOAs?: (coas: COAData[]) => void, currentIndex?: number) => Promise<string>;
   uploadAllCOAs: (coaDataArray: COAData[], currentCOAData: COAData, updateCurrentCOA: (data: COAData) => void, updateGeneratedCOAs?: (coas: COAData[]) => void) => Promise<string[]>;
@@ -93,6 +89,12 @@ export const useSupabaseUpload = (componentRef?: React.RefObject<HTMLDivElement 
     }
   }, []);
 
+  // Helper function to generate lab site viewer URL
+  const generateViewerUrl = (filename: string): string => {
+    const cleanFilename = filename.replace('.pdf', '');
+    return `https://quantixanalytics.com/coa/${cleanFilename}`;
+  };
+
   // Upload single COA to Supabase with QR code
   const uploadSingleCOA = useCallback(async (coaData: COAData, updateCOAData?: (data: COAData) => void, generatedCOAs?: COAData[], updateGeneratedCOAs?: (coas: COAData[]) => void, currentIndex?: number): Promise<string> => {
     if (!componentRef?.current) {
@@ -120,8 +122,8 @@ export const useSupabaseUpload = (componentRef?: React.RefObject<HTMLDivElement 
       // If no QR code exists, generate one with the expected URL using SAME timestamp
       let updatedCOAData = coaData;
       if (!coaData.qrCodeDataUrl && updateCOAData) {
-        // Generate the expected public URL using the SAME timestamp
-        const expectedUrl = `${SUPABASE_STORAGE_URL}pdfs/${uniqueFilename}`;
+        // Generate the expected lab site viewer URL using the SAME timestamp
+        const expectedUrl = generateViewerUrl(uniqueFilename);
         
         console.log('Generating QR code for expected URL with fixed timestamp:', expectedUrl);
         const qrCodeDataUrl = await generateQrCode(expectedUrl);
@@ -295,8 +297,8 @@ export const useSupabaseUpload = (componentRef?: React.RefObject<HTMLDivElement 
           console.log(`COA ${i + 1}: Fixed timestamp:`, timestamp);
           console.log(`COA ${i + 1}: Unique filename:`, uniqueFilename);
           
-          // Generate the expected public URL using the SAME timestamp
-          const expectedUrl = `${SUPABASE_STORAGE_URL}pdfs/${uniqueFilename}`;
+          // Generate the expected lab site viewer URL using the SAME timestamp
+          const expectedUrl = generateViewerUrl(uniqueFilename);
           
           // Generate QR code with expected URL using SAME timestamp
           console.log(`Generating QR code for ${coaData.sampleName} with fixed timestamp URL:`, expectedUrl);
@@ -462,7 +464,7 @@ export const useSupabaseUpload = (componentRef?: React.RefObject<HTMLDivElement 
       const fileName = `COA_${coaData.sampleName.replace(/[^a-z0-9]/gi, '_')}_${coaData.sampleId}.pdf`;
       const timestamp = Date.now();
       const uniqueFilename = `${timestamp}_${fileName}`;
-      const previewUrl = `${SUPABASE_STORAGE_URL}pdfs/${uniqueFilename}`;
+      const previewUrl = generateViewerUrl(uniqueFilename);
       console.log('=== PREVIEW QR GENERATION ===');
       console.log('Preview timestamp:', timestamp);
       console.log('Preview filename:', uniqueFilename);
@@ -549,7 +551,7 @@ export const useSupabaseUpload = (componentRef?: React.RefObject<HTMLDivElement 
         if (!isAccessible) {
           console.error('URL is not accessible!', coaData.publicUrl);
           throw new COAError(
-            `The uploaded file URL is not accessible: ${coaData.publicUrl}. Please check your Supabase storage configuration or re-upload the COA.`,
+            `The uploaded file URL is not accessible: ${coaData.publicUrl}. Please check your lab site configuration or re-upload the COA.`,
             ErrorType.VALIDATION
           );
         }
@@ -594,7 +596,7 @@ export const useSupabaseUpload = (componentRef?: React.RefObject<HTMLDivElement 
             if (!isAccessible) {
               console.error('URL is not accessible!', uploadedCOA.publicUrl);
               throw new COAError(
-                `The uploaded file URL is not accessible: ${uploadedCOA.publicUrl}. Please check your Supabase storage configuration or re-upload the COA.`,
+                `The uploaded file URL is not accessible: ${uploadedCOA.publicUrl}. Please check your lab site configuration or re-upload the COA.`,
                 ErrorType.VALIDATION
               );
             }
@@ -640,7 +642,7 @@ export const useSupabaseUpload = (componentRef?: React.RefObject<HTMLDivElement 
           if (!isAccessible) {
             console.error('URL is not accessible!', uploadedCOA.publicUrl);
             throw new COAError(
-              `The uploaded file URL is not accessible: ${uploadedCOA.publicUrl}. Please check your Supabase storage configuration or re-upload the COA.`,
+              `The uploaded file URL is not accessible: ${uploadedCOA.publicUrl}. Please check your lab site configuration or re-upload the COA.`,
               ErrorType.VALIDATION
             );
           }
@@ -658,51 +660,30 @@ export const useSupabaseUpload = (componentRef?: React.RefObject<HTMLDivElement 
           console.log('Updating preview COA data with fresh QR code from sample ID match...');
           updateCOAData(updatedCOAData);
           
-          // Also update in generatedCOAs array if we have the index
-          if (typeof currentIndex === 'number' && currentIndex >= 0 && currentIndex < generatedCOAs.length) {
-            const updatedCOAs = [...generatedCOAs];
-            updatedCOAs[currentIndex] = updatedCOAData;
+          // Also update in generatedCOAs array
+          const updatedCOAs = [...generatedCOAs];
+          const targetIndex = generatedCOAs.findIndex(coa => coa.sampleId === coaData.sampleId);
+          if (targetIndex >= 0) {
+            updatedCOAs[targetIndex] = updatedCOAData;
             updateGeneratedCOAs(updatedCOAs);
           }
           
-          console.log('QR code synchronized from uploaded COA (found by sample ID)');
+          console.log('QR code synchronized from uploaded COA by sample ID match');
           return;
         }
-        
-        // Check if any COAs have been uploaded at all
-        const uploadedCOAs = generatedCOAs.filter(coa => coa.publicUrl);
-        if (uploadedCOAs.length === 0) {
-          console.log('No uploaded COAs found in the entire array');
-          throw new COAError(
-            'No uploaded COAs found. Please upload some COAs first to generate QR codes.',
-            ErrorType.VALIDATION
-          );
-        } else {
-          console.log(`Found ${uploadedCOAs.length} uploaded COAs, but none match the current COA`);
-          console.log('Uploaded COAs:', uploadedCOAs.map(coa => `${coa.sampleName} (${coa.sampleId})`));
-          throw new COAError(
-            `Current COA "${coaData.sampleName}" has not been uploaded yet. Please upload this COA first to generate a QR code.`,
-            ErrorType.VALIDATION
-          );
-        }
-      } else {
-        console.log('No generatedCOAs provided or missing parameters');
-        console.log('generatedCOAs provided:', !!generatedCOAs);
-        console.log('updateGeneratedCOAs provided:', !!updateGeneratedCOAs);
-        console.log('currentIndex provided:', typeof currentIndex);
-        throw new COAError(
-          'Unable to sync QR code. COA data not available.',
-          ErrorType.VALIDATION
-        );
       }
+      
+      console.log('No uploaded COA found to sync QR code from');
+      throw new COAError(
+        'No uploaded COA found to sync QR code from. Please upload the COA first.',
+        ErrorType.VALIDATION
+      );
+      
     } catch (error) {
       console.error('Error in syncQRCodesFromUploaded:', error);
-      logError(error, 'Sync QR codes from uploaded COA');
-      if (error instanceof COAError) {
-        throw error;
-      }
-      throw new COAError(
-        'Failed to synchronize QR codes from uploaded COA. Please try again.',
+      logError(error, 'Sync QR codes from uploaded');
+      throw error instanceof COAError ? error : new COAError(
+        'Failed to sync QR code from uploaded COA. Please try again.',
         ErrorType.EXPORT,
         error
       );

@@ -48,35 +48,31 @@ export async function uploadPdfToSupabase(filename: string, fileBuffer: Buffer, 
     console.log('Upload successful:', data)
     console.log('Uploaded to path:', data?.path);
 
-    // Get public URL
-    const { data: urlData } = supabase.storage
-      .from('coas')
-      .getPublicUrl(`pdfs/${finalFilename}`)
-
-    if (!urlData?.publicUrl) {
-      throw new Error('Failed to get public URL')
-    }
+    // Generate lab site viewer URL instead of using getPublicUrl
+    const cleanFilename = finalFilename.replace('.pdf', '');
+    const viewerUrl = `https://quantixanalytics.com/coa/${cleanFilename}`;
 
     console.log('=== URL GENERATION ===');
     console.log('Storage path used for URL:', `pdfs/${finalFilename}`);
-    console.log('Generated public URL:', urlData.publicUrl);
+    console.log('Generated lab site viewer URL:', viewerUrl);
+    console.log('Clean filename (without .pdf):', cleanFilename);
     console.log('=== END UPLOAD DEBUG ===');
     
     // Test the URL accessibility immediately after upload
     try {
       console.log('Testing uploaded file accessibility...');
-      const testResponse = await fetch(urlData.publicUrl, { method: 'HEAD' });
+      const testResponse = await fetch(viewerUrl, { method: 'HEAD' });
       console.log('Upload URL test result:', testResponse.status, testResponse.statusText);
       if (!testResponse.ok) {
-        console.warn('⚠️ Uploaded file is not immediately accessible!');
+        console.warn('⚠️ Uploaded file is not immediately accessible via lab site viewer!');
       } else {
-        console.log('✅ Uploaded file is accessible');
+        console.log('✅ Uploaded file is accessible via lab site viewer');
       }
     } catch (testError) {
       console.error('❌ Error testing uploaded file accessibility:', testError);
     }
     
-    return urlData.publicUrl
+    return viewerUrl
   } catch (error) {
     console.error('uploadPdfToSupabase error:', error)
     throw error

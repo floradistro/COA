@@ -95,20 +95,17 @@ export default function TestSupabase() {
       
       setStatus(prev => prev + '\n✅ Test upload successful!')
       
-      // Test 4: Get public URL
-      const { data: urlData } = supabase.storage
-        .from('coas')
-        .getPublicUrl(uploadData.path)
-        
-      if (urlData?.publicUrl) {
-        setStatus(prev => prev + `\n✅ Public URL: ${urlData.publicUrl}`)
-      }
+      // Test 4: Generate lab site viewer URL instead of getPublicUrl
+      const cleanFilename = uploadData.path.replace('test/', '').replace('.pdf', '');
+      const viewerUrl = `https://quantixanalytics.com/coa/${cleanFilename}`;
+      setStatus(prev => prev + `\n✅ Lab site viewer URL: ${viewerUrl}`)
       
       // Test 5: Clean up test file
       await supabase.storage.from('coas').remove([uploadData.path])
       setStatus(prev => prev + '\n✅ Test file cleaned up')
       
       setStatus(prev => prev + '\n\n🎉 ALL TESTS PASSED! Your Supabase setup is working correctly.')
+      setStatus(prev => prev + '\n📋 Note: Files are now accessed via lab site viewer URLs instead of direct Supabase URLs.')
       
     } catch (error) {
       setStatus(`❌ Error: ${error instanceof Error ? error.message : 'Unknown error'}`)

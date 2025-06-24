@@ -10,13 +10,13 @@ export default function DebugQRPage() {
   const [error, setError] = useState('')
   const [urlTestResult, setUrlTestResult] = useState<{url: string, status: number, ok: boolean} | null>(null)
   
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://elhsobjvwmjfminxxcwy.supabase.co'
-  const storageUrl = `${supabaseUrl}/storage/v1/object/public/coas/`
+  // Example lab site viewer URL format
+  const exampleUrl = `https://quantixanalytics.com/coa/1234567890_TEST_COA_Sample_123`
 
   const generateTestQR = async () => {
     try {
       setError('')
-      const url = testUrl || `${storageUrl}pdfs/test_${Date.now()}.pdf`
+      const url = testUrl || exampleUrl
       const qrDataUrl = await generateQrCode(url)
       setQrCode(qrDataUrl)
     } catch (err) {
@@ -55,10 +55,13 @@ export default function DebugQRPage() {
       <h1 className="text-3xl font-bold mb-8">QR Code Debug Tool</h1>
       
       <div className="bg-gray-50 p-6 rounded-lg mb-8">
-        <h2 className="text-xl font-semibold mb-4">Environment Info</h2>
+        <h2 className="text-xl font-semibold mb-4">Lab Site Viewer URL Format</h2>
         <div className="space-y-2 text-sm">
-          <div><span className="font-medium">Supabase URL:</span> {supabaseUrl}</div>
-          <div><span className="font-medium">Storage URL:</span> {storageUrl}</div>
+          <div><span className="font-medium">URL Pattern:</span> https://quantixanalytics.com/coa/[filename-without-pdf]</div>
+          <div><span className="font-medium">Example:</span> {exampleUrl}</div>
+          <div className="text-gray-600 mt-2">
+            Note: QR codes now point to the lab site viewer instead of direct Supabase storage URLs
+          </div>
         </div>
       </div>
 
@@ -69,7 +72,7 @@ export default function DebugQRPage() {
             type="text"
             value={testUrl}
             onChange={(e) => setTestUrl(e.target.value)}
-            placeholder="Paste your Supabase storage URL here to test"
+            placeholder="Paste your lab site viewer URL here to test"
             className="flex-1 px-4 py-2 border rounded-lg"
           />
           <button
@@ -95,25 +98,13 @@ export default function DebugQRPage() {
       )}
 
       {urlTestResult && (
-        <div className="mb-8 p-4 rounded-lg border">
-          <h3 className="text-lg font-semibold mb-2">URL Test Result</h3>
-          <div className={`p-3 rounded ${urlTestResult.ok ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}>
-            <div><strong>URL:</strong> {urlTestResult.url}</div>
-            <div><strong>Status:</strong> {urlTestResult.status}</div>
-            <div><strong>Accessible:</strong> {urlTestResult.ok ? 'Yes ✅' : 'No ❌'}</div>
+        <div className="mb-6 p-4 bg-blue-50 rounded-lg">
+          <h3 className="font-semibold mb-2">URL Test Result:</h3>
+          <div className="space-y-1 text-sm">
+            <div><span className="font-medium">URL:</span> {urlTestResult.url}</div>
+            <div><span className="font-medium">Status:</span> {urlTestResult.status}</div>
+            <div><span className="font-medium">Accessible:</span> {urlTestResult.ok ? '✅ Yes' : '❌ No'}</div>
           </div>
-          
-          {!urlTestResult.ok && (
-            <div className="mt-4 p-3 bg-yellow-50 text-yellow-800 rounded">
-              <h4 className="font-medium">Troubleshooting:</h4>
-              <ul className="list-disc list-inside mt-2 text-sm">
-                <li>Check if the Supabase storage bucket &apos;coas&apos; exists</li>
-                <li>Ensure the bucket is set to PUBLIC</li>
-                <li>Verify the file actually exists at this path</li>
-                <li>Check your Supabase storage policies</li>
-              </ul>
-            </div>
-          )}
         </div>
       )}
 
