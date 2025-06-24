@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
+import Image from 'next/image'
 import { generateQrCode } from '@/lib/generateQrCode'
 
 export default function DebugQRPage() {
@@ -106,7 +107,7 @@ export default function DebugQRPage() {
             <div className="mt-4 p-3 bg-yellow-50 text-yellow-800 rounded">
               <h4 className="font-medium">Troubleshooting:</h4>
               <ul className="list-disc list-inside mt-2 text-sm">
-                <li>Check if the Supabase storage bucket 'coas' exists</li>
+                <li>Check if the Supabase storage bucket &apos;coas&apos; exists</li>
                 <li>Ensure the bucket is set to PUBLIC</li>
                 <li>Verify the file actually exists at this path</li>
                 <li>Check your Supabase storage policies</li>
@@ -123,17 +124,17 @@ export default function DebugQRPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="border p-4 rounded-lg">
               <h4 className="font-medium mb-2">Small (64x64)</h4>
-              <img src={qrCode} alt="QR Code" className="w-16 h-16" />
+              <Image src={qrCode} alt="QR Code" className="w-16 h-16" width={64} height={64} />
             </div>
             
             <div className="border p-4 rounded-lg">
               <h4 className="font-medium mb-2">Medium (128x128)</h4>
-              <img src={qrCode} alt="QR Code" className="w-32 h-32" />
+              <Image src={qrCode} alt="QR Code" className="w-32 h-32" width={128} height={128} />
             </div>
             
             <div className="border p-4 rounded-lg">
               <h4 className="font-medium mb-2">Large (256x256)</h4>
-              <img src={qrCode} alt="QR Code" className="w-64 h-64" />
+              <Image src={qrCode} alt="QR Code" className="w-64 h-64" width={256} height={256} />
             </div>
           </div>
           

@@ -128,7 +128,7 @@ export default function Home() {
       const message = getUserFriendlyMessage(error);
       showNotification('error', message);
     }
-  }, [strain, dateReceived, productType, selectedProfile, generateNewCOA, updateProfile, showNotification]);
+  }, [strain, dateReceived, productType, selectedProfile, generateNewCOA, updateProfile, showNotification, setIsPreview]);
   
   // Generate multiple COAs
   const handleGenerateBatch = useCallback(async () => {
@@ -206,7 +206,7 @@ export default function Home() {
         if (!confirmed) return;
       }
       
-      const uploadedUrl = await uploadSingleCOA(coaData, setCOAData, generatedCOAs, setGeneratedCOAs, currentCOAIndex);
+      await uploadSingleCOA(coaData, setCOAData, generatedCOAs, setGeneratedCOAs, currentCOAIndex);
       showNotification('success', 'COA uploaded successfully to cloud storage!');
     } catch (error) {
       const message = getUserFriendlyMessage(error);

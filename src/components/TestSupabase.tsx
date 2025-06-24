@@ -29,7 +29,7 @@ export default function TestSupabase() {
         setStatus(prev => prev + '\n❌ Bucket "coas" not found. Creating it...')
         
         // Try to create the bucket
-        const { data: newBucket, error: createError } = await supabase.storage.createBucket('coas', {
+        const { error: createError } = await supabase.storage.createBucket('coas', {
           public: true,
           fileSizeLimit: 52428800, // 50MB
           allowedMimeTypes: ['application/pdf']

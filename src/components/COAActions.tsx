@@ -441,7 +441,7 @@ export const COAActions: React.FC<COAActionsProps> = ({
             <div className="flex-1">
               <h4 className="text-sm font-medium text-yellow-900 mb-1">Draft COA</h4>
               <div className="text-sm text-yellow-800">
-                <p>This COA is not official until launched. Click "Launch COA" to make it live.</p>
+                <p>This COA is not official until launched. Click &quot;Launch COA&quot; to make it live.</p>
               </div>
             </div>
           </div>

@@ -5,7 +5,6 @@ import { checkSupabaseBucket } from '@/utils/supabaseUtils'
 
 export default function SupabaseStatus() {
   const [status, setStatus] = useState<'checking' | 'connected' | 'error'>('checking')
-  const [error, setError] = useState<string>('')
 
   useEffect(() => {
     checkConnection()
@@ -18,14 +17,13 @@ export default function SupabaseStatus() {
       
       if (exists) {
         setStatus('connected')
-        setError('')
       } else {
         setStatus('error')
-        setError(error || 'Unknown error')
+        console.error('Supabase bucket check failed:', error || 'Unknown error')
       }
     } catch (err) {
       setStatus('error')
-      setError(err instanceof Error ? err.message : 'Connection failed')
+      console.error('Supabase connection failed:', err instanceof Error ? err.message : 'Connection failed')
     }
   }
 

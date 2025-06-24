@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback } from 'react';
 import { COAData } from '@/types';
 import { generateQrCode } from '@/lib/generateQrCode';
 import { uploadPdfToSupabase } from '@/lib/uploadPdfToSupabase';
