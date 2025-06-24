@@ -83,8 +83,6 @@ export default function Home() {
   const {
     uploadSingleCOA,
     uploadAllCOAs,
-    syncQRCodesFromUploaded,
-    refreshAllQRCodes,
     isUploading,
     uploadProgress
   } = useSupabaseUpload(componentRef);
@@ -201,31 +199,7 @@ export default function Home() {
   
 
 
-  // Sync QR code from uploaded COA
-  const handleSyncQRCode = useCallback(async () => {
-    try {
-      console.log('Syncing QR code for COA:', coaData.sampleId);
-      await syncQRCodesFromUploaded(coaData, setCOAData, generatedCOAs, setGeneratedCOAs, currentCOAIndex);
-      showNotification('success', 'QR code synced from uploaded COA!');
-    } catch (error) {
-      const message = getUserFriendlyMessage(error);
-      showNotification('error', message);
-      console.error('QR code sync failed:', error);
-    }
-  }, [coaData, syncQRCodesFromUploaded, setCOAData, generatedCOAs, setGeneratedCOAs, currentCOAIndex, showNotification]);
 
-  // Refresh all QR codes
-  const handleRefreshAllQRCodes = useCallback(async () => {
-    try {
-      console.log('Refreshing all QR codes...');
-      await refreshAllQRCodes(generatedCOAs, setGeneratedCOAs, coaData, setCOAData, currentCOAIndex);
-      showNotification('success', 'All QR codes refreshed successfully!');
-    } catch (error) {
-      const message = getUserFriendlyMessage(error);
-      showNotification('error', message);
-      console.error('QR codes refresh failed:', error);
-    }
-  }, [refreshAllQRCodes, generatedCOAs, setGeneratedCOAs, coaData, setCOAData, currentCOAIndex, showNotification]);
 
   // Supabase upload handlers
   const handleUploadToSupabase = useCallback(async () => {
@@ -244,7 +218,7 @@ export default function Home() {
       const message = getUserFriendlyMessage(error);
       showNotification('error', message);
     }
-  }, [coaData, uploadSingleCOA, showNotification, validationResult, generatedCOAs, setGeneratedCOAs, currentCOAIndex]);
+  }, [coaData, uploadSingleCOA, showNotification, validationResult, generatedCOAs, setGeneratedCOAs, currentCOAIndex, setCOAData]);
   
   const handleUploadAllToSupabase = useCallback(async () => {
     try {
@@ -368,16 +342,11 @@ export default function Home() {
           setIsPreview={setIsPreview}
           onUploadToSupabase={handleUploadToSupabase}
           onUploadAllToSupabase={generatedCOAs.length > 0 ? handleUploadAllToSupabase : undefined}
-          onSyncQRCode={handleSyncQRCode}
-          onRefreshAllQRCodes={generatedCOAs.length > 0 ? handleRefreshAllQRCodes : undefined}
           generatedCOAs={generatedCOAs}
           currentCOAIndex={currentCOAIndex}
-          onNavigateCOA={goToCOA}
           isUploading={isUploading}
           uploadProgress={uploadProgress}
-          hasUploadedCOAs={generatedCOAs.some(coa => coa.publicUrl)}
           onBurnBatch={handleBurnBatch}
-          validationResult={validationResult}
         />
 
         {/* Main Content */}

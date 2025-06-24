@@ -24,23 +24,15 @@ interface COAControlsProps {
   // Action button props
   isPreview: boolean;
   setIsPreview: (preview: boolean) => void;
-  onPrint?: () => void;
-  onExportPDF?: () => void;
-  onExportAllCOAs?: () => void;
   onBurnBatch?: () => void;
   onUploadToSupabase?: () => void;
   onUploadAllToSupabase?: () => void;
-  onSyncQRCode?: () => void;
-  onRefreshAllQRCodes?: () => void;
   generatedCOAs: COAData[];
   currentCOAIndex: number;
-  onNavigateCOA: (index: number) => void;
   isExporting?: boolean;
   exportProgress?: number;
   isUploading?: boolean;
   uploadProgress?: number;
-  hasUploadedCOAs?: boolean;
-  validationResult?: any;
 }
 
 export const COAControls: React.FC<COAControlsProps> = ({
@@ -62,23 +54,15 @@ export const COAControls: React.FC<COAControlsProps> = ({
   // Action props
   isPreview,
   setIsPreview,
-  onPrint,
-  onExportPDF,
-  onExportAllCOAs,
   onBurnBatch,
   onUploadToSupabase,
   onUploadAllToSupabase,
-  onSyncQRCode,
-  onRefreshAllQRCodes,
   generatedCOAs,
   currentCOAIndex,
-  onNavigateCOA,
   isExporting,
   exportProgress,
   isUploading = false,
-  uploadProgress = 0,
-  hasUploadedCOAs = false,
-  validationResult
+  uploadProgress = 0
 }) => {
   const router = useRouter();
   const currentCOA = generatedCOAs[currentCOAIndex];

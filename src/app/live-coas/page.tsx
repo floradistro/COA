@@ -11,7 +11,7 @@ interface COAFile {
   updated_at: string;
   metadata?: {
     size?: number;
-    [key: string]: any;
+    [key: string]: unknown;
   };
   viewerUrl: string;
 }
