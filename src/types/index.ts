@@ -34,8 +34,11 @@ export interface COAData {
   
   // Dates
   dateCollected: string;
+  dateCollectedEnd?: string;
   dateReceived: string;
+  dateReceivedEnd?: string;
   dateTested: string;
+  dateTestedEnd?: string;
   dateReported: string;
   
   // Test Status

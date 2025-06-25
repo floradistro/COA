@@ -81,6 +81,100 @@ export const getTodayString = (): string => {
 };
 
 /**
+ * Generates a random date between two dates (inclusive)
+ * @param startDate Start date in YYYY-MM-DD format
+ * @param endDate End date in YYYY-MM-DD format
+ * @param sampleIndex Optional sample index for seeded randomization
+ * @returns Random date in MM/DD/YYYY format
+ */
+export const generateRandomDateInRange = (
+  startDate: string, 
+  endDate: string, 
+  sampleIndex?: number
+): string => {
+  let start = new Date(startDate);
+  let end = new Date(endDate);
+  
+  // If start and end are the same, return that exact date
+  if (start.getTime() === end.getTime() || startDate === endDate) {
+    return formatDate(start);
+  }
+  
+  // Ensure start is before end
+  if (start > end) {
+    [start, end] = [end, start];
+  }
+  
+  // Calculate the time difference in milliseconds
+  const timeDiff = end.getTime() - start.getTime();
+  
+  // Generate random offset with optional seeding
+  let randomFactor: number;
+  if (sampleIndex !== undefined) {
+    // Use sample index for seeded randomization
+    const seed = sampleIndex * 1234567 + Date.now() % 10000;
+    randomFactor = ((seed * 9301 + 49297) % 233280) / 233280;
+  } else {
+    randomFactor = Math.random();
+  }
+  
+  const randomOffset = Math.floor(timeDiff * randomFactor);
+  const randomDate = new Date(start.getTime() + randomOffset);
+  
+  return formatDate(randomDate);
+};
+
+/**
+ * Generates randomized dates within specified ranges
+ * @param dateRanges Object containing date ranges
+ * @param sampleIndex Optional sample index for seeded randomization
+ * @returns Object with randomized dates in MM/DD/YYYY format
+ */
+export const generateDatesFromRanges = (
+  dateRanges: {
+    dateCollected: string;
+    dateCollectedEnd: string;
+    dateReceived: string;
+    dateReceivedEnd: string;
+    dateTested: string;
+    dateTestedEnd: string;
+  },
+  sampleIndex?: number
+): FormattedDates => {
+  // Generate single random dates within each range
+  const collected = generateRandomDateInRange(
+    dateRanges.dateCollected, 
+    dateRanges.dateCollectedEnd, 
+    sampleIndex ? sampleIndex * 3 + 1 : undefined
+  );
+  
+  const received = generateRandomDateInRange(
+    dateRanges.dateReceived, 
+    dateRanges.dateReceivedEnd, 
+    sampleIndex ? sampleIndex * 3 + 2 : undefined
+  );
+  
+  const tested = generateRandomDateInRange(
+    dateRanges.dateTested, 
+    dateRanges.dateTestedEnd, 
+    sampleIndex ? sampleIndex * 3 + 3 : undefined
+  );
+  
+  // For reported date, use tested date + 1-2 days
+  const testedDate = parseFormattedDate(tested);
+  const reportedOffset = Math.floor(Math.random() * 2) + 1; // 1-2 days
+  const reportedDate = new Date(testedDate!);
+  reportedDate.setDate(reportedDate.getDate() + reportedOffset);
+  
+  return {
+    collected,
+    received,
+    tested,
+    reported: formatDate(reportedDate)
+  };
+};
+
+/**
  * Validates if a date string is in YYYY-MM-DD format
  * @param dateString Date string to validate
  * @returns Boolean indicating if the date is valid

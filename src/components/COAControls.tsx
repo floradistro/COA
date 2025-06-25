@@ -10,6 +10,16 @@ interface COAControlsProps {
   setStrain: (strain: string) => void;
   dateReceived: string;
   setDateReceived: (date: string) => void;
+  dateReceivedEnd: string;
+  setDateReceivedEnd: (date: string) => void;
+  dateCollected: string;
+  setDateCollected: (date: string) => void;
+  dateCollectedEnd: string;
+  setDateCollectedEnd: (date: string) => void;
+  dateTested: string;
+  setDateTested: (date: string) => void;
+  dateTestedEnd: string;
+  setDateTestedEnd: (date: string) => void;
   productType: ProductType;
   setProductType: (type: ProductType) => void;
   selectedProfile: CannabinoidProfile;
@@ -40,6 +50,16 @@ export const COAControls: React.FC<COAControlsProps> = ({
   setStrain,
   dateReceived,
   setDateReceived,
+  dateReceivedEnd,
+  setDateReceivedEnd,
+  dateCollected,
+  setDateCollected,
+  dateCollectedEnd,
+  setDateCollectedEnd,
+  dateTested,
+  setDateTested,
+  dateTestedEnd,
+  setDateTestedEnd,
   productType,
   setProductType,
   selectedProfile,
@@ -122,9 +142,9 @@ export const COAControls: React.FC<COAControlsProps> = ({
       <div className="bg-white rounded-xl shadow-lg border border-gray-100">
         {/* Main Controls */}
         <div className="p-5">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="space-y-4">
             {/* Strain Input */}
-            <div className={isMultiStrain ? 'md:col-span-4' : ''}>
+            <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">
                 {isMultiStrain ? 'Strain Names (one per line)' : 'Strain Name'}
               </label>
@@ -146,53 +166,121 @@ export const COAControls: React.FC<COAControlsProps> = ({
               )}
             </div>
 
-            {/* Date Received */}
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">
-                Date Received
-              </label>
-              <input
-                type="date"
-                value={dateReceived}
-                onChange={(e) => setDateReceived(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all text-gray-900 text-sm"
-              />
+            {/* Date Ranges */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Date Collected Range */}
+              <div className="space-y-2">
+                <label className="block text-xs font-medium text-gray-700">Date Collected Range</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-[10px] text-gray-600 mb-1">From</label>
+                    <input
+                      type="date"
+                      value={dateCollected}
+                      onChange={(e) => setDateCollected(e.target.value)}
+                      className="w-full px-2 py-1.5 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent transition-all text-gray-900 text-xs"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] text-gray-600 mb-1">To</label>
+                    <input
+                      type="date"
+                      value={dateCollectedEnd}
+                      onChange={(e) => setDateCollectedEnd(e.target.value)}
+                      className="w-full px-2 py-1.5 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent transition-all text-gray-900 text-xs"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Date Received Range */}
+              <div className="space-y-2">
+                <label className="block text-xs font-medium text-gray-700">Date Received Range</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-[10px] text-gray-600 mb-1">From</label>
+                    <input
+                      type="date"
+                      value={dateReceived}
+                      onChange={(e) => setDateReceived(e.target.value)}
+                      className="w-full px-2 py-1.5 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent transition-all text-gray-900 text-xs"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] text-gray-600 mb-1">To</label>
+                    <input
+                      type="date"
+                      value={dateReceivedEnd}
+                      onChange={(e) => setDateReceivedEnd(e.target.value)}
+                      className="w-full px-2 py-1.5 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent transition-all text-gray-900 text-xs"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Date Completed Range */}
+              <div className="space-y-2">
+                <label className="block text-xs font-medium text-gray-700">Date Completed Range</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-[10px] text-gray-600 mb-1">From</label>
+                    <input
+                      type="date"
+                      value={dateTested}
+                      onChange={(e) => setDateTested(e.target.value)}
+                      className="w-full px-2 py-1.5 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent transition-all text-gray-900 text-xs"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] text-gray-600 mb-1">To</label>
+                    <input
+                      type="date"
+                      value={dateTestedEnd}
+                      onChange={(e) => setDateTestedEnd(e.target.value)}
+                      className="w-full px-2 py-1.5 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent transition-all text-gray-900 text-xs"
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
 
-            {/* Product Type */}
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">
-                Product Type
-              </label>
-              <select
-                value={productType}
-                onChange={(e) => setProductType(e.target.value as ProductType)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all bg-white text-gray-900 text-sm"
-              >
-                {Object.entries(PRODUCT_CONFIGS).map(([key, config]) => (
-                  <option key={key} value={key}>
-                    {config.sampleType}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {/* Product Type and Cannabinoid Profile */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Product Type */}
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  Product Type
+                </label>
+                <select
+                  value={productType}
+                  onChange={(e) => setProductType(e.target.value as ProductType)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all bg-white text-gray-900 text-sm"
+                >
+                  {Object.entries(PRODUCT_CONFIGS).map(([key, config]) => (
+                    <option key={key} value={key}>
+                      {config.sampleType}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-            {/* Cannabinoid Profile */}
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">
-                Cannabinoid Profile
-              </label>
-              <select
-                value={selectedProfile}
-                onChange={(e) => setSelectedProfile(e.target.value as CannabinoidProfile)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all bg-white text-gray-900 text-sm"
-              >
-                <option value="high-thc">High THCA (22-30%)</option>
-                <option value="medium-thc">Medium THCA (15-20%)</option>
-                <option value="low-thc">Low THCA (0-15%)</option>
-                <option value="hemp">Hemp/CBD (0.1-0.3% THCA)</option>
-                <option value="decarbed">Decarbed (1-5% THCA)</option>
-              </select>
+              {/* Cannabinoid Profile */}
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  Cannabinoid Profile
+                </label>
+                <select
+                  value={selectedProfile}
+                  onChange={(e) => setSelectedProfile(e.target.value as CannabinoidProfile)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all bg-white text-gray-900 text-sm"
+                >
+                  <option value="high-thc">High THCA (22-30%)</option>
+                  <option value="medium-thc">Medium THCA (15-20%)</option>
+                  <option value="low-thc">Low THCA (0-15%)</option>
+                  <option value="hemp">Hemp/CBD (0.1-0.3% THCA)</option>
+                  <option value="decarbed">Decarbed (1-5% THCA)</option>
+                </select>
+              </div>
             </div>
           </div>
 

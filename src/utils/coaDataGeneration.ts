@@ -9,7 +9,7 @@ import {
   METHOD_REFERENCES
 } from '@/constants/defaults';
 import { generateSampleId, generateBatchId } from './idGeneration';
-import { generateDates } from './dateUtils';
+import { generateDates, generateDatesFromRanges, generateRandomDateInRange } from './dateUtils';
 import { 
   generateFullCannabinoidProfile, 
   generateMoistureContent 
@@ -29,14 +29,24 @@ export const generateDefaultCOAData = (
   dateReceived: string = new Date().toISOString().split('T')[0],
   productType: ProductType = 'flower',
   profileType?: CannabinoidProfile,
-  sampleIndex?: number
+  sampleIndex?: number,
+  dateRanges?: {
+    dateCollected: string;
+    dateCollectedEnd: string;
+    dateReceived: string;
+    dateReceivedEnd: string;
+    dateTested: string;
+    dateTestedEnd: string;
+  }
 ): COAData => {
   // Get product configuration
   const productConfig = PRODUCT_CONFIGS[productType];
   const effectiveProfile = profileType || productConfig.defaultProfile;
   
-  // Generate dates
-  const dates = generateDates(dateReceived);
+  // Generate dates - use ranges if provided, otherwise use default generation
+  const dates = dateRanges 
+    ? generateDatesFromRanges(dateRanges, sampleIndex)
+    : generateDates(dateReceived);
   
   // Generate cannabinoid profile with sample index
   const profile = generateFullCannabinoidProfile(effectiveProfile, undefined, sampleIndex);
@@ -70,8 +80,11 @@ export const generateDefaultCOAData = (
     
     // Dates
     dateCollected: dates.collected,
+    dateCollectedEnd: dates.collected,
     dateReceived: dates.received,
+    dateReceivedEnd: dates.received,
     dateTested: dates.tested,
+    dateTestedEnd: dates.tested,
     dateReported: dates.reported,
     
     // Test Status
@@ -117,8 +130,11 @@ export const createBlankCOAData = (): COAData => {
     
     // Dates
     dateCollected: dates.collected,
+    dateCollectedEnd: dates.collected,
     dateReceived: dates.received,
+    dateReceivedEnd: dates.received,
     dateTested: dates.tested,
+    dateTestedEnd: dates.tested,
     dateReported: dates.reported,
     
     // Test Status

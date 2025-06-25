@@ -387,42 +387,93 @@ const COAForm: React.FC<COAFormProps> = ({
       {/* Dates */}
       <div className="space-y-4">
         <h3 className="text-lg font-medium text-gray-900 border-b border-gray-200 pb-2">Test Dates</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Date Collected</label>
-            <input
-              type="text"
-              value={data.dateCollected}
-              onChange={(e) => updateField('dateCollected', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
+        <div className="grid grid-cols-1 gap-6">
+          {/* Date Collected Range */}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">Date Collected Range</label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs text-gray-600 mb-1">From</label>
+                <input
+                  type="date"
+                  value={data.dateCollected}
+                  onChange={(e) => updateField('dateCollected', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-600 mb-1">To</label>
+                <input
+                  type="date"
+                  value={data.dateCollectedEnd || data.dateCollected}
+                  onChange={(e) => updateField('dateCollectedEnd', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Date Received</label>
-            <input
-              type="text"
-              value={data.dateReceived}
-              onChange={(e) => updateField('dateReceived', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
+
+          {/* Date Received Range */}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">Date Received Range</label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs text-gray-600 mb-1">From</label>
+                <input
+                  type="date"
+                  value={data.dateReceived}
+                  onChange={(e) => updateField('dateReceived', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-600 mb-1">To</label>
+                <input
+                  type="date"
+                  value={data.dateReceivedEnd || data.dateReceived}
+                  onChange={(e) => updateField('dateReceivedEnd', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Date Tested</label>
-            <input
-              type="text"
-              value={data.dateTested}
-              onChange={(e) => updateField('dateTested', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
+
+          {/* Date Completed Range */}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">Date Completed Range</label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs text-gray-600 mb-1">From</label>
+                <input
+                  type="date"
+                  value={data.dateTested}
+                  onChange={(e) => updateField('dateTested', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-600 mb-1">To</label>
+                <input
+                  type="date"
+                  value={data.dateTestedEnd || data.dateTested}
+                  onChange={(e) => updateField('dateTestedEnd', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Date Reported</label>
-            <input
-              type="text"
-              value={data.dateReported}
-              onChange={(e) => updateField('dateReported', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
+
+          {/* Date Reported (single date) */}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">Date Reported</label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <input
+                type="date"
+                value={data.dateReported}
+                onChange={(e) => updateField('dateReported', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
           </div>
         </div>
       </div>

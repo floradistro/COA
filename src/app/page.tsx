@@ -41,6 +41,11 @@ export default function Home() {
   // Form state
   const [strain, setStrain] = useState('');
   const [dateReceived, setDateReceived] = useState(getTodayString());
+  const [dateReceivedEnd, setDateReceivedEnd] = useState(getTodayString());
+  const [dateCollected, setDateCollected] = useState(getTodayString());
+  const [dateCollectedEnd, setDateCollectedEnd] = useState(getTodayString());
+  const [dateTested, setDateTested] = useState(getTodayString());
+  const [dateTestedEnd, setDateTestedEnd] = useState(getTodayString());
   const [selectedProfile, setSelectedProfile] = useState<CannabinoidProfile>('high-thc');
   const [productType, setProductType] = useState<ProductType>('flower');
 
@@ -152,7 +157,13 @@ export default function Home() {
   const handleGenerateSingle = useCallback(() => {
     try {
       console.log('Generating single COA with:', { strain, dateReceived, productType, selectedProfile });
-      generateNewCOA(strain || 'Sample Strain', dateReceived, productType);
+      generateNewCOA(strain || 'Sample Strain', dateReceived, productType, {
+        dateReceivedEnd,
+        dateCollected,
+        dateCollectedEnd,
+        dateTested,
+        dateTestedEnd
+      });
       
       // Apply profile if not default
       if (selectedProfile !== 'high-thc') {
@@ -171,7 +182,7 @@ export default function Home() {
       const message = getUserFriendlyMessage(error);
       showNotification('error', message);
     }
-  }, [strain, dateReceived, productType, selectedProfile, generateNewCOA, updateProfile, showNotification, setIsPreview, coaData]);
+  }, [strain, dateReceived, dateReceivedEnd, dateCollected, dateCollectedEnd, dateTested, dateTestedEnd, productType, selectedProfile, generateNewCOA, updateProfile, showNotification, setIsPreview, coaData]);
   
   // Generate multiple COAs
   const handleGenerateBatch = useCallback(async () => {
@@ -187,7 +198,13 @@ export default function Home() {
         return;
       }
       
-      await generateMultipleCOAs(strains, dateReceived, productType, selectedProfile);
+      await generateMultipleCOAs(strains, dateReceived, productType, selectedProfile, {
+        dateReceivedEnd,
+        dateCollected,
+        dateCollectedEnd,
+        dateTested,
+        dateTestedEnd
+      });
       
       setIsPreview(true);
       showNotification('success', `Generated ${strains.length} COAs successfully`);
@@ -249,6 +266,11 @@ export default function Home() {
       // Reset all form states to defaults
       setStrain('');
       setDateReceived(getTodayString());
+      setDateReceivedEnd(getTodayString());
+      setDateCollected(getTodayString());
+      setDateCollectedEnd(getTodayString());
+      setDateTested(getTodayString());
+      setDateTestedEnd(getTodayString());
       setSelectedProfile('high-thc');
       setProductType('flower');
       setFormProfile('high-thc');
@@ -326,6 +348,16 @@ export default function Home() {
           setStrain={setStrain}
           dateReceived={dateReceived}
           setDateReceived={setDateReceived}
+          dateReceivedEnd={dateReceivedEnd}
+          setDateReceivedEnd={setDateReceivedEnd}
+          dateCollected={dateCollected}
+          setDateCollected={setDateCollected}
+          dateCollectedEnd={dateCollectedEnd}
+          setDateCollectedEnd={setDateCollectedEnd}
+          dateTested={dateTested}
+          setDateTested={setDateTested}
+          dateTestedEnd={dateTestedEnd}
+          setDateTestedEnd={setDateTestedEnd}
           productType={productType}
           setProductType={setProductType}
           selectedProfile={selectedProfile}

@@ -11,7 +11,13 @@ export interface UseCOAGenerationReturn {
   // Single COA
   coaData: COAData;
   setCOAData: (data: COAData) => void;
-  generateNewCOA: (strain: string, dateReceived: string, productType: ProductType) => void;
+  generateNewCOA: (strain: string, dateReceived: string, productType: ProductType, dateRanges?: {
+    dateReceivedEnd?: string;
+    dateCollected?: string;
+    dateCollectedEnd?: string;
+    dateTested?: string;
+    dateTestedEnd?: string;
+  }) => void;
   updateProfile: (profileType: CannabinoidProfile) => void;
   
   // Multiple COAs
@@ -19,7 +25,13 @@ export interface UseCOAGenerationReturn {
   setGeneratedCOAs: (coas: COAData[]) => void;
   currentCOAIndex: number;
   isGeneratingBatch: boolean;
-  generateMultipleCOAs: (strains: string[], dateReceived: string, productType: ProductType, profileType?: CannabinoidProfile) => Promise<void>;
+  generateMultipleCOAs: (strains: string[], dateReceived: string, productType: ProductType, profileType?: CannabinoidProfile, dateRanges?: {
+    dateReceivedEnd?: string;
+    dateCollected?: string;
+    dateCollectedEnd?: string;
+    dateTested?: string;
+    dateTestedEnd?: string;
+  }) => Promise<void>;
   goToCOA: (index: number) => void;
   clearGeneratedCOAs: () => void;
   burnAllData: () => void;
@@ -53,13 +65,31 @@ export const useCOAGeneration = (
   const generateNewCOA = useCallback((
     strain: string, 
     dateReceived: string, 
-    productType: ProductType
+    productType: ProductType,
+    dateRanges?: {
+      dateReceivedEnd?: string;
+      dateCollected?: string;
+      dateCollectedEnd?: string;
+      dateTested?: string;
+      dateTestedEnd?: string;
+    }
   ) => {
     const newData = generateDefaultCOAData(
       strain || 'Sample Strain', 
       dateReceived, 
-      productType
+      productType,
+      undefined,
+      undefined,
+      dateRanges ? {
+        dateCollected: dateRanges.dateCollected || dateReceived,
+        dateCollectedEnd: dateRanges.dateCollectedEnd || dateReceived,
+        dateReceived: dateReceived,
+        dateReceivedEnd: dateRanges.dateReceivedEnd || dateReceived,
+        dateTested: dateRanges.dateTested || dateReceived,
+        dateTestedEnd: dateRanges.dateTestedEnd || dateReceived
+      } : undefined
     );
+    
     setCOAData(newData);
   }, []);
   
@@ -75,7 +105,14 @@ export const useCOAGeneration = (
     strains: string[], 
     dateReceived: string, 
     productType: ProductType,
-    profileType?: CannabinoidProfile
+    profileType?: CannabinoidProfile,
+    dateRanges?: {
+      dateReceivedEnd?: string;
+      dateCollected?: string;
+      dateCollectedEnd?: string;
+      dateTested?: string;
+      dateTestedEnd?: string;
+    }
   ): Promise<void> => {
     // Validate input
     if (strains.length === 0) {
@@ -95,7 +132,21 @@ export const useCOAGeneration = (
       for (let i = 0; i < strains.length; i++) {
         const strainName = strains[i].trim();
         if (strainName) {
-          const newCOA = generateDefaultCOAData(strainName, dateReceived, productType, profileType, i);
+          const newCOA = generateDefaultCOAData(
+            strainName, 
+            dateReceived, 
+            productType, 
+            profileType, 
+            i,
+            dateRanges ? {
+              dateCollected: dateRanges.dateCollected || dateReceived,
+              dateCollectedEnd: dateRanges.dateCollectedEnd || dateReceived,
+              dateReceived: dateReceived,
+              dateReceivedEnd: dateRanges.dateReceivedEnd || dateReceived,
+              dateTested: dateRanges.dateTested || dateReceived,
+              dateTestedEnd: dateRanges.dateTestedEnd || dateReceived
+            } : undefined
+          );
           
           newCOAs.push(newCOA);
           
