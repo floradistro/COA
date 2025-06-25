@@ -10,6 +10,7 @@ import {
   CANNABINOID_NAMES,
   CANNABINOID_LIMITS
 } from '@/constants';
+import { LAB_EMPLOYEES, SAMPLE_SIZE_OPTIONS } from '@/constants/defaults';
 import ValidationPanel from './ValidationPanel';
 
 interface COAFormProps {
@@ -175,6 +176,14 @@ const COAForm: React.FC<COAFormProps> = ({
     }
   };
 
+  const handleLabEmployeeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedEmployee = LAB_EMPLOYEES.find(emp => emp.name === e.target.value);
+    if (selectedEmployee) {
+      updateField('labDirector', selectedEmployee.name);
+      updateField('directorTitle', selectedEmployee.role);
+    }
+  };
+
   return (
     <div className="space-y-8">
       {/* THCA/D9 THC Range Generator */}
@@ -287,13 +296,19 @@ const COAForm: React.FC<COAFormProps> = ({
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Lab Director</label>
-            <input
-              type="text"
+            <label className="block text-sm font-medium text-gray-700 mb-1">Approved By</label>
+            <select
               value={data.labDirector}
-              onChange={(e) => updateField('labDirector', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
+              onChange={handleLabEmployeeChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+            >
+              <option value="">Select Lab Employee</option>
+              {LAB_EMPLOYEES.map((employee) => (
+                <option key={employee.name} value={employee.name}>
+                  {employee.name} - {employee.role}
+                </option>
+              ))}
+            </select>
           </div>
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-1">Lab Contact</label>
@@ -346,6 +361,42 @@ const COAForm: React.FC<COAFormProps> = ({
               onChange={(e) => updateField('batchId', e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Sample Size</label>
+            <div className="flex gap-2">
+              <select
+                value={SAMPLE_SIZE_OPTIONS.find(option => option.value === data.sampleSize)?.value || 'custom'}
+                onChange={(e) => {
+                  if (e.target.value === 'custom') {
+                    // Keep current value if it's not in the predefined options
+                    const isPredefineOption = SAMPLE_SIZE_OPTIONS.some(option => option.value === data.sampleSize);
+                    if (isPredefineOption) {
+                      updateField('sampleSize', '');
+                    }
+                  } else {
+                    updateField('sampleSize', e.target.value);
+                  }
+                }}
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+              >
+                {SAMPLE_SIZE_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              {(!SAMPLE_SIZE_OPTIONS.some(option => option.value === data.sampleSize) || 
+                SAMPLE_SIZE_OPTIONS.find(option => option.value === data.sampleSize)?.value === 'custom') && (
+                <input
+                  type="text"
+                  value={data.sampleSize}
+                  onChange={(e) => updateField('sampleSize', e.target.value)}
+                  placeholder="Enter custom size"
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              )}
+            </div>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Sample Type</label>

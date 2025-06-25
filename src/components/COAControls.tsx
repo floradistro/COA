@@ -1,6 +1,6 @@
 import React from 'react';
 import { ProductType, CannabinoidProfile, COAData } from '@/types';
-import { PRODUCT_CONFIGS } from '@/constants/defaults';
+import { PRODUCT_CONFIGS, LAB_EMPLOYEES, SAMPLE_SIZE_OPTIONS } from '@/constants/defaults';
 import LoadingSpinner from './LoadingSpinner';
 import ProgressBar from './ProgressBar';
 import { useRouter } from 'next/navigation';
@@ -24,6 +24,10 @@ interface COAControlsProps {
   setProductType: (type: ProductType) => void;
   selectedProfile: CannabinoidProfile;
   setSelectedProfile: (profile: CannabinoidProfile) => void;
+  selectedLabEmployee: string;
+  setSelectedLabEmployee: (employee: string) => void;
+  sampleSize: string;
+  setSampleSize: (size: string) => void;
   isMultiStrain: boolean;
   setIsMultiStrain: (multi: boolean) => void;
   strainList: string;
@@ -64,6 +68,10 @@ export const COAControls: React.FC<COAControlsProps> = ({
   setProductType,
   selectedProfile,
   setSelectedProfile,
+  selectedLabEmployee,
+  setSelectedLabEmployee,
+  sampleSize,
+  setSampleSize,
   isMultiStrain,
   setIsMultiStrain,
   strainList,
@@ -244,8 +252,8 @@ export const COAControls: React.FC<COAControlsProps> = ({
               </div>
             </div>
 
-            {/* Product Type and Cannabinoid Profile */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Product Type, Cannabinoid Profile, Sample Size, and Lab Employee */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {/* Product Type */}
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">
@@ -279,6 +287,65 @@ export const COAControls: React.FC<COAControlsProps> = ({
                   <option value="low-thc">Low THCA (0-15%)</option>
                   <option value="hemp">Hemp/CBD (0.1-0.3% THCA)</option>
                   <option value="decarbed">Decarbed (1-5% THCA)</option>
+                </select>
+              </div>
+
+              {/* Sample Size */}
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  Sample Size
+                </label>
+                <div className="flex gap-1">
+                  <select
+                    value={SAMPLE_SIZE_OPTIONS.find(option => option.value === sampleSize)?.value || 'custom'}
+                    onChange={(e) => {
+                      if (e.target.value === 'custom') {
+                        // Keep current value if it's not in the predefined options
+                        const isPredefineOption = SAMPLE_SIZE_OPTIONS.some(option => option.value === sampleSize);
+                        if (isPredefineOption) {
+                          setSampleSize('');
+                        }
+                      } else {
+                        setSampleSize(e.target.value);
+                      }
+                    }}
+                    className="flex-1 px-2 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all bg-white text-gray-900 text-sm"
+                  >
+                    {SAMPLE_SIZE_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                  {(!SAMPLE_SIZE_OPTIONS.some(option => option.value === sampleSize) || 
+                    SAMPLE_SIZE_OPTIONS.find(option => option.value === sampleSize)?.value === 'custom') && (
+                    <input
+                      type="text"
+                      value={sampleSize}
+                      onChange={(e) => setSampleSize(e.target.value)}
+                      placeholder="Custom"
+                      className="w-16 px-2 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all text-gray-900 text-xs"
+                    />
+                  )}
+                </div>
+              </div>
+
+              {/* Lab Employee */}
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  Approved By
+                </label>
+                <select
+                  value={selectedLabEmployee}
+                  onChange={(e) => setSelectedLabEmployee(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all bg-white text-gray-900 text-sm"
+                >
+                  <option value="">Random Employee</option>
+                  {LAB_EMPLOYEES.map((employee) => (
+                    <option key={employee.name} value={employee.name}>
+                      {employee.name}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>

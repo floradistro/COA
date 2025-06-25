@@ -9,16 +9,20 @@ export const LAB_DEFAULTS = {
   methodReference: 'HPLC-DAD, SOP QA-001'
 };
 
-// Analyst names pool for rotation
-export const ANALYST_NAMES = [
-  'Dr. Sarah Mitchell',
-  'Dr. Michael Chen',
-  'Dr. Emily Rodriguez',
-  'Dr. James Thompson',
-  'Dr. Laura Martinez',
-  'J. Anderson',
-  'K. Patel'
+// Lab employees with roles for approval signatures
+export const LAB_EMPLOYEES = [
+  { name: 'Dr. Sarah Mitchell', role: 'Laboratory Director' },
+  { name: 'Michael B Minogue', role: 'Head Scientist' },
+  { name: 'Dr. Michael Chen', role: 'Head Scientist' },
+  { name: 'Dr. Emily Rodriguez', role: 'Director' },
+  { name: 'Dr. James Thompson', role: 'Head Scientist' },
+  { name: 'Dr. Laura Martinez', role: 'Director' },
+  { name: 'J. Anderson', role: 'General Manager' },
+  { name: 'K. Patel', role: 'Head Scientist' }
 ];
+
+// Legacy analyst names for backward compatibility
+export const ANALYST_NAMES = LAB_EMPLOYEES.map(emp => emp.name);
 
 // Footer phrase variations
 export const FOOTER_PHRASES = [
@@ -131,4 +135,15 @@ export const EXPORT_CONFIG = {
 export const BATCH_LIMITS = {
   maxCOAs: 100,
   defaultBatchSize: 10
-}; 
+};
+
+// Sample size options
+export const SAMPLE_SIZE_OPTIONS = [
+  { value: '1g', label: '1g' },
+  { value: '3g', label: '3g' },
+  { value: '5g', label: '5g' },
+  { value: 'custom', label: 'Custom' }
+];
+
+// Default sample size
+export const DEFAULT_SAMPLE_SIZE = '3g'; 

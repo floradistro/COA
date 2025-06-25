@@ -17,7 +17,7 @@ export interface UseCOAGenerationReturn {
     dateCollectedEnd?: string;
     dateTested?: string;
     dateTestedEnd?: string;
-  }) => void;
+  }, selectedLabEmployee?: string, sampleSize?: string) => void;
   updateProfile: (profileType: CannabinoidProfile) => void;
   
   // Multiple COAs
@@ -31,7 +31,7 @@ export interface UseCOAGenerationReturn {
     dateCollectedEnd?: string;
     dateTested?: string;
     dateTestedEnd?: string;
-  }) => Promise<void>;
+  }, selectedLabEmployee?: string, sampleSize?: string) => Promise<void>;
   goToCOA: (index: number) => void;
   clearGeneratedCOAs: () => void;
   burnAllData: () => void;
@@ -72,7 +72,9 @@ export const useCOAGeneration = (
       dateCollectedEnd?: string;
       dateTested?: string;
       dateTestedEnd?: string;
-    }
+    },
+    selectedLabEmployee?: string,
+    sampleSize?: string
   ) => {
     const newData = generateDefaultCOAData(
       strain || 'Sample Strain', 
@@ -87,8 +89,14 @@ export const useCOAGeneration = (
         dateReceivedEnd: dateRanges.dateReceivedEnd || dateReceived,
         dateTested: dateRanges.dateTested || dateReceived,
         dateTestedEnd: dateRanges.dateTestedEnd || dateReceived
-      } : undefined
+      } : undefined,
+      selectedLabEmployee
     );
+    
+    // Update sample size if provided
+    if (sampleSize) {
+      newData.sampleSize = sampleSize;
+    }
     
     setCOAData(newData);
   }, []);
@@ -112,7 +120,9 @@ export const useCOAGeneration = (
       dateCollectedEnd?: string;
       dateTested?: string;
       dateTestedEnd?: string;
-    }
+    },
+    selectedLabEmployee?: string,
+    sampleSize?: string
   ): Promise<void> => {
     // Validate input
     if (strains.length === 0) {
@@ -145,8 +155,14 @@ export const useCOAGeneration = (
               dateReceivedEnd: dateRanges.dateReceivedEnd || dateReceived,
               dateTested: dateRanges.dateTested || dateReceived,
               dateTestedEnd: dateRanges.dateTestedEnd || dateReceived
-            } : undefined
+            } : undefined,
+            selectedLabEmployee
           );
+          
+          // Update sample size if provided
+          if (sampleSize) {
+            newCOA.sampleSize = sampleSize;
+          }
           
           newCOAs.push(newCOA);
           

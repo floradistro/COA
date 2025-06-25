@@ -22,6 +22,7 @@ export default function LiveCOAsPage() {
   const [error, setError] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState('');
   const [mounted, setMounted] = useState(false);
+  const [deletingFiles, setDeletingFiles] = useState<Set<string>>(new Set());
 
   // Handle mounting to prevent hydration issues
   useEffect(() => {
@@ -132,6 +133,91 @@ export default function LiveCOAsPage() {
     }
   };
 
+  const handleDeleteCOA = async (coa: COAFile) => {
+    if (typeof window === 'undefined') return;
+
+    const confirmed = window.confirm(
+      `Are you sure you want to delete "${coa.name}"?\n\nThis will permanently remove the file from cloud storage and make it inaccessible via www.quantixanalytics.com. This action cannot be undone.`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      setDeletingFiles(prev => new Set([...prev, coa.id]));
+
+      const filePath = `pdfs/${coa.name}`;
+      const { error: deleteError } = await supabase.storage
+        .from('coas')
+        .remove([filePath]);
+
+      if (deleteError) {
+        if (deleteError.message?.includes('not authorized') || deleteError.message?.includes('Invalid JWT')) {
+          throw new Error(
+            'Access denied: You do not have permission to delete files from private storage. Please ensure your credentials have delete access to the bucket.'
+          );
+        }
+        throw new Error(`Failed to delete file: ${deleteError.message}`);
+      }
+
+      // Remove from local state
+      setCOAFiles(prev => prev.filter(file => file.id !== coa.id));
+      
+      // Show success message
+      alert(`Successfully deleted "${coa.name}"`);
+
+    } catch (err) {
+      console.error('Error deleting COA:', err);
+      alert(err instanceof Error ? err.message : 'Failed to delete COA');
+    } finally {
+      setDeletingFiles(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(coa.id);
+        return newSet;
+      });
+    }
+  };
+
+  const handleDeleteAll = async () => {
+    if (typeof window === 'undefined' || filteredCOAs.length === 0) return;
+
+    const confirmed = window.confirm(
+      `Are you sure you want to delete ALL ${filteredCOAs.length} COA(s)${searchTerm ? ` matching "${searchTerm}"` : ''}?\n\nThis will permanently remove all files from cloud storage and make them inaccessible via www.quantixanalytics.com. This action cannot be undone.`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      setLoading(true);
+
+      const filePaths = filteredCOAs.map(coa => `pdfs/${coa.name}`);
+      const { error: deleteError } = await supabase.storage
+        .from('coas')
+        .remove(filePaths);
+
+      if (deleteError) {
+        if (deleteError.message?.includes('not authorized') || deleteError.message?.includes('Invalid JWT')) {
+          throw new Error(
+            'Access denied: You do not have permission to delete files from private storage. Please ensure your credentials have delete access to the bucket.'
+          );
+        }
+        throw new Error(`Failed to delete files: ${deleteError.message}`);
+      }
+
+      // Remove from local state
+      const deletedIds = new Set(filteredCOAs.map(coa => coa.id));
+      setCOAFiles(prev => prev.filter(file => !deletedIds.has(file.id)));
+      
+      // Show success message
+      alert(`Successfully deleted ${filteredCOAs.length} COA(s)`);
+
+    } catch (err) {
+      console.error('Error deleting COAs:', err);
+      alert(err instanceof Error ? err.message : 'Failed to delete COAs');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Render loading state on server and initial client render
   if (!mounted) {
     return (
@@ -175,9 +261,9 @@ export default function LiveCOAsPage() {
           )}
         </div>
 
-        {/* Search Bar */}
-        <div className="mb-8">
-          <div className="max-w-md">
+        {/* Search Bar and Bulk Actions */}
+        <div className="mb-8 flex flex-col sm:flex-row gap-4 items-start sm:items-end">
+          <div className="flex-1 max-w-md">
             <label htmlFor="search" className="block text-sm font-medium text-gray-700 mb-2">
               Search COAs
             </label>
@@ -205,6 +291,20 @@ export default function LiveCOAsPage() {
               </svg>
             </div>
           </div>
+          
+          {/* Bulk Delete Button */}
+          {filteredCOAs.length > 0 && (
+            <button
+              onClick={handleDeleteAll}
+              disabled={loading}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium text-sm flex items-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+              Delete All {searchTerm && `(${filteredCOAs.length})`}
+            </button>
+          )}
         </div>
 
         {/* Loading State */}
@@ -306,6 +406,19 @@ export default function LiveCOAsPage() {
                       className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium text-sm"
                     >
                       Copy Link
+                    </button>
+                    <button
+                      onClick={() => handleDeleteCOA(coa)}
+                      disabled={deletingFiles.has(coa.id)}
+                      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium text-sm flex items-center"
+                    >
+                      {deletingFiles.has(coa.id) ? (
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      )}
                     </button>
                   </div>
                 </div>

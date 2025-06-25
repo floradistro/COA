@@ -513,7 +513,7 @@ const COATemplate = forwardRef<HTMLDivElement, COATemplateProps>(({
                 <div><span className="font-medium text-gray-900">Strain:</span> <span className="text-gray-800">{data.strain}</span></div>
                 <div><span className="font-medium text-gray-900">Matrix:</span> <span className="text-gray-800">Plant</span></div>
                 <div><span className="font-medium text-gray-900">Type:</span> <span className="text-gray-800">{data.sampleType}</span></div>
-                <div><span className="font-medium text-gray-900">Sample Size:</span> <span className="text-gray-800">{data.batchId}</span></div>
+                <div><span className="font-medium text-gray-900">Sample Size:</span> <span className="text-gray-800">{data.sampleSize}</span></div>
               </div>
             </div>
             
@@ -746,9 +746,27 @@ const COATemplate = forwardRef<HTMLDivElement, COATemplateProps>(({
               <div className="text-gray-800">www.quantixanalytics.com</div>
             </div>
             <div className="border-t border-gray-300 pt-1 mt-1">
-              <div className="font-medium text-gray-900">{data.labDirector}</div>
-              <div className="text-gray-800">{data.directorTitle}</div>
-              <div className="text-gray-800">{data.approvalDate}</div>
+              <div className="flex items-center justify-end gap-2">
+                {data.labDirector === 'Michael B Minogue' && (
+                  <div className="flex-shrink-0">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img 
+                      src="/signature.png" 
+                      alt="Michael B Minogue Signature"
+                      className="h-48 w-auto object-contain"
+                      style={{ 
+                        maxHeight: '192px',
+                        maxWidth: '480px'
+                      }}
+                    />
+                  </div>
+                )}
+                <div className="text-right">
+                  <div className="font-medium text-gray-900">{data.labDirector}</div>
+                  <div className="text-gray-800">{data.directorTitle}</div>
+                  <div className="text-gray-800">{data.approvalDate}</div>
+                </div>
+              </div>
             </div>
           </div>
         </div>

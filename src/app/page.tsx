@@ -10,6 +10,7 @@ import {
   setNotificationCallback,
   validateCOAComprehensive
 } from '@/utils';
+import { DEFAULT_SAMPLE_SIZE } from '@/constants/defaults';
 import COATemplate from '@/components/COATemplate';
 import COAForm from '@/components/COAForm';
 import { COAControls } from '@/components/COAControls';
@@ -47,6 +48,8 @@ export default function Home() {
   const [dateTested, setDateTested] = useState(getTodayString());
   const [dateTestedEnd, setDateTestedEnd] = useState(getTodayString());
   const [selectedProfile, setSelectedProfile] = useState<CannabinoidProfile>('high-thc');
+  const [selectedLabEmployee, setSelectedLabEmployee] = useState<string>('');
+  const [sampleSize, setSampleSize] = useState<string>(DEFAULT_SAMPLE_SIZE);
   const [productType, setProductType] = useState<ProductType>('flower');
 
   const [isPreview, setIsPreview] = useState(true);
@@ -163,7 +166,7 @@ export default function Home() {
         dateCollectedEnd,
         dateTested,
         dateTestedEnd
-      });
+      }, selectedLabEmployee, sampleSize);
       
       // Apply profile if not default
       if (selectedProfile !== 'high-thc') {
@@ -182,7 +185,7 @@ export default function Home() {
       const message = getUserFriendlyMessage(error);
       showNotification('error', message);
     }
-  }, [strain, dateReceived, dateReceivedEnd, dateCollected, dateCollectedEnd, dateTested, dateTestedEnd, productType, selectedProfile, generateNewCOA, updateProfile, showNotification, setIsPreview, coaData]);
+  }, [strain, dateReceived, dateReceivedEnd, dateCollected, dateCollectedEnd, dateTested, dateTestedEnd, productType, selectedProfile, selectedLabEmployee, sampleSize, generateNewCOA, updateProfile, showNotification, setIsPreview, coaData]);
   
   // Generate multiple COAs
   const handleGenerateBatch = useCallback(async () => {
@@ -204,7 +207,7 @@ export default function Home() {
         dateCollectedEnd,
         dateTested,
         dateTestedEnd
-      });
+      }, selectedLabEmployee, sampleSize);
       
       setIsPreview(true);
       showNotification('success', `Generated ${strains.length} COAs successfully`);
@@ -212,7 +215,7 @@ export default function Home() {
       const message = getUserFriendlyMessage(error);
       showNotification('error', message);
     }
-  }, [strainList, dateReceived, productType, selectedProfile, generateMultipleCOAs, showNotification]);
+  }, [strainList, dateReceived, productType, selectedProfile, selectedLabEmployee, sampleSize, generateMultipleCOAs, showNotification]);
   
 
 
@@ -272,6 +275,8 @@ export default function Home() {
       setDateTested(getTodayString());
       setDateTestedEnd(getTodayString());
       setSelectedProfile('high-thc');
+      setSelectedLabEmployee('');
+      setSampleSize(DEFAULT_SAMPLE_SIZE);
       setProductType('flower');
       setFormProfile('high-thc');
       setCustomRanges({
@@ -362,6 +367,10 @@ export default function Home() {
           setProductType={setProductType}
           selectedProfile={selectedProfile}
           setSelectedProfile={setSelectedProfile}
+          selectedLabEmployee={selectedLabEmployee}
+          setSelectedLabEmployee={setSelectedLabEmployee}
+          sampleSize={sampleSize}
+          setSampleSize={setSampleSize}
           isMultiStrain={isMultiStrain}
           setIsMultiStrain={setIsMultiStrain}
           strainList={strainList}

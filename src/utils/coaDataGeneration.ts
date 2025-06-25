@@ -5,8 +5,9 @@ import {
   PRODUCT_CONFIGS, 
   PRODUCT_NOTES,
   DEFAULT_TEST_STATUS,
-  ANALYST_NAMES,
-  METHOD_REFERENCES
+  LAB_EMPLOYEES,
+  METHOD_REFERENCES,
+  DEFAULT_SAMPLE_SIZE
 } from '@/constants/defaults';
 import { generateSampleId, generateBatchId } from './idGeneration';
 import { generateDates, generateDatesFromRanges, generateRandomDateInRange } from './dateUtils';
@@ -37,7 +38,8 @@ export const generateDefaultCOAData = (
     dateReceivedEnd: string;
     dateTested: string;
     dateTestedEnd: string;
-  }
+  },
+  selectedLabEmployee?: string
 ): COAData => {
   // Get product configuration
   const productConfig = PRODUCT_CONFIGS[productType];
@@ -54,8 +56,11 @@ export const generateDefaultCOAData = (
   // Generate moisture content
   const moisture = generateMoistureContent(sampleIndex);
   
-  // Select random analyst name
-  const randomAnalyst = ANALYST_NAMES[Math.floor(Math.random() * ANALYST_NAMES.length)];
+  // Select lab employee - use selected employee or random if none selected
+  const selectedEmployee = selectedLabEmployee 
+    ? LAB_EMPLOYEES.find(emp => emp.name === selectedLabEmployee)
+    : null;
+  const employee = selectedEmployee || LAB_EMPLOYEES[Math.floor(Math.random() * LAB_EMPLOYEES.length)];
   
   // Select random method reference
   const randomMethodReference = METHOD_REFERENCES[Math.floor(Math.random() * METHOD_REFERENCES.length)];
@@ -64,7 +69,8 @@ export const generateDefaultCOAData = (
   return {
     // Lab Information
     ...LAB_DEFAULTS,
-    labDirector: randomAnalyst,
+    labDirector: employee.name,
+    directorTitle: employee.role,
     methodReference: randomMethodReference,
     approvalDate: dates.reported,
     
@@ -73,6 +79,7 @@ export const generateDefaultCOAData = (
     sampleId: generateSampleId(sampleIndex),
     strain: strain,
     batchId: generateBatchId(sampleIndex),
+    sampleSize: DEFAULT_SAMPLE_SIZE,
     sampleType: productConfig.sampleType,
     
     // Client Information
@@ -122,6 +129,7 @@ export const createBlankCOAData = (): COAData => {
     sampleId: generateSampleId(),
     strain: '',
     batchId: generateBatchId(),
+    sampleSize: DEFAULT_SAMPLE_SIZE,
     sampleType: PRODUCT_CONFIGS.flower.sampleType,
     methodReference: LAB_DEFAULTS.methodReference,
     

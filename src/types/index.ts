@@ -25,6 +25,7 @@ export interface COAData {
   sampleId: string;
   strain: string;
   batchId: string;
+  sampleSize: string;
   sampleType: string;
   methodReference: string;
   
