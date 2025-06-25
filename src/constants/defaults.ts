@@ -4,21 +4,16 @@ import { ProductType, ProductConfig } from '@/types';
 export const LAB_DEFAULTS = {
   labName: 'Quantix Analytics',
   labContact: '5540 Centerview Dr Ste 204 #982095\nRaleigh, NC 27606\nsupport@quantixanalytics.com\nwww.quantixanalytics.com',
-  labDirector: 'Dr. Sarah Mitchell',
+  labDirector: 'Sarah Mitchell',
   directorTitle: 'Laboratory Director',
   methodReference: 'HPLC-DAD, SOP QA-001'
 };
 
 // Lab employees with roles for approval signatures
 export const LAB_EMPLOYEES = [
-  { name: 'Dr. Sarah Mitchell', role: 'Laboratory Director' },
-  { name: 'Michael B Minogue', role: 'Head Scientist' },
-  { name: 'Dr. Michael Chen', role: 'Head Scientist' },
-  { name: 'Dr. Emily Rodriguez', role: 'Director' },
-  { name: 'Dr. James Thompson', role: 'Head Scientist' },
-  { name: 'Dr. Laura Martinez', role: 'Director' },
-  { name: 'J. Anderson', role: 'General Manager' },
-  { name: 'K. Patel', role: 'Head Scientist' }
+  { name: 'Sarah Mitchell', role: 'Laboratory Director' },
+  { name: 'Michael Minogue', role: 'Head Scientist' },
+  { name: 'K. Patel', role: 'Laboratory Tech' }
 ];
 
 // Legacy analyst names for backward compatibility

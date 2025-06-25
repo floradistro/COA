@@ -747,12 +747,40 @@ const COATemplate = forwardRef<HTMLDivElement, COATemplateProps>(({
             </div>
             <div className="border-t border-gray-300 pt-1 mt-1">
               <div className="flex items-center justify-end gap-2">
-                {data.labDirector === 'Michael B Minogue' && (
+                {data.labDirector === 'Michael Minogue' && (
                   <div className="flex-shrink-0">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img 
                       src="/signature.png" 
-                      alt="Michael B Minogue Signature"
+                      alt="Michael Minogue Signature"
+                      className="h-48 w-auto object-contain"
+                      style={{ 
+                        maxHeight: '192px',
+                        maxWidth: '480px'
+                      }}
+                    />
+                  </div>
+                )}
+                {data.labDirector === 'Sarah Mitchell' && (
+                  <div className="flex-shrink-0">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img 
+                      src="/sarah-mitchell-signature.png" 
+                      alt="Sarah Mitchell Signature"
+                      className="h-48 w-auto object-contain"
+                      style={{ 
+                        maxHeight: '192px',
+                        maxWidth: '480px'
+                      }}
+                    />
+                  </div>
+                )}
+                {data.labDirector === 'K. Patel' && (
+                  <div className="flex-shrink-0">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img 
+                      src="/k-patel-signature.png" 
+                      alt="K. Patel Signature"
                       className="h-48 w-auto object-contain"
                       style={{ 
                         maxHeight: '192px',
