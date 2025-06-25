@@ -10,7 +10,7 @@ import {
   DEFAULT_SAMPLE_SIZE
 } from '@/constants/defaults';
 import { generateSampleId, generateBatchId } from './idGeneration';
-import { generateDates, generateDatesFromRanges, generateRandomDateInRange } from './dateUtils';
+import { generateDates, generateDatesFromRanges } from './dateUtils';
 import { 
   generateFullCannabinoidProfile, 
   generateMoistureContent 
