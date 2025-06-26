@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import JSZip from 'jszip';
 
 interface COAFile {
   id: string;
@@ -23,6 +24,8 @@ export default function LiveCOAsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [mounted, setMounted] = useState(false);
   const [deletingFiles, setDeletingFiles] = useState<Set<string>>(new Set());
+  const [selectedCOAs, setSelectedCOAs] = useState<Set<string>>(new Set());
+  const [exporting, setExporting] = useState(false);
 
   // Handle mounting to prevent hydration issues
   useEffect(() => {
@@ -162,6 +165,13 @@ export default function LiveCOAsPage() {
       // Remove from local state
       setCOAFiles(prev => prev.filter(file => file.id !== coa.id));
       
+      // Remove from selected if it was selected
+      setSelectedCOAs(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(coa.id);
+        return newSet;
+      });
+      
       // Show success message
       alert(`Successfully deleted "${coa.name}"`);
 
@@ -207,6 +217,9 @@ export default function LiveCOAsPage() {
       const deletedIds = new Set(filteredCOAs.map(coa => coa.id));
       setCOAFiles(prev => prev.filter(file => !deletedIds.has(file.id)));
       
+      // Clear selected COAs
+      setSelectedCOAs(new Set());
+      
       // Show success message
       alert(`Successfully deleted ${filteredCOAs.length} COA(s)`);
 
@@ -215,6 +228,91 @@ export default function LiveCOAsPage() {
       alert(err instanceof Error ? err.message : 'Failed to delete COAs');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Selection handlers
+  const handleSelectCOA = (coaId: string) => {
+    setSelectedCOAs(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(coaId)) {
+        newSet.delete(coaId);
+      } else {
+        newSet.add(coaId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleSelectAll = () => {
+    if (selectedCOAs.size === filteredCOAs.length) {
+      // If all are selected, deselect all
+      setSelectedCOAs(new Set());
+    } else {
+      // Select all filtered COAs
+      setSelectedCOAs(new Set(filteredCOAs.map(coa => coa.id)));
+    }
+  };
+
+  const handleSelectAllVisible = () => {
+    setSelectedCOAs(new Set(filteredCOAs.map(coa => coa.id)));
+  };
+
+  const handleClearSelection = () => {
+    setSelectedCOAs(new Set());
+  };
+
+  // Export handlers
+  const handleExportSelected = async () => {
+    if (selectedCOAs.size === 0) {
+      alert('Please select at least one COA to export.');
+      return;
+    }
+
+    try {
+      setExporting(true);
+
+      const zip = new JSZip();
+      const selectedCOAObjects = coaFiles.filter(coa => selectedCOAs.has(coa.id));
+
+      // Download each selected COA and add to zip
+      for (const coa of selectedCOAObjects) {
+        try {
+          const filePath = `pdfs/${coa.name}`;
+          const { data, error } = await supabase.storage
+            .from('coas')
+            .download(filePath);
+
+          if (error) {
+            console.error(`Error downloading ${coa.name}:`, error);
+            continue;
+          }
+
+          if (data) {
+            zip.file(coa.name, data);
+          }
+        } catch (err) {
+          console.error(`Error processing ${coa.name}:`, err);
+        }
+      }
+
+      // Generate and download zip file
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+      const url = URL.createObjectURL(zipBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `coas-export-${new Date().toISOString().split('T')[0]}.zip`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      alert(`Successfully exported ${selectedCOAs.size} COA(s) to zip file.`);
+    } catch (err) {
+      console.error('Error exporting COAs:', err);
+      alert('Failed to export COAs. Please try again.');
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -292,20 +390,76 @@ export default function LiveCOAsPage() {
             </div>
           </div>
           
-          {/* Bulk Delete Button */}
-          {filteredCOAs.length > 0 && (
-            <button
-              onClick={handleDeleteAll}
-              disabled={loading}
-              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium text-sm flex items-center gap-2"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
-              Delete All {searchTerm && `(${filteredCOAs.length})`}
-            </button>
-          )}
+          {/* Bulk Action Buttons */}
+          <div className="flex gap-2">
+            {filteredCOAs.length > 0 && (
+              <>
+                <button
+                  onClick={handleSelectAll}
+                  className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium text-sm"
+                >
+                  {selectedCOAs.size === filteredCOAs.length ? 'Deselect All' : 'Select All'}
+                </button>
+                {selectedCOAs.size > 0 && (
+                  <>
+                    <button
+                      onClick={handleExportSelected}
+                      disabled={exporting}
+                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium text-sm flex items-center gap-2"
+                    >
+                      {exporting ? (
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                      )}
+                      Export {selectedCOAs.size} COA{selectedCOAs.size !== 1 ? 's' : ''}
+                    </button>
+                    <button
+                      onClick={handleClearSelection}
+                      className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors font-medium text-sm"
+                    >
+                      Clear Selection
+                    </button>
+                  </>
+                )}
+                <button
+                  onClick={handleDeleteAll}
+                  disabled={loading}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium text-sm flex items-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  Delete All {searchTerm && `(${filteredCOAs.length})`}
+                </button>
+              </>
+            )}
+          </div>
         </div>
+
+        {/* Selection Summary */}
+        {selectedCOAs.size > 0 && (
+          <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className="text-blue-800 font-medium">
+                  {selectedCOAs.size} COA{selectedCOAs.size !== 1 ? 's' : ''} selected
+                </span>
+              </div>
+              <button
+                onClick={handleClearSelection}
+                className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+              >
+                Clear selection
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Loading State */}
         {loading && (
@@ -345,9 +499,30 @@ export default function LiveCOAsPage() {
             {filteredCOAs.map((coa) => (
               <div
                 key={coa.id}
-                className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden"
+                className={`bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border-2 ${
+                  selectedCOAs.has(coa.id) ? 'border-blue-500 shadow-blue-100' : 'border-transparent'
+                }`}
               >
                 <div className="p-6">
+                  {/* Selection Checkbox */}
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="checkbox"
+                        checked={selectedCOAs.has(coa.id)}
+                        onChange={() => handleSelectCOA(coa.id)}
+                        className="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                      />
+                      {selectedCOAs.has(coa.id) && (
+                        <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+                          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
                   {/* File Icon and Name */}
                   <div className="flex items-start gap-4 mb-4">
                     <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -434,6 +609,7 @@ export default function LiveCOAsPage() {
               <span>
                 Showing {filteredCOAs.length} of {coaFiles.length} COAs
                 {searchTerm && ` matching "${searchTerm}"`}
+                {selectedCOAs.size > 0 && ` • ${selectedCOAs.size} selected`}
               </span>
               <span className="text-xs bg-green-100 text-green-800 px-3 py-1 rounded-full">
                 Private Storage • Served via www.quantixanalytics.com
