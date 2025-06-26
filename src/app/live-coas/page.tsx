@@ -254,10 +254,6 @@ export default function LiveCOAsPage() {
     }
   };
 
-  const handleSelectAllVisible = () => {
-    setSelectedCOAs(new Set(filteredCOAs.map(coa => coa.id)));
-  };
-
   const handleClearSelection = () => {
     setSelectedCOAs(new Set());
   };
