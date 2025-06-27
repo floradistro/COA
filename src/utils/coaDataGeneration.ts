@@ -72,7 +72,7 @@ export const generateDefaultCOAData = (
     labDirector: employee.name,
     directorTitle: employee.role,
     methodReference: randomMethodReference,
-    approvalDate: dates.reported,
+    approvalDate: dates.tested,
     
     // Sample Information
     sampleName: strain,
@@ -122,7 +122,7 @@ export const createBlankCOAData = (): COAData => {
   return {
     // Lab Information
     ...LAB_DEFAULTS,
-    approvalDate: dates.reported,
+    approvalDate: dates.tested,
     
     // Sample Information
     sampleName: '',
