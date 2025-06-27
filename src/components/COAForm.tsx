@@ -93,7 +93,7 @@ const COAForm: React.FC<COAFormProps> = ({
     }, 100); // Small delay to ensure state is updated
     
     return () => clearTimeout(timeoutId);
-  }, [data.sampleSize, data.edibleDosage, data.sampleType, data.cannabinoids]); // Added cannabinoids to detect changes
+  }, [data.sampleSize, data.edibleDosage, data.sampleType, data.cannabinoids, data]); // Added data to detect changes
 
   const updateField = (field: keyof COAData, value: string | number | boolean) => {
     onChange({ ...data, [field]: value });

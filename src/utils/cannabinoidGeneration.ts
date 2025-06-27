@@ -432,16 +432,16 @@ export const generateFullCannabinoidProfile = (
   const baseProfile = generateTHCProfile(profileType, customRanges, sampleIndex);
   
   // Generate random LOD/LOQ values for each cannabinoid
-  const thcaLimits = generateRandomLimits(CANNABINOID_NAMES.THCA, sampleIndex);
-  const d9thcLimits = generateRandomLimits(CANNABINOID_NAMES.D9THC, sampleIndex);
-  const d8thcLimits = generateRandomLimits(CANNABINOID_NAMES.D8THC, sampleIndex);
-  const thcvLimits = generateRandomLimits(CANNABINOID_NAMES.THCV, sampleIndex);
-  const cbdaLimits = generateRandomLimits(CANNABINOID_NAMES.CBDA, sampleIndex);
-  const cbdLimits = generateRandomLimits(CANNABINOID_NAMES.CBD, sampleIndex);
-  const cbnLimits = generateRandomLimits(CANNABINOID_NAMES.CBN, sampleIndex);
-  const cbgaLimits = generateRandomLimits(CANNABINOID_NAMES.CBGA, sampleIndex);
-  const cbgLimits = generateRandomLimits(CANNABINOID_NAMES.CBG, sampleIndex);
-  const cbcLimits = generateRandomLimits(CANNABINOID_NAMES.CBC, sampleIndex);
+  const thcaLimits = generateRandomLimits(CANNABINOID_NAMES.THCA);
+  const d9thcLimits = generateRandomLimits(CANNABINOID_NAMES.D9THC);
+  const d8thcLimits = generateRandomLimits(CANNABINOID_NAMES.D8THC);
+  const thcvLimits = generateRandomLimits(CANNABINOID_NAMES.THCV);
+  const cbdaLimits = generateRandomLimits(CANNABINOID_NAMES.CBDA);
+  const cbdLimits = generateRandomLimits(CANNABINOID_NAMES.CBD);
+  const cbnLimits = generateRandomLimits(CANNABINOID_NAMES.CBN);
+  const cbgaLimits = generateRandomLimits(CANNABINOID_NAMES.CBGA);
+  const cbgLimits = generateRandomLimits(CANNABINOID_NAMES.CBG);
+  const cbcLimits = generateRandomLimits(CANNABINOID_NAMES.CBC);
   
   // Always include CBDa if profileType is hemp
   let cbdaData: MinorCannabinoidData;
@@ -524,16 +524,16 @@ export const generateTHCAComplianceProfile = (
   const d9thc = parseFloat(randomInRange(0.05, 0.29).toFixed(2));
   
   // Generate random LOD/LOQ values for each cannabinoid
-  const thcaLimits = generateRandomLimits(CANNABINOID_NAMES.THCA, sampleIndex);
-  const d9thcLimits = generateRandomLimits(CANNABINOID_NAMES.D9THC, sampleIndex);
-  const d8thcLimits = generateRandomLimits(CANNABINOID_NAMES.D8THC, sampleIndex);
-  const thcvLimits = generateRandomLimits(CANNABINOID_NAMES.THCV, sampleIndex);
-  const cbdaLimits = generateRandomLimits(CANNABINOID_NAMES.CBDA, sampleIndex);
-  const cbdLimits = generateRandomLimits(CANNABINOID_NAMES.CBD, sampleIndex);
-  const cbnLimits = generateRandomLimits(CANNABINOID_NAMES.CBN, sampleIndex);
-  const cbgaLimits = generateRandomLimits(CANNABINOID_NAMES.CBGA, sampleIndex);
-  const cbgLimits = generateRandomLimits(CANNABINOID_NAMES.CBG, sampleIndex);
-  const cbcLimits = generateRandomLimits(CANNABINOID_NAMES.CBC, sampleIndex);
+  const thcaLimits = generateRandomLimits(CANNABINOID_NAMES.THCA);
+  const d9thcLimits = generateRandomLimits(CANNABINOID_NAMES.D9THC);
+  const d8thcLimits = generateRandomLimits(CANNABINOID_NAMES.D8THC);
+  const thcvLimits = generateRandomLimits(CANNABINOID_NAMES.THCV);
+  const cbdaLimits = generateRandomLimits(CANNABINOID_NAMES.CBDA);
+  const cbdLimits = generateRandomLimits(CANNABINOID_NAMES.CBD);
+  const cbnLimits = generateRandomLimits(CANNABINOID_NAMES.CBN);
+  const cbgaLimits = generateRandomLimits(CANNABINOID_NAMES.CBGA);
+  const cbgLimits = generateRandomLimits(CANNABINOID_NAMES.CBG);
+  const cbcLimits = generateRandomLimits(CANNABINOID_NAMES.CBC);
   
   // Get THCA range from selected profile
   let thca: number;
@@ -692,7 +692,7 @@ export const calculateSumOfCannabinoids = (cannabinoids: Cannabinoid[]): number 
  * Returns fixed LOD and LOQ values for flower products
  * No longer generates random values - uses fixed values from CANNABINOID_LIMITS
  */
-const generateRandomLimits = (cannabinoidName: string, sampleIndex?: number): { lod: number; loq: number } => {
+const generateRandomLimits = (cannabinoidName: string): { lod: number; loq: number } => {
   // Use fixed values from CANNABINOID_LIMITS for flower products
   const limits = CANNABINOID_LIMITS[cannabinoidName as keyof typeof CANNABINOID_LIMITS];
   
@@ -721,9 +721,6 @@ export const generateEdibleCannabinoidProfile = (
   // Calculate D9-THC percentage using the correct formula
   // (THC mg / Sample Size mg) × 100
   const d9thcPercent = (thcContentMg / sampleSizeMg) * 100;
-  
-  // Convert to mg/g for display
-  const d9thcMgPerG = percentToMgPerG(d9thcPercent);
   
   // For edibles, only D9-THC is detected, all others are ND
   const cannabinoids: Cannabinoid[] = Object.values(CANNABINOID_NAMES).map(name => {
