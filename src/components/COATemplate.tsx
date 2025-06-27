@@ -808,8 +808,9 @@ const COATemplate = forwardRef<HTMLDivElement, COATemplateProps>(({
               )}
             </div>
             <div className="text-gray-800 leading-tight" style={{fontSize: '8px', lineHeight: '11px'}}>
-              <div>Analytical testing performed using validated methodologies and quality systems. All test results relate only to the samples tested. Quantix Analytics makes no claims as to the efficacy, safety, or other risks associated with any detected or non-detected levels of any compounds reported herein. This Certificate shall not be reproduced except in full without the written approval of Quantix Analytics. Analysis {footerPhrase}.</div>
-              <div className="mt-1">For questions regarding this report, please contact support@quantixanalytics.com</div>
+              <div>Quantix Analytics performs analytical testing using validated internal methodologies and quality control protocols. All results apply only to the sample(s) tested. This Certificate is not a declaration of product safety, efficacy, or regulatory compliance, and should not be construed as state or federal endorsement. Testing follows quality practices aligned with general guidance under the North Carolina Department of Agriculture and Consumer Services (NCDA&CS) and applicable provisions of the NC Industrial Hemp Pilot Program.</div>
+              <div className="mt-1">This report may not be reproduced except in full without written approval from Quantix Analytics.</div>
+              <div className="mt-1">For inquiries, contact support@quantixanalytics.com | Raleigh, NC | www.quantixanalytics.com</div>
             </div>
           </div>
           
