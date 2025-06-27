@@ -496,7 +496,6 @@ const COATemplate = forwardRef<HTMLDivElement, COATemplateProps>(({
           </div>
         </div>
         <div className="text-right text-[10px] text-gray-800 leading-tight">
-          <div className="font-medium">Laboratory Testing</div>
           <div>Page 1 of 1</div>
         </div>
       </div>
