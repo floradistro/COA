@@ -251,9 +251,28 @@ const createCannabinoid = (
 ): Cannabinoid => {
   const mgPerG = parseFloat((percentWeight * 10).toFixed(2));
   
-  // For D9-THC, always show the actual value if it's above 0
+  // Always ND cannabinoids - no exceptions, no ranges
+  const alwaysNDCannabinoids = [
+    'Δ8-THC', 'D8-THC', 'Delta8-THC',
+    'CBD',
+    'CBDV', 'CBDVa', 'CBDv', 'CBDva',
+    'CBN',
+    'CBL',
+    'CBC',
+    'THCV'
+  ];
+  
+  // For always ND cannabinoids, set LOD and LOQ to 0 so they show ND in those columns too
+  let finalLod = lod;
+  let finalLoq = loq;
   let finalResult: CannabinoidResult;
-  if (name === 'Δ9-THC' && percentWeight > 0) {
+  
+  if (alwaysNDCannabinoids.includes(name)) {
+    finalLod = 0;
+    finalLoq = 0;
+    finalResult = TEST_RESULT.NOT_DETECTED as CannabinoidResult;
+  } else if (name === 'Δ9-THC' && percentWeight > 0) {
+    // For D9-THC, always show the actual value if it's above 0
     finalResult = 'detected' as CannabinoidResult;
   } else {
     finalResult = result || (
@@ -267,8 +286,8 @@ const createCannabinoid = (
     name,
     percentWeight,
     mgPerG,
-    loq,
-    lod,
+    loq: finalLoq,
+    lod: finalLod,
     result: finalResult
   };
 };
