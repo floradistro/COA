@@ -42,16 +42,31 @@ export const MOISTURE_RANGE = { min: 8.5, max: 12.5 };
 
 // LOD (Limit of Detection) and LOQ (Limit of Quantification) values
 export const CANNABINOID_LIMITS = {
-  THCa: { lod: 0.20, loq: 0.61 },
-  'Δ9-THC': { lod: 0.15, loq: 0.45 },
-  'Δ8-THC': { lod: 0.14, loq: 0.42 },
-  THCV: { lod: 0.15, loq: 0.44 },
-  CBDa: { lod: 0.10, loq: 0.31 },
-  CBD: { lod: 0.15, loq: 0.45 },
-  CBN: { lod: 0.16, loq: 0.50 },
-  CBGa: { lod: 0.29, loq: 0.88 },
-  CBG: { lod: 0.13, loq: 0.39 },
-  CBC: { lod: 0.14, loq: 0.42 }
+  // Default values (for flower)
+  THCa: { lod: 0.10, loq: 0.30 },
+  'Δ9-THC': { lod: 0.10, loq: 0.25 },
+  'Δ8-THC': { lod: 0.05, loq: 0.15 }, // Using CBC/CBG values as reference
+  THCV: { lod: 0.05, loq: 0.15 }, // Using CBC/CBG values as reference
+  CBDa: { lod: 0.10, loq: 0.25 }, // Using CBD values as reference
+  CBD: { lod: 0.10, loq: 0.25 },
+  CBN: { lod: 0.01, loq: 0.05 },
+  CBGa: { lod: 0.05, loq: 0.15 }, // Using CBG values as reference
+  CBG: { lod: 0.05, loq: 0.15 },
+  CBC: { lod: 0.05, loq: 0.15 }
+};
+
+// Separate LOD/LOQ values for edibles
+export const EDIBLE_CANNABINOID_LIMITS = {
+  THCa: { lod: 0.02, loq: 0.05 },
+  'Δ9-THC': { lod: 0.01, loq: 0.03 },
+  'Δ8-THC': { lod: 0.01, loq: 0.03 }, // Using CBC values as reference
+  THCV: { lod: 0.01, loq: 0.03 }, // Using CBC values as reference
+  CBDa: { lod: 0.02, loq: 0.05 }, // Using CBD values as reference
+  CBD: { lod: 0.02, loq: 0.05 },
+  CBN: { lod: 0.01, loq: 0.03 },
+  CBGa: { lod: 0.01, loq: 0.04 }, // Using CBG values as reference
+  CBG: { lod: 0.01, loq: 0.04 },
+  CBC: { lod: 0.01, loq: 0.03 }
 };
 
 // Standard cannabinoid names

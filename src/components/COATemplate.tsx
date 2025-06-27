@@ -32,54 +32,95 @@ const CannabinoidPieChart = memo(({ data }: { data: COAData }) => {
     // Calculate total CBD using the formula
     const totalCBD = cbd + (cbda * DECARB_FACTOR);
     
-    // Calculate other cannabinoids (everything else that's detected)
+    // Get individual minor cannabinoids
+    const cbg = data.cannabinoids.find(c => c.name === 'CBG')?.percentWeight || 0;
+    const cbga = data.cannabinoids.find(c => c.name === 'CBGa')?.percentWeight || 0;
+    const cbc = data.cannabinoids.find(c => c.name === 'CBC')?.percentWeight || 0;
+    const cbn = data.cannabinoids.find(c => c.name === 'CBN')?.percentWeight || 0;
+    const thcv = data.cannabinoids.find(c => c.name === 'THCV')?.percentWeight || 0;
+    
+    // Calculate other cannabinoids (remaining ones not explicitly shown)
     const otherCannabinoids = data.cannabinoids
-      .filter(c => !['THCa', 'Δ9-THC', 'CBD', 'CBDa'].includes(c.name))
+      .filter(c => !['THCa', 'Δ9-THC', 'CBD', 'CBDa', 'CBG', 'CBGa', 'CBC', 'CBN', 'THCV'].includes(c.name))
       .reduce((sum, c) => {
-        // Only include if it's actually detected (not ND or < LOQ)
         if (c.result === 'detected' && c.percentWeight > 0) {
           return sum + c.percentWeight;
         }
         return sum;
       }, 0);
     
-    const total = thca + d9thc + totalCBD + otherCannabinoids;
+    const total = thca + d9thc + totalCBD + cbg + cbga + cbc + cbn + thcv + otherCannabinoids;
     
     if (total === 0) return [];
     
     // Add slight variations to slice angles
     const angleVariation = () => (Math.random() - 0.5) * 2; // -1 to 1 degree variation
     
-    return [
-      { 
-        name: 'THCA', 
+    // Build chart data - only include cannabinoids that are detected
+    const chartData = [];
+    
+    if (thca > 0) {
+      chartData.push({ 
+        name: 'THCa', 
         value: thca, 
         percentage: (thca / total * 100) + angleVariation(),
-        displayValue: thca > 0 ? `${thca.toFixed(2)}%` : 'ND',
+        displayValue: `${thca.toFixed(2)}%`,
         color: '#10B981' 
-      },
-      { 
+      });
+    }
+    
+    if (d9thc > 0) {
+      chartData.push({ 
         name: 'D9 THC', 
         value: d9thc, 
         percentage: (d9thc / total * 100) + angleVariation(),
-        displayValue: d9thc > 0 ? `${d9thc.toFixed(2)}%` : 'ND',
+        displayValue: `${d9thc.toFixed(2)}%`,
         color: '#F59E0B' 
-      },
-      { 
+      });
+    }
+    
+    if (totalCBD > 0) {
+      chartData.push({ 
         name: 'Total CBD', 
         value: totalCBD, 
         percentage: (totalCBD / total * 100) + angleVariation(),
-        displayValue: totalCBD > 0 ? `${totalCBD.toFixed(2)}%` : 'ND',
+        displayValue: `${totalCBD.toFixed(2)}%`,
         color: '#3B82F6' 
-      },
-      { 
-        name: 'Other', 
-        value: otherCannabinoids, 
-        percentage: (otherCannabinoids / total * 100) + angleVariation(),
-        displayValue: otherCannabinoids > 0 ? `${otherCannabinoids.toFixed(2)}%` : 'ND',
+      });
+    }
+    
+    if (cbga > 0) {
+      chartData.push({ 
+        name: 'CBGa', 
+        value: cbga, 
+        percentage: (cbga / total * 100) + angleVariation(),
+        displayValue: `${cbga.toFixed(2)}%`,
         color: '#8B5CF6' 
-      }
-    ].filter(item => item.value > 0);
+      });
+    }
+    
+    if (cbg > 0) {
+      chartData.push({ 
+        name: 'CBG', 
+        value: cbg, 
+        percentage: (cbg / total * 100) + angleVariation(),
+        displayValue: `${cbg.toFixed(2)}%`,
+        color: '#EC4899' 
+      });
+    }
+    
+    if (cbc > 0 || cbn > 0 || thcv > 0 || otherCannabinoids > 0) {
+      const otherTotal = cbc + cbn + thcv + otherCannabinoids;
+      chartData.push({ 
+        name: 'Other', 
+        value: otherTotal, 
+        percentage: (otherTotal / total * 100) + angleVariation(),
+        displayValue: `${otherTotal.toFixed(2)}%`,
+        color: '#6B7280' 
+      });
+    }
+    
+    return chartData;
   };
 
   const chartData = getChartData();
@@ -127,32 +168,67 @@ const CannabinoidPieChart = memo(({ data }: { data: COAData }) => {
     });
   };
 
+  // Get minor cannabinoids for detail panel
+  const getMinorCannabinoidDetails = () => {
+    const minorCannabinoids: { name: string; value: string }[] = [];
+    
+    data.cannabinoids.forEach(c => {
+      if (['CBG', 'CBGa', 'CBC', 'CBN', 'THCV', 'CBDa'].includes(c.name) && c.result === 'detected' && c.percentWeight > 0) {
+        minorCannabinoids.push({
+          name: c.name,
+          value: c.percentWeight.toFixed(2)
+        });
+      }
+    });
+    
+    return minorCannabinoids;
+  };
+
+  const minorDetails = getMinorCannabinoidDetails();
+
   return (
-    <div className="flex items-center">
-      {/* Pie Chart */}
-      <div className="relative">
-        <svg width="140" height="140" viewBox="0 0 140 140">
-          {createPieSlices()}
-        </svg>
-      </div>
-      
-      {/* Legend */}
-      <div className="space-y-1.5 -ml-2">
-        {chartData.map((item, index) => (
-          <div key={index} className="flex items-center gap-2">
-            <div 
-              className="w-2.5 h-2.5 rounded-sm"
-              style={{ backgroundColor: item.color }}
-            ></div>
-            <div className="text-xs">
-              <span className="font-medium text-gray-900">{item.name}</span>
-              <div className="text-gray-600 text-xs">
-                {item.displayValue}
+    <div>
+      <div className="flex items-center">
+        {/* Pie Chart */}
+        <div className="relative">
+          <svg width="140" height="140" viewBox="0 0 140 140">
+            {createPieSlices()}
+          </svg>
+        </div>
+        
+        {/* Legend */}
+        <div className="space-y-1.5 -ml-2">
+          {chartData.map((item, index) => (
+            <div key={index} className="flex items-center gap-2">
+              <div 
+                className="w-2.5 h-2.5 rounded-sm"
+                style={{ backgroundColor: item.color }}
+              ></div>
+              <div className="text-xs">
+                <span className="font-medium text-gray-900">{item.name}</span>
+                <div className="text-gray-600 text-xs">
+                  {item.displayValue}
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
+      
+      {/* Minor Cannabinoid Panel */}
+      {minorDetails.length > 0 && (
+        <div className="mt-2 pt-2 border-t border-gray-200">
+          <div className="text-[9px] font-medium text-gray-900 mb-1">Minor Cannabinoids</div>
+          <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 text-[8px]">
+            {minorDetails.map((minor, index) => (
+              <div key={index} className="flex justify-between">
+                <span className="text-gray-700">{minor.name}:</span>
+                <span className="font-medium text-gray-900">{minor.value}%</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 });
@@ -175,8 +251,16 @@ const COATemplate = forwardRef<HTMLDivElement, COATemplateProps>(({
     const cbda = data.cannabinoids.find(c => c.name === 'CBDa')?.percentWeight || 0;
     const cbd = data.cannabinoids.find(c => c.name === 'CBD')?.percentWeight || 0;
     
-    const totalTHC = (d9thc + (thca * DECARB_FACTOR)).toFixed(2);
-    const totalCBD = (cbd + (cbda * DECARB_FACTOR)).toFixed(2);
+    // Use pre-calculated totalTHC if available (for edibles), otherwise calculate it
+    const totalTHC = data.totalTHC !== undefined && data.totalTHC !== null 
+      ? data.totalTHC.toFixed(3)
+      : (d9thc + (thca * DECARB_FACTOR)).toFixed(2);
+    
+    // Use pre-calculated totalCBD if available, otherwise calculate it
+    const totalCBD = data.totalCBD !== undefined && data.totalCBD !== null
+      ? data.totalCBD.toFixed(2)
+      : (cbd + (cbda * DECARB_FACTOR)).toFixed(2);
+    
     const sumOfCannabinoids = calculateSumOfCannabinoids(data.cannabinoids).toFixed(2);
     
     return {
@@ -184,7 +268,7 @@ const COATemplate = forwardRef<HTMLDivElement, COATemplateProps>(({
       totalCBD,
       sumOfCannabinoids
     };
-  }, [data.cannabinoids]);
+  }, [data.cannabinoids, data.totalTHC, data.totalCBD]);
   
   // Get random footer phrase based on sample ID for consistency
   const footerPhrase = useMemo(() => {
@@ -509,8 +593,8 @@ const COATemplate = forwardRef<HTMLDivElement, COATemplateProps>(({
               <h2 className="text-xs font-bold text-gray-900 mb-1">{data.sampleName}</h2>
               <div className="space-y-0.5 text-[10px] leading-tight">
                 <div><span className="font-medium text-gray-900">Sample ID:</span> <span className="text-gray-800">{data.sampleId}</span></div>
-                <div><span className="font-medium text-gray-900">Strain:</span> <span className="text-gray-800">{data.strain}</span></div>
-                <div><span className="font-medium text-gray-900">Matrix:</span> <span className="text-gray-800">Plant</span></div>
+                <div><span className="font-medium text-gray-900">{data.sampleType === 'Cannabis Edible' ? 'Product Name:' : 'Strain:'}</span> <span className="text-gray-800">{data.strain}</span></div>
+                <div><span className="font-medium text-gray-900">Matrix:</span> <span className="text-gray-800">{data.sampleType === 'Cannabis Edible' ? 'Infused Product' : 'Plant'}</span></div>
                 <div><span className="font-medium text-gray-900">Type:</span> <span className="text-gray-800">{data.sampleType}</span></div>
                 <div><span className="font-medium text-gray-900">Sample Size:</span> <span className="text-gray-800">{data.sampleSize}</span></div>
               </div>
@@ -618,16 +702,8 @@ const COATemplate = forwardRef<HTMLDivElement, COATemplateProps>(({
                 <div className="w-[20%] px-2 text-center text-gray-800 flex items-center justify-center" style={{ height: '24px', paddingTop: '4px', paddingBottom: '4px' }}>{totalCBDValue !== '0.00' ? formatMgPerG(totalCBDValue) : 'ND'}</div>
               </div>
               
-              <div className="flex border-b border-gray-200 bg-gray-100 font-medium" style={{ minHeight: '24px' }}>
-                <div className="w-[30%] px-2 border-r border-gray-200 text-gray-900 text-left flex items-center" style={{ height: '24px', paddingTop: '4px', paddingBottom: '4px' }}>Total</div>
-                <div className="w-[15%] px-2 border-r border-gray-200" style={{ height: '24px' }}></div>
-                <div className="w-[15%] px-2 border-r border-gray-200" style={{ height: '24px' }}></div>
-                <div className="w-[20%] px-2 border-r border-gray-200 text-center text-gray-900 flex items-center justify-center" style={{ height: '24px', paddingTop: '4px', paddingBottom: '4px' }}>{sumOfCannabinoids}</div>
-                <div className="w-[20%] px-2 text-center text-gray-800 flex items-center justify-center" style={{ height: '24px', paddingTop: '4px', paddingBottom: '4px' }}>{formatMgPerG(sumOfCannabinoids)}</div>
-              </div>
-              
               <div className="flex bg-gray-100 font-medium" style={{ minHeight: '24px' }}>
-                <div className="w-[30%] px-2 border-r border-gray-200 text-gray-900 text-left flex items-center" style={{ height: '24px', paddingTop: '4px', paddingBottom: '4px' }}>Sum of Cannabinoids</div>
+                <div className="w-[30%] px-2 border-r border-gray-200 text-gray-900 text-left flex items-center" style={{ height: '24px', paddingTop: '4px', paddingBottom: '4px' }}>Total Cannabinoids (Sum)</div>
                 <div className="w-[15%] px-2 border-r border-gray-200" style={{ height: '24px' }}></div>
                 <div className="w-[15%] px-2 border-r border-gray-200" style={{ height: '24px' }}></div>
                 <div className="w-[20%] px-2 border-r border-gray-200 text-center text-gray-900 flex items-center justify-center" style={{ height: '24px', paddingTop: '4px', paddingBottom: '4px' }}>{sumOfCannabinoids}</div>

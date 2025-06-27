@@ -51,6 +51,9 @@ export default function Home() {
   const [selectedLabEmployee, setSelectedLabEmployee] = useState<string>('');
   const [sampleSize, setSampleSize] = useState<string>(DEFAULT_SAMPLE_SIZE);
   const [productType, setProductType] = useState<ProductType>('flower');
+  
+  // Edible specific state
+  const [edibleDosage, setEdibleDosage] = useState<number>(10); // mg
 
   const [isPreview, setIsPreview] = useState(true);
   
@@ -166,7 +169,7 @@ export default function Home() {
         dateCollectedEnd,
         dateTested,
         dateTestedEnd
-      }, selectedLabEmployee, sampleSize);
+      }, selectedLabEmployee, sampleSize, edibleDosage);
       
       // Apply profile if not default
       if (selectedProfile !== 'high-thc') {
@@ -185,7 +188,7 @@ export default function Home() {
       const message = getUserFriendlyMessage(error);
       showNotification('error', message);
     }
-  }, [strain, dateReceived, dateReceivedEnd, dateCollected, dateCollectedEnd, dateTested, dateTestedEnd, productType, selectedProfile, selectedLabEmployee, sampleSize, generateNewCOA, updateProfile, showNotification, setIsPreview, coaData]);
+  }, [strain, dateReceived, dateReceivedEnd, dateCollected, dateCollectedEnd, dateTested, dateTestedEnd, productType, selectedProfile, selectedLabEmployee, sampleSize, edibleDosage, generateNewCOA, updateProfile, showNotification, setIsPreview, coaData]);
   
   // Generate multiple COAs
   const handleGenerateBatch = useCallback(async () => {
@@ -207,7 +210,7 @@ export default function Home() {
         dateCollectedEnd,
         dateTested,
         dateTestedEnd
-      }, selectedLabEmployee, sampleSize);
+      }, selectedLabEmployee, sampleSize, edibleDosage);
       
       setIsPreview(true);
       showNotification('success', `Generated ${strains.length} COAs successfully`);
@@ -215,7 +218,7 @@ export default function Home() {
       const message = getUserFriendlyMessage(error);
       showNotification('error', message);
     }
-  }, [strainList, dateReceived, productType, selectedProfile, selectedLabEmployee, sampleSize, generateMultipleCOAs, showNotification]);
+  }, [strainList, dateReceived, dateReceivedEnd, dateCollected, dateCollectedEnd, dateTested, dateTestedEnd, productType, selectedProfile, selectedLabEmployee, sampleSize, edibleDosage, generateMultipleCOAs, showNotification]);
   
 
 
@@ -375,6 +378,9 @@ export default function Home() {
           setIsMultiStrain={setIsMultiStrain}
           strainList={strainList}
           setStrainList={setStrainList}
+          // Edible props
+          edibleDosage={edibleDosage}
+          setEdibleDosage={setEdibleDosage}
           onGenerate={handleGenerateSingle}
           onGenerateBatch={handleGenerateBatch}
           isGeneratingBatch={isGeneratingBatch}

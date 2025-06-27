@@ -32,6 +32,9 @@ interface COAControlsProps {
   setIsMultiStrain: (multi: boolean) => void;
   strainList: string;
   setStrainList: (list: string) => void;
+  // Edible specific props
+  edibleDosage: number;
+  setEdibleDosage: (dosage: number) => void;
   onGenerate: () => void;
   onGenerateBatch: () => void;
   isGeneratingBatch: boolean;
@@ -76,6 +79,9 @@ export const COAControls: React.FC<COAControlsProps> = ({
   setIsMultiStrain,
   strainList,
   setStrainList,
+  // Edible props
+  edibleDosage,
+  setEdibleDosage,
   onGenerate,
   onGenerateBatch,
   isGeneratingBatch,
@@ -154,14 +160,17 @@ export const COAControls: React.FC<COAControlsProps> = ({
             {/* Strain Input */}
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">
-                {isMultiStrain ? 'Strain Names (one per line)' : 'Strain Name'}
+                {productType === 'edible' ? 
+                  (isMultiStrain ? 'Product Names (one per line)' : 'Product Name') : 
+                  (isMultiStrain ? 'Strain Names (one per line)' : 'Strain Name')
+                }
               </label>
               {isMultiStrain ? (
                 <textarea
                   value={strainList}
                   onChange={(e) => setStrainList(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all h-20 text-sm"
-                  placeholder="Enter strain names, one per line..."
+                  placeholder={productType === 'edible' ? 'Enter product names, one per line...' : 'Enter strain names, one per line...'}
                 />
               ) : (
                 <input
@@ -169,7 +178,7 @@ export const COAControls: React.FC<COAControlsProps> = ({
                   value={strain}
                   onChange={(e) => setStrain(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all text-gray-900 placeholder-gray-500 text-sm"
-                  placeholder="Enter strain name..."
+                  placeholder={productType === 'edible' ? 'Enter product name...' : 'Enter strain name...'}
                 />
               )}
             </div>
@@ -348,6 +357,55 @@ export const COAControls: React.FC<COAControlsProps> = ({
                   ))}
                 </select>
               </div>
+              
+              {/* Edible Specific Fields - Only show when edible is selected */}
+              {productType === 'edible' && (
+                <>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                      THC Content (mg)
+                    </label>
+                    <div className="flex gap-1">
+                      <select
+                        value={[2.5, 5, 10, 25, 50, 100].includes(edibleDosage) ? edibleDosage : 'custom'}
+                        onChange={(e) => {
+                          if (e.target.value === 'custom') {
+                            // Keep current value if it's already custom
+                            if (![2.5, 5, 10, 25, 50, 100].includes(edibleDosage)) {
+                              // Already custom, don't change
+                              return;
+                            } else {
+                              setEdibleDosage(0);
+                            }
+                          } else {
+                            setEdibleDosage(Number(e.target.value));
+                          }
+                        }}
+                        className="flex-1 px-2 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all bg-white text-gray-900 text-sm"
+                      >
+                        <option value={2.5}>2.5mg</option>
+                        <option value={5}>5mg</option>
+                        <option value={10}>10mg</option>
+                        <option value={25}>25mg</option>
+                        <option value={50}>50mg</option>
+                        <option value={100}>100mg</option>
+                        <option value="custom">Custom</option>
+                      </select>
+                      {![2.5, 5, 10, 25, 50, 100].includes(edibleDosage) && (
+                        <input
+                          type="number"
+                          step="0.1"
+                          min="0"
+                          value={edibleDosage}
+                          onChange={(e) => setEdibleDosage(Number(e.target.value))}
+                          placeholder="mg"
+                          className="w-16 px-2 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all text-gray-900 text-xs"
+                        />
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
 

@@ -56,6 +56,10 @@ export interface COAData {
   totalCBD: number;
   totalCannabinoids: number;
   
+  // Edible specific fields
+  edibleDosage?: number; // mg per unit
+  edibleWeight?: number; // weight of unit in grams
+  
   // Other Tests
   moisture?: number;
   

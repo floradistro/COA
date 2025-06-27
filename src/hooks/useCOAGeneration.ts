@@ -3,7 +3,8 @@ import { COAData, ProductType, CannabinoidProfile } from '@/types';
 import { 
   generateDefaultCOAData, 
   updateCOAWithProfile,
-  getTodayString
+  getTodayString,
+  generateEdibleCannabinoidProfile
 } from '@/utils';
 import { BATCH_LIMITS } from '@/constants';
 
@@ -17,7 +18,7 @@ export interface UseCOAGenerationReturn {
     dateCollectedEnd?: string;
     dateTested?: string;
     dateTestedEnd?: string;
-  }, selectedLabEmployee?: string, sampleSize?: string) => void;
+  }, selectedLabEmployee?: string, sampleSize?: string, edibleDosage?: number) => void;
   updateProfile: (profileType: CannabinoidProfile) => void;
   
   // Multiple COAs
@@ -31,7 +32,7 @@ export interface UseCOAGenerationReturn {
     dateCollectedEnd?: string;
     dateTested?: string;
     dateTestedEnd?: string;
-  }, selectedLabEmployee?: string, sampleSize?: string) => Promise<void>;
+  }, selectedLabEmployee?: string, sampleSize?: string, edibleDosage?: number) => Promise<void>;
   goToCOA: (index: number) => void;
   clearGeneratedCOAs: () => void;
   burnAllData: () => void;
@@ -74,7 +75,8 @@ export const useCOAGeneration = (
       dateTestedEnd?: string;
     },
     selectedLabEmployee?: string,
-    sampleSize?: string
+    sampleSize?: string,
+    edibleDosage?: number
   ) => {
     const newData = generateDefaultCOAData(
       strain || 'Sample Strain', 
@@ -98,6 +100,18 @@ export const useCOAGeneration = (
       newData.sampleSize = sampleSize;
     }
     
+    // Update edible values if provided and product type is edible
+    if (productType === 'edible' && edibleDosage) {
+      newData.edibleDosage = edibleDosage;
+      
+      // Regenerate cannabinoid profile with edible-specific calculation
+      const edibleProfile = generateEdibleCannabinoidProfile(edibleDosage, newData.sampleSize);
+      newData.cannabinoids = edibleProfile.cannabinoids;
+      newData.totalTHC = edibleProfile.totalTHC;
+      newData.totalCBD = edibleProfile.totalCBD;
+      newData.totalCannabinoids = edibleProfile.totalCannabinoids;
+    }
+    
     setCOAData(newData);
   }, []);
   
@@ -105,8 +119,6 @@ export const useCOAGeneration = (
   const updateProfile = useCallback((profileType: CannabinoidProfile) => {
     setCOAData(current => updateCOAWithProfile(current, profileType));
   }, []);
-  
-
   
   // Generate multiple COAs for batch processing
   const generateMultipleCOAs = useCallback(async (
@@ -122,7 +134,8 @@ export const useCOAGeneration = (
       dateTestedEnd?: string;
     },
     selectedLabEmployee?: string,
-    sampleSize?: string
+    sampleSize?: string,
+    edibleDosage?: number
   ): Promise<void> => {
     // Validate input
     if (strains.length === 0) {
@@ -162,6 +175,18 @@ export const useCOAGeneration = (
           // Update sample size if provided
           if (sampleSize) {
             newCOA.sampleSize = sampleSize;
+          }
+          
+          // Update edible values if provided and product type is edible
+          if (productType === 'edible' && edibleDosage) {
+            newCOA.edibleDosage = edibleDosage;
+            
+            // Regenerate cannabinoid profile with edible-specific calculation
+            const edibleProfile = generateEdibleCannabinoidProfile(edibleDosage, newCOA.sampleSize);
+            newCOA.cannabinoids = edibleProfile.cannabinoids;
+            newCOA.totalTHC = edibleProfile.totalTHC;
+            newCOA.totalCBD = edibleProfile.totalCBD;
+            newCOA.totalCannabinoids = edibleProfile.totalCannabinoids;
           }
           
           newCOAs.push(newCOA);

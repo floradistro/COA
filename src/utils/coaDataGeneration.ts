@@ -7,13 +7,15 @@ import {
   DEFAULT_TEST_STATUS,
   LAB_EMPLOYEES,
   METHOD_REFERENCES,
-  DEFAULT_SAMPLE_SIZE
+  DEFAULT_SAMPLE_SIZE,
+  DEFAULT_EDIBLE_VALUES
 } from '@/constants/defaults';
 import { generateSampleId, generateBatchId } from './idGeneration';
 import { generateDates, generateDatesFromRanges } from './dateUtils';
 import { 
   generateFullCannabinoidProfile, 
-  generateMoistureContent 
+  generateMoistureContent,
+  generateEdibleCannabinoidProfile
 } from './cannabinoidGeneration';
 
 /**
@@ -51,7 +53,9 @@ export const generateDefaultCOAData = (
     : generateDates(dateReceived);
   
   // Generate cannabinoid profile with sample index
-  const profile = generateFullCannabinoidProfile(effectiveProfile, undefined, sampleIndex);
+  const profile = productType === 'edible' && DEFAULT_EDIBLE_VALUES.dosage
+    ? generateEdibleCannabinoidProfile(DEFAULT_EDIBLE_VALUES.dosage, DEFAULT_SAMPLE_SIZE)
+    : generateFullCannabinoidProfile(effectiveProfile, undefined, sampleIndex);
   
   // Generate moisture content
   const moisture = generateMoistureContent(sampleIndex);
@@ -103,6 +107,9 @@ export const generateDefaultCOAData = (
     totalCBD: profile.totalCBD,
     totalCannabinoids: profile.totalCannabinoids,
     
+    // Edible specific fields
+    edibleDosage: productType === 'edible' ? DEFAULT_EDIBLE_VALUES.dosage : undefined,
+    
     // Other Tests
     moisture: moisture,
     
@@ -153,6 +160,9 @@ export const createBlankCOAData = (): COAData => {
     totalTHC: 0,
     totalCBD: 0,
     totalCannabinoids: 0,
+    
+    // Edible specific fields
+    edibleDosage: DEFAULT_EDIBLE_VALUES.dosage,
     
     // Other Tests
     moisture: 0,

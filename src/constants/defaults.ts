@@ -105,9 +105,14 @@ export const DEFAULT_TEST_STATUS = {
   testsBatch: true,
   testsCannabinoids: true,
   testsMoisture: true,
-  testsHeavyMetals: true,
-  testsPesticides: true,
-  testsMicrobials: true
+  testsHeavyMetals: false,
+  testsPesticides: false,
+  testsMicrobials: false
+};
+
+// Default edible values
+export const DEFAULT_EDIBLE_VALUES = {
+  dosage: 10 // 10mg THC content
 };
 
 // Export file configurations
@@ -135,10 +140,17 @@ export const BATCH_LIMITS = {
 // Sample size options
 export const SAMPLE_SIZE_OPTIONS = [
   { value: '1g', label: '1g' },
+  { value: '2g', label: '2g' },
+  { value: '2.5g', label: '2.5g' },
   { value: '3g', label: '3g' },
+  { value: '3.5g', label: '3.5g' },
+  { value: '3.6g', label: '3.6g' },
+  { value: '4g', label: '4g' },
   { value: '5g', label: '5g' },
+  { value: '7g', label: '7g' },
+  { value: '10g', label: '10g' },
   { value: 'custom', label: 'Custom' }
 ];
 
 // Default sample size
-export const DEFAULT_SAMPLE_SIZE = '3g'; 
+export const DEFAULT_SAMPLE_SIZE = '3.5g'; 

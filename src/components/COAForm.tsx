@@ -3,6 +3,7 @@ import { COAData, CustomRanges, CannabinoidProfile, ComprehensiveValidationResul
 import { 
   generateTHCProfile, 
   generateFullCannabinoidProfile,
+  generateEdibleCannabinoidProfile,
   percentToMgPerG,
   validateCOAComprehensive
 } from '@/utils';
@@ -39,8 +40,60 @@ const COAForm: React.FC<COAFormProps> = ({
   showCustomRanges = false,
   onShowCustomRangesChange
 }) => {
-  const [validationResult, setValidationResult] = React.useState<ComprehensiveValidationResult | null>(null);
   const [showValidation, setShowValidation] = React.useState(false);
+  const [validationResult, setValidationResult] = React.useState<ComprehensiveValidationResult | null>(null);
+  
+  // Use a ref to store onChange to avoid stale closures
+  const onChangeRef = React.useRef(onChange);
+  React.useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
+
+  // Auto-recalculate edible profile when sample size or THC content changes
+  React.useEffect(() => {
+    // Skip if not an edible or missing required data
+    if (data.sampleType !== 'Cannabis Edible' || !data.edibleDosage || !data.sampleSize) {
+      return;
+    }
+    
+    // Add a small delay to ensure the state has updated
+    const timeoutId = setTimeout(() => {
+      console.log('=== Edible Profile Recalculation ===');
+      console.log('THC Content:', data.edibleDosage, 'mg');
+      console.log('Sample Size (raw):', data.sampleSize);
+      
+      // Ensure edibleDosage is a number (it's already checked above, but TypeScript needs this)
+      const dosage = data.edibleDosage || 0;
+      const profile = generateEdibleCannabinoidProfile(dosage, data.sampleSize);
+      
+      // Check if the D9-THC value actually changed to prevent infinite loops
+      const currentD9THC = data.cannabinoids.find(c => c.name === 'Δ9-THC')?.percentWeight;
+      const newD9THC = profile.cannabinoids.find(c => c.name === 'Δ9-THC')?.percentWeight;
+      
+      console.log('Current D9-THC%:', currentD9THC);
+      console.log('New D9-THC%:', newD9THC);
+      
+      // Use a very small epsilon for comparison
+      const epsilon = 0.00001;
+      const hasChanged = !currentD9THC || Math.abs((currentD9THC || 0) - (newD9THC || 0)) > epsilon;
+      
+      if (hasChanged) {
+        console.log('Updating cannabinoid profile...');
+        onChangeRef.current({ 
+          ...data, 
+          cannabinoids: profile.cannabinoids,
+          totalTHC: profile.totalTHC,
+          totalCBD: profile.totalCBD,
+          totalCannabinoids: profile.totalCannabinoids
+        });
+      } else {
+        console.log('No change detected, skipping update');
+      }
+      console.log('===================================');
+    }, 100); // Small delay to ensure state is updated
+    
+    return () => clearTimeout(timeoutId);
+  }, [data.sampleSize, data.edibleDosage, data.sampleType, data.cannabinoids]); // Added cannabinoids to detect changes
 
   const updateField = (field: keyof COAData, value: string | number | boolean) => {
     onChange({ ...data, [field]: value });
@@ -147,6 +200,23 @@ const COAForm: React.FC<COAFormProps> = ({
 
   const generateFullProfile = () => {
     const profile = generateFullCannabinoidProfile(selectedProfile, showCustomRanges ? customRanges : undefined);
+    
+    onChange({ 
+      ...data, 
+      cannabinoids: profile.cannabinoids,
+      totalTHC: profile.totalTHC,
+      totalCBD: profile.totalCBD,
+      totalCannabinoids: profile.totalCannabinoids
+    });
+  };
+
+  const generateEdibleProfile = () => {
+    if (!data.edibleDosage) {
+      alert('Please enter THC content (mg) for edible products');
+      return;
+    }
+    
+    const profile = generateEdibleCannabinoidProfile(data.edibleDosage, data.sampleSize);
     
     onChange({ 
       ...data, 
@@ -277,7 +347,12 @@ const COAForm: React.FC<COAFormProps> = ({
             >
               Generate Full Profile
             </button>
-
+            <button
+              onClick={generateEdibleProfile}
+              className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors font-medium"
+            >
+              Generate Edible Profile
+            </button>
           </div>
         </div>
       </div>
@@ -336,7 +411,9 @@ const COAForm: React.FC<COAFormProps> = ({
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Strain</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              {data.sampleType === 'Cannabis Edible' ? 'Product Name' : 'Strain'}
+            </label>
             <input
               type="text"
               value={data.strain}
@@ -407,6 +484,23 @@ const COAForm: React.FC<COAFormProps> = ({
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
+          
+          {/* Edible Specific Fields */}
+          {data.sampleType === 'Cannabis Edible' && (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">THC Content (mg per unit)</label>
+                <input
+                  type="number"
+                  step="0.1"
+                  value={data.edibleDosage || ''}
+                  onChange={(e) => updateField('edibleDosage', parseFloat(e.target.value) || 0)}
+                  placeholder="Enter THC content in mg"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+            </>
+          )}
         </div>
       </div>
 

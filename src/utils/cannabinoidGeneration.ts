@@ -11,6 +11,8 @@ import {
   DECARB_FACTOR, 
   CANNABINOID_RANGES, 
   CANNABINOID_NAMES,
+  CANNABINOID_LIMITS,
+  EDIBLE_CANNABINOID_LIMITS,
   TEST_RESULT,
   MOISTURE_RANGE
 } from '@/constants/cannabinoids';
@@ -78,46 +80,74 @@ const generateMinorCannabinoid = (
     return { value: 0, result: TEST_RESULT.NOT_DETECTED as CannabinoidResult };
   }
   
-  if (random < probability) {
+  // Add strain-based variance using sample index
+  const strainVariance = sampleIndex ? Math.sin(sampleIndex * 2.7) * 0.3 : 0;
+  const adjustedProbability = Math.max(0.1, Math.min(0.95, probability + strainVariance));
+  
+  if (random < adjustedProbability) {
     let value: number;
     
-    // Use updated ranges based on specified trace cannabinoid ranges
+    // Use updated ranges based on specified trace cannabinoid ranges with more variance
     switch (cannabinoidName) {
       case 'CBDa':
-        // Expected Range: 0.05% – 0.10%, Show as ND if < 0.05% (but this seems low, keeping reasonable range)
-        value = randomInRange(0.05, 0.10);
+        // Expected Range: 0.05% – 0.10%, with 20% chance of being ND
+        if (Math.random() < 0.2) {
+          return { value: 0, result: TEST_RESULT.NOT_DETECTED as CannabinoidResult };
+        }
+        value = randomInRange(0.03, 0.15, sampleIndex ? sampleIndex * 13 : undefined);
         // Check if should be ND
         if (value < 0.05) {
           return { value: 0, result: TEST_RESULT.NOT_DETECTED as CannabinoidResult };
         }
         break;
       case 'CBGa':
-        // Expected Range: 0.30% – 1.20%, Show as ND if < 0.10%
-        value = randomInRange(0.30, 1.20);
+        // Expected Range: 0.30% – 1.20%, with wider variance
+        // Add strain-specific patterns
+        const cbgaBase = 0.30 + (sampleIndex ? (sampleIndex % 5) * 0.18 : Math.random() * 0.9);
+        const cbgaVariance = (Math.random() - 0.5) * 0.4;
+        value = Math.max(0.1, Math.min(1.5, cbgaBase + cbgaVariance));
+        // 15% chance to be ND for some strains
+        if (Math.random() < 0.15) {
+          return { value: 0, result: TEST_RESULT.NOT_DETECTED as CannabinoidResult };
+        }
         // Check if should be ND
         if (value < 0.10) {
           return { value: 0, result: TEST_RESULT.NOT_DETECTED as CannabinoidResult };
         }
         break;
       case 'CBG':
-        // Expected Range: 0.05% – 0.30%, Show as ND if < 0.05%
-        value = randomInRange(0.05, 0.30);
+        // Expected Range: 0.05% – 0.30%, with strain variance
+        // 25% chance to be ND
+        if (Math.random() < 0.25) {
+          return { value: 0, result: TEST_RESULT.NOT_DETECTED as CannabinoidResult };
+        }
+        const cbgBase = 0.05 + (sampleIndex ? (sampleIndex % 3) * 0.08 : Math.random() * 0.25);
+        const cbgVariance = (Math.random() - 0.5) * 0.15;
+        value = Math.max(0.02, Math.min(0.85, cbgBase + cbgVariance));
         // Check if should be ND
         if (value < 0.05) {
           return { value: 0, result: TEST_RESULT.NOT_DETECTED as CannabinoidResult };
         }
         break;
       case 'THCVa':
-        // Expected Range: 0.05% – 0.25%, Show as ND if < 0.05%
-        value = randomInRange(0.05, 0.25);
+        // Expected Range: 0.05% – 0.25%, often ND
+        // 40% chance to be ND
+        if (Math.random() < 0.4) {
+          return { value: 0, result: TEST_RESULT.NOT_DETECTED as CannabinoidResult };
+        }
+        value = randomInRange(0.03, 0.35, sampleIndex ? sampleIndex * 17 : undefined);
         // Check if should be ND
         if (value < 0.05) {
           return { value: 0, result: TEST_RESULT.NOT_DETECTED as CannabinoidResult };
         }
         break;
       case 'CBCa':
-        // Expected Range: 0.10% – 0.40%, Show as ND if < 0.10%
-        value = randomInRange(0.10, 0.40);
+        // Expected Range: 0.10% – 0.40%, with variation
+        // 30% chance to be ND
+        if (Math.random() < 0.3) {
+          return { value: 0, result: TEST_RESULT.NOT_DETECTED as CannabinoidResult };
+        }
+        value = randomInRange(0.05, 0.5, sampleIndex ? sampleIndex * 19 : undefined);
         // Check if should be ND
         if (value < 0.10) {
           return { value: 0, result: TEST_RESULT.NOT_DETECTED as CannabinoidResult };
@@ -166,8 +196,25 @@ export const generateTHCProfile = (
       d9thc = customRanges
         ? randomInRange(customRanges.d9thcMin, customRanges.d9thcMax, baseSeed + 2)
         : randomInRange(ranges.d9thc.min, ranges.d9thc.max, baseSeed + 2);
-      cbga = randomInRange(ranges.cbga.min, ranges.cbga.max, baseSeed + 3);
-      cbg = randomInRange(ranges.cbg.min, ranges.cbg.max, baseSeed + 4);
+      
+      // Add more variance to CBGa and CBG
+      // CBGa: Sometimes ND (15% chance), otherwise varied
+      if (Math.random() < 0.15) {
+        cbga = 0;
+      } else {
+        const cbgaBase = ranges.cbga.min + (baseSeed % 7) * 0.13;
+        const cbgaVariance = (Math.random() - 0.5) * 0.35;
+        cbga = Math.max(0.1, Math.min(1.5, cbgaBase + cbgaVariance));
+      }
+      
+      // CBG: Often ND (25% chance), otherwise varied
+      if (Math.random() < 0.25) {
+        cbg = 0;
+      } else {
+        const cbgBase = ranges.cbg.min + (baseSeed % 5) * 0.05;
+        const cbgVariance = (Math.random() - 0.5) * 0.12;
+        cbg = Math.max(0.02, Math.min(0.45, cbgBase + cbgVariance));
+      }
       break;
     }
     case 'medium-thc': {
@@ -178,8 +225,25 @@ export const generateTHCProfile = (
       d9thc = customRanges
         ? randomInRange(customRanges.d9thcMin, customRanges.d9thcMax, baseSeed + 2)
         : randomInRange(ranges.d9thc.min, ranges.d9thc.max, baseSeed + 2);
-      cbga = randomInRange(ranges.cbga.min, ranges.cbga.max, baseSeed + 3);
-      cbg = randomInRange(ranges.cbg.min, ranges.cbg.max, baseSeed + 4);
+      
+      // Add more variance to CBGa and CBG
+      // CBGa: Sometimes ND (15% chance), otherwise varied
+      if (Math.random() < 0.15) {
+        cbga = 0;
+      } else {
+        const cbgaBase = ranges.cbga.min + (baseSeed % 7) * 0.13;
+        const cbgaVariance = (Math.random() - 0.5) * 0.35;
+        cbga = Math.max(0.1, Math.min(1.5, cbgaBase + cbgaVariance));
+      }
+      
+      // CBG: Often ND (25% chance), otherwise varied
+      if (Math.random() < 0.25) {
+        cbg = 0;
+      } else {
+        const cbgBase = ranges.cbg.min + (baseSeed % 5) * 0.05;
+        const cbgVariance = (Math.random() - 0.5) * 0.12;
+        cbg = Math.max(0.02, Math.min(0.45, cbgBase + cbgVariance));
+      }
       break;
     }
     case 'low-thc': {
@@ -190,8 +254,25 @@ export const generateTHCProfile = (
       d9thc = customRanges
         ? randomInRange(customRanges.d9thcMin, customRanges.d9thcMax, baseSeed + 2)
         : randomInRange(ranges.d9thc.min, ranges.d9thc.max, baseSeed + 2);
-      cbga = randomInRange(ranges.cbga.min, ranges.cbga.max, baseSeed + 3);
-      cbg = randomInRange(ranges.cbg.min, ranges.cbg.max, baseSeed + 4);
+      
+      // Add more variance to CBGa and CBG
+      // CBGa: Sometimes ND (15% chance), otherwise varied
+      if (Math.random() < 0.15) {
+        cbga = 0;
+      } else {
+        const cbgaBase = ranges.cbga.min + (baseSeed % 7) * 0.13;
+        const cbgaVariance = (Math.random() - 0.5) * 0.35;
+        cbga = Math.max(0.1, Math.min(1.5, cbgaBase + cbgaVariance));
+      }
+      
+      // CBG: Often ND (25% chance), otherwise varied
+      if (Math.random() < 0.25) {
+        cbg = 0;
+      } else {
+        const cbgBase = ranges.cbg.min + (baseSeed % 5) * 0.05;
+        const cbgVariance = (Math.random() - 0.5) * 0.12;
+        cbg = Math.max(0.02, Math.min(0.45, cbgBase + cbgVariance));
+      }
       break;
     }
     case 'hemp': {
@@ -202,8 +283,25 @@ export const generateTHCProfile = (
       d9thc = customRanges
         ? randomInRange(customRanges.d9thcMin, customRanges.d9thcMax, baseSeed + 2)
         : randomInRange(ranges.d9thc.min, ranges.d9thc.max, baseSeed + 2);
-      cbga = randomInRange(ranges.cbga.min, ranges.cbga.max, baseSeed + 3);
-      cbg = randomInRange(ranges.cbg.min, ranges.cbg.max, baseSeed + 4);
+      
+      // Add more variance to CBGa and CBG
+      // CBGa: Sometimes ND (15% chance), otherwise varied
+      if (Math.random() < 0.15) {
+        cbga = 0;
+      } else {
+        const cbgaBase = ranges.cbga.min + (baseSeed % 7) * 0.13;
+        const cbgaVariance = (Math.random() - 0.5) * 0.35;
+        cbga = Math.max(0.1, Math.min(1.5, cbgaBase + cbgaVariance));
+      }
+      
+      // CBG: Often ND (25% chance), otherwise varied
+      if (Math.random() < 0.25) {
+        cbg = 0;
+      } else {
+        const cbgBase = ranges.cbg.min + (baseSeed % 5) * 0.05;
+        const cbgVariance = (Math.random() - 0.5) * 0.12;
+        cbg = Math.max(0.02, Math.min(0.45, cbgBase + cbgVariance));
+      }
       break;
     }
     case 'decarbed': {
@@ -214,8 +312,25 @@ export const generateTHCProfile = (
       d9thc = customRanges
         ? randomInRange(customRanges.d9thcMin, customRanges.d9thcMax, baseSeed + 2)
         : randomInRange(ranges.d9thc.min, ranges.d9thc.max, baseSeed + 2);
-      cbga = randomInRange(ranges.cbga.min, ranges.cbga.max, baseSeed + 3);
-      cbg = randomInRange(ranges.cbg.min, ranges.cbg.max, baseSeed + 4);
+      
+      // Add more variance to CBGa and CBG
+      // CBGa: Sometimes ND (15% chance), otherwise varied
+      if (Math.random() < 0.15) {
+        cbga = 0;
+      } else {
+        const cbgaBase = ranges.cbga.min + (baseSeed % 7) * 0.13;
+        const cbgaVariance = (Math.random() - 0.5) * 0.35;
+        cbga = Math.max(0.1, Math.min(1.5, cbgaBase + cbgaVariance));
+      }
+      
+      // CBG: Often ND (25% chance), otherwise varied
+      if (Math.random() < 0.25) {
+        cbg = 0;
+      } else {
+        const cbgBase = ranges.cbg.min + (baseSeed % 5) * 0.05;
+        const cbgVariance = (Math.random() - 0.5) * 0.12;
+        cbg = Math.max(0.02, Math.min(0.45, cbgBase + cbgVariance));
+      }
       break;
     }
     default: {
@@ -223,8 +338,25 @@ export const generateTHCProfile = (
       const ranges = CANNABINOID_RANGES.highTHC;
       thca = randomInRange(ranges.thca.min, ranges.thca.max, baseSeed + 1);
       d9thc = randomInRange(ranges.d9thc.min, ranges.d9thc.max, baseSeed + 2);
-      cbga = randomInRange(ranges.cbga.min, ranges.cbga.max, baseSeed + 3);
-      cbg = randomInRange(ranges.cbg.min, ranges.cbg.max, baseSeed + 4);
+      
+      // Add more variance to CBGa and CBG
+      // CBGa: Sometimes ND (15% chance), otherwise varied
+      if (Math.random() < 0.15) {
+        cbga = 0;
+      } else {
+        const cbgaBase = ranges.cbga.min + (baseSeed % 7) * 0.13;
+        const cbgaVariance = (Math.random() - 0.5) * 0.35;
+        cbga = Math.max(0.1, Math.min(1.5, cbgaBase + cbgaVariance));
+      }
+      
+      // CBG: Often ND (25% chance), otherwise varied
+      if (Math.random() < 0.25) {
+        cbg = 0;
+      } else {
+        const cbgBase = ranges.cbg.min + (baseSeed % 5) * 0.05;
+        const cbgVariance = (Math.random() - 0.5) * 0.12;
+        cbg = Math.max(0.02, Math.min(0.45, cbgBase + cbgVariance));
+      }
     }
   }
 
@@ -262,14 +394,10 @@ const createCannabinoid = (
     'THCV'
   ];
   
-  // For always ND cannabinoids, set LOD and LOQ to 0 so they show ND in those columns too
-  let finalLod = lod;
-  let finalLoq = loq;
+  // Keep the provided LOD and LOQ values - don't override them
   let finalResult: CannabinoidResult;
   
   if (alwaysNDCannabinoids.includes(name)) {
-    finalLod = 0;
-    finalLoq = 0;
     finalResult = TEST_RESULT.NOT_DETECTED as CannabinoidResult;
   } else if (name === 'Δ9-THC' && percentWeight > 0) {
     // For D9-THC, always show the actual value if it's above 0
@@ -286,8 +414,8 @@ const createCannabinoid = (
     name,
     percentWeight,
     mgPerG,
-    loq: finalLoq,
-    lod: finalLod,
+    loq: loq,
+    lod: lod,
     result: finalResult
   };
 };
@@ -300,6 +428,7 @@ export const generateFullCannabinoidProfile = (
   customRanges?: CustomRanges,
   sampleIndex?: number
 ): CannabinoidProfileResult => {
+  // Use the base profile's values for most cannabinoids, but randomize the selected minor ones
   const baseProfile = generateTHCProfile(profileType, customRanges, sampleIndex);
   
   // Generate random LOD/LOQ values for each cannabinoid
@@ -314,36 +443,23 @@ export const generateFullCannabinoidProfile = (
   const cbgLimits = generateRandomLimits(CANNABINOID_NAMES.CBG, sampleIndex);
   const cbcLimits = generateRandomLimits(CANNABINOID_NAMES.CBC, sampleIndex);
   
-  // Randomly select 1-3 minor cannabinoids to show - excluding always ND cannabinoids
-  const minorCannabinoidCount = Math.floor(Math.random() * 3) + 1;
-  const availableMinors = ['CBDa']; // Only CBDa is allowed to be detected from the trace cannabinoids
-  const selectedMinors = new Set<string>();
-  
-  // Always include CBDa as it's the only one that can be detected
-  selectedMinors.add('CBDa');
-
-  // Generate minor cannabinoids - all always-ND cannabinoids will return ND
-  let cbdData: MinorCannabinoidData = { value: 0, result: TEST_RESULT.NOT_DETECTED as CannabinoidResult };
+  // Always include CBDa if profileType is hemp
   let cbdaData: MinorCannabinoidData;
   
   if (profileType === 'hemp') {
-    // Even hemp profiles - CBD is always ND now, but CBDa can still be detected
-    const ranges = CANNABINOID_RANGES.hemp;
-    const cbda = parseFloat(randomInRange(ranges.cbda!.min, ranges.cbda!.max).toFixed(2));
-    cbdData = { value: 0, result: TEST_RESULT.NOT_DETECTED as CannabinoidResult }; // Always ND
-    cbdaData = { value: cbda, result: 'detected' as CannabinoidResult };
+    // For hemp profiles, CBDa should be detected
+    cbdaData = generateMinorCannabinoid('CBDa', cbdaLimits.loq, cbdaLimits.lod, 0.9, sampleIndex);
   } else {
-    cbdData = { value: 0, result: TEST_RESULT.NOT_DETECTED as CannabinoidResult }; // Always ND
+    // For other profiles, CBDa may or may not be detected
     cbdaData = generateMinorCannabinoid('CBDa', cbdaLimits.loq, cbdaLimits.lod, 0.9, sampleIndex);
   }
   
-  // All these are now always ND
-  const cbcData = { value: 0, result: TEST_RESULT.NOT_DETECTED as CannabinoidResult };
-  const cbnData = { value: 0, result: TEST_RESULT.NOT_DETECTED as CannabinoidResult };
-  const thcvData = { value: 0, result: TEST_RESULT.NOT_DETECTED as CannabinoidResult };
-  
-  // Handle Δ8-THC - always ND now
-  const d8thcData = { value: 0, result: TEST_RESULT.NOT_DETECTED as CannabinoidResult };
+  // Generate other minor cannabinoids - always ND now
+  const d8thcData = generateMinorCannabinoid('D8-THC', d8thcLimits.loq, d8thcLimits.lod, 0.7, sampleIndex);
+  const thcvData = generateMinorCannabinoid('THCV', thcvLimits.loq, thcvLimits.lod, 0.7, sampleIndex);
+  const cbdData = generateMinorCannabinoid('CBD', cbdLimits.loq, cbdLimits.lod, 0.7, sampleIndex);
+  const cbnData = generateMinorCannabinoid('CBN', cbnLimits.loq, cbnLimits.lod, 0.7, sampleIndex);  
+  const cbcData = generateMinorCannabinoid('CBC', cbcLimits.loq, cbcLimits.lod, 0.7, sampleIndex);
 
   // Create cannabinoid array - D9-THC will always show its value due to the createCannabinoid logic
   const cannabinoids = [
@@ -475,9 +591,6 @@ export const generateTHCAComplianceProfile = (
   // Calculate total THC (this will be > 0.3% due to THCA content, but D9 is compliant)
   const totalTHC = calculateTotalTHC(thca, d9thc);
   
-  // Only CBDa is allowed to be detected from trace cannabinoids
-  const selectedMinors = new Set<string>(['CBDa']);
-  
   // Add typical cannabinoids based on profile
   let cbd: number, cbda: number, cbg: number, cbga: number;
   
@@ -491,8 +604,24 @@ export const generateTHCAComplianceProfile = (
     // Generate minor cannabinoids with variation
     cbd = 0; // Always ND now
     cbda = parseFloat(randomInRange(0.05, 0.10).toFixed(2)); // Use the trace range
-    cbg = parseFloat(randomInRange(0.05, 0.30).toFixed(2)); // Use the trace range
-    cbga = parseFloat(randomInRange(0.30, 1.20).toFixed(2)); // Use the trace range
+    
+    // CBG with more variance (25% chance to be ND)
+    if (Math.random() < 0.25) {
+      cbg = 0;
+    } else {
+      const cbgBase = 0.05 + ((sampleIndex || 0) % 5) * 0.05;
+      const cbgVariance = (Math.random() - 0.5) * 0.12;
+      cbg = parseFloat(Math.max(0.02, Math.min(0.45, cbgBase + cbgVariance)).toFixed(2));
+    }
+    
+    // CBGa with more variance (15% chance to be ND)
+    if (Math.random() < 0.15) {
+      cbga = 0;
+    } else {
+      const cbgaBase = 0.30 + ((sampleIndex || 0) % 7) * 0.13;
+      const cbgaVariance = (Math.random() - 0.5) * 0.35;
+      cbga = parseFloat(Math.max(0.1, Math.min(1.5, cbgaBase + cbgaVariance)).toFixed(2));
+    }
   }
   
   // All these are now always ND
@@ -560,36 +689,104 @@ export const calculateSumOfCannabinoids = (cannabinoids: Cannabinoid[]): number 
 };
 
 /**
- * Generates randomized LOD and LOQ values within realistic ranges with more variation
- * Enhanced with sample index for better entropy across batch generation
+ * Returns fixed LOD and LOQ values for flower products
+ * No longer generates random values - uses fixed values from CANNABINOID_LIMITS
  */
 const generateRandomLimits = (cannabinoidName: string, sampleIndex?: number): { lod: number; loq: number } => {
-  // Define realistic ranges for LOD/LOQ based on cannabinoid type with more variation
-  const limitRanges: Record<string, { lodMin: number; lodMax: number; loqMin: number; loqMax: number }> = {
-    'THCa': { lodMin: 0.12, lodMax: 0.28, loqMin: 0.40, loqMax: 0.85 },
-    'Δ9-THC': { lodMin: 0.08, lodMax: 0.22, loqMin: 0.30, loqMax: 0.65 },
-    'Δ8-THC': { lodMin: 0.09, lodMax: 0.20, loqMin: 0.32, loqMax: 0.58 },
-    'THCV': { lodMin: 0.08, lodMax: 0.23, loqMin: 0.33, loqMax: 0.62 },
-    'CBDa': { lodMin: 0.06, lodMax: 0.18, loqMin: 0.22, loqMax: 0.45 },
-    'CBD': { lodMin: 0.08, lodMax: 0.24, loqMin: 0.32, loqMax: 0.60 },
-    'CBN': { lodMin: 0.10, lodMax: 0.25, loqMin: 0.38, loqMax: 0.68 },
-    'CBGa': { lodMin: 0.18, lodMax: 0.40, loqMin: 0.65, loqMax: 1.10 },
-    'CBG': { lodMin: 0.08, lodMax: 0.21, loqMin: 0.28, loqMax: 0.55 },
-    'CBC': { lodMin: 0.09, lodMax: 0.20, loqMin: 0.32, loqMax: 0.56 }
+  // Use fixed values from CANNABINOID_LIMITS for flower products
+  const limits = CANNABINOID_LIMITS[cannabinoidName as keyof typeof CANNABINOID_LIMITS];
+  
+  if (limits) {
+    return { lod: limits.lod, loq: limits.loq };
+  }
+  
+  // Fallback values if cannabinoid not found
+  return { lod: 0.05, loq: 0.15 };
+};
+
+/**
+ * Generates cannabinoid profile specifically for edible products
+ * Uses the correct formula: (THC mg / Sample Size in mg) × 100
+ * Only D9-THC is detected, calculated from THC content and sample size
+ * All other cannabinoids are set to ND
+ */
+export const generateEdibleCannabinoidProfile = (
+  thcContentMg: number,
+  sampleSize: string
+): CannabinoidProfileResult => {
+  // Parse sample size to get weight in mg
+  // Sample size formats: "3.5g", "1000mg", "2.5 g", etc.
+  const sampleSizeMg = parseSampleSizeToMg(sampleSize);
+  
+  // Calculate D9-THC percentage using the correct formula
+  // (THC mg / Sample Size mg) × 100
+  const d9thcPercent = (thcContentMg / sampleSizeMg) * 100;
+  
+  // Convert to mg/g for display
+  const d9thcMgPerG = percentToMgPerG(d9thcPercent);
+  
+  // For edibles, only D9-THC is detected, all others are ND
+  const cannabinoids: Cannabinoid[] = Object.values(CANNABINOID_NAMES).map(name => {
+    if (name === 'Δ9-THC') {
+      return createCannabinoid(
+        name,
+        parseFloat(d9thcPercent.toFixed(3)),
+        EDIBLE_CANNABINOID_LIMITS[name].loq,
+        EDIBLE_CANNABINOID_LIMITS[name].lod
+      );
+    }
+    
+    // All other cannabinoids are not detected in edibles
+    // Use edible-specific LOD/LOQ values
+    const limits = EDIBLE_CANNABINOID_LIMITS[name as keyof typeof EDIBLE_CANNABINOID_LIMITS];
+    return createCannabinoid(
+      name,
+      0,
+      limits?.loq || 0.01,
+      limits?.lod || 0.003,
+      TEST_RESULT.NOT_DETECTED as CannabinoidResult
+    );
+  });
+  
+  // Calculate totals (only D9-THC contributes)
+  const totalTHC = d9thcPercent; // No THCA conversion needed
+  const totalCBD = 0; // No CBD/CBDA in edibles
+  const totalCannabinoids = d9thcPercent; // Only D9-THC
+  
+  return {
+    cannabinoids,
+    totalTHC: parseFloat(totalTHC.toFixed(3)),
+    totalCBD: parseFloat(totalCBD.toFixed(3)),
+    totalCannabinoids: parseFloat(totalCannabinoids.toFixed(3))
   };
+};
+
+/**
+ * Parses sample size string to milligrams
+ * Handles formats like "3.5g", "1000mg", "2.5 g", etc.
+ */
+const parseSampleSizeToMg = (sampleSize: string): number => {
+  // Remove whitespace and convert to lowercase
+  const cleaned = sampleSize.trim().replace(/\s+/g, '').toLowerCase();
   
-  const range = limitRanges[cannabinoidName] || { lodMin: 0.08, lodMax: 0.25, loqMin: 0.28, loqMax: 0.70 };
+  // Try to extract number and unit - more flexible regex
+  const match = cleaned.match(/^([\d.]+)(mg|g)?$/);
   
-  // Add more variation based on cannabinoid name hash and sample index
-  const nameHash = cannabinoidName.split('').reduce((hash, char) => hash + char.charCodeAt(0), 0);
-  const indexOffset = sampleIndex || 0;
-  const seed = (nameHash + indexOffset + Date.now()) % 1000;
+  if (!match) {
+    // Default fallback if parsing fails
+    console.warn(`Could not parse sample size: ${sampleSize}, using default 3500mg`);
+    return 3500; // 3.5g default
+  }
   
-  const lodVariation = (Math.sin(seed * 0.01) * 0.03);
-  const loqVariation = (Math.cos(seed * 0.01) * 0.04);
+  const value = parseFloat(match[1]);
+  const unit = match[2] || 'g'; // Default to grams if no unit specified
   
-  const lod = parseFloat((randomInRange(range.lodMin, range.lodMax) + lodVariation).toFixed(2));
-  const loq = parseFloat((randomInRange(range.loqMin, range.loqMax) + loqVariation).toFixed(2));
+  let result: number;
+  if (unit === 'mg') {
+    result = value;
+  } else { // Assume grams for 'g' or no unit
+    result = value * 1000; // Convert grams to milligrams
+  }
   
-  return { lod, loq };
+  return result;
 }; 
