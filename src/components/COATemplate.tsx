@@ -5,7 +5,6 @@ import {
   percentToMgPerG
 } from '@/utils';
 import { DECARB_FACTOR } from '@/constants';
-import { FOOTER_PHRASES } from '@/constants/defaults';
 
 interface COATemplateProps {
   data: COAData;
@@ -270,13 +269,6 @@ const COATemplate = forwardRef<HTMLDivElement, COATemplateProps>(({
     };
   }, [data.cannabinoids, data.totalTHC, data.totalCBD]);
   
-  // Get random footer phrase based on sample ID for consistency
-  const footerPhrase = useMemo(() => {
-    const index = data.sampleId ? 
-      data.sampleId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % FOOTER_PHRASES.length 
-      : 0;
-    return FOOTER_PHRASES[index];
-  }, [data.sampleId]);
   
   const formatMgPerG = (percentValue: number | string) => {
     const numValue = typeof percentValue === 'string' ? parseFloat(percentValue) : percentValue;
@@ -772,7 +764,7 @@ const COATemplate = forwardRef<HTMLDivElement, COATemplateProps>(({
           <div className="text-gray-800 leading-tight" style={{fontSize: '8px', lineHeight: '11px'}}>
             <div>Total THC = Δ9-THC + 0.877 * THCa</div>
             <div>Total CBD = CBD + 0.877 * CBDa</div>
-            <div>*Total Cannabinoids = Sum of individual cannabinoids detected. Other Detected: The reported result is based on a sample weight with the applicable moisture content for that sample. Unless otherwise stated all quality control samples performed within specifications established by the Laboratory. HL105.10-01. Cannabinoid Testing: Pass/Fail decision determined by Department of Cannabis Control criteria.</div>
+            <div>*Total Cannabinoids = Sum of individual cannabinoids detected. Other Detected: The reported result is based on a sample weight with the applicable moisture content for that sample. Unless otherwise stated all quality control samples performed within specifications established by the Laboratory. HL105.10-01. Cannabinoid Testing: Pass/Fail status determined based on thresholds established under North Carolina hemp regulations and federal Farm Bill limits.</div>
           </div>
         </div>
       </div>
@@ -808,7 +800,7 @@ const COATemplate = forwardRef<HTMLDivElement, COATemplateProps>(({
               )}
             </div>
             <div className="text-gray-800 leading-tight" style={{fontSize: '8px', lineHeight: '11px'}}>
-              <div>Quantix Analytics performs analytical testing using validated internal methodologies and quality control protocols. All results apply only to the sample(s) tested. This Certificate is not a declaration of product safety, efficacy, or regulatory compliance, and should not be construed as state or federal endorsement. Testing follows quality practices aligned with general guidance under the North Carolina Department of Agriculture and Consumer Services (NCDA&CS) and applicable provisions of the NC Industrial Hemp Pilot Program.</div>
+              <div>Quantix Analytics performs analytical testing using validated internal methodologies and quality control protocols. All results apply only to the sample(s) tested. This Certificate is not a declaration of product safety, efficacy, or regulatory compliance, and should not be construed as state or federal endorsement. Testing is performed in accordance with North Carolina Department of Agriculture & Consumer Services (NCDA&CS) guidance and fully complies with the federal USDA Domestic Hemp Production Program (7 CFR Part 990).</div>
               <div className="mt-1">This report may not be reproduced except in full without written approval from Quantix Analytics.</div>
               <div className="mt-1">For inquiries, contact support@quantixanalytics.com | Raleigh, NC | www.quantixanalytics.com</div>
             </div>
