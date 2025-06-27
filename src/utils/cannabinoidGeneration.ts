@@ -63,20 +63,19 @@ const generateMinorCannabinoid = (
 ): MinorCannabinoidData => {
   const random = Math.random();
   
-  // Special handling for anomalies - CBN as ND in 1 out of 8 COAs
-  if (cannabinoidName === 'CBN' && sampleIndex !== undefined && sampleIndex % 8 === 7) {
+  // Always ND cannabinoids - no exceptions, no ranges
+  const alwaysNDCannabinoids = [
+    'Δ8-THC', 'D8-THC', 'Delta8-THC',
+    'CBD',
+    'CBDV', 'CBDVa', 'CBDv', 'CBDva',
+    'CBN',
+    'CBL',
+    'CBC',
+    'THCV'
+  ];
+  
+  if (alwaysNDCannabinoids.includes(cannabinoidName)) {
     return { value: 0, result: TEST_RESULT.NOT_DETECTED as CannabinoidResult };
-  }
-  
-  // Occasional injection of THCV or Δ8-THC
-  if (cannabinoidName === 'THCV' && Math.random() < 0.25) {
-    const value = parseFloat(randomInRange(0.05, 0.25).toFixed(2));
-    return { value, result: 'detected' as CannabinoidResult };
-  }
-  
-  if (cannabinoidName === 'Δ8-THC' && Math.random() < 0.15) {
-    const value = parseFloat(randomInRange(0.1, 0.4).toFixed(2));
-    return { value, result: 'detected' as CannabinoidResult };
   }
   
   if (random < probability) {
@@ -91,13 +90,6 @@ const generateMinorCannabinoid = (
         if (value < 0.05) {
           return { value: 0, result: TEST_RESULT.NOT_DETECTED as CannabinoidResult };
         }
-        break;
-      case 'CBD':
-        value = randomInRange(0.01, 1.0);
-        break;
-      case 'CBN':
-        // Low but quantifiable values instead of always ND
-        value = Math.random() < 0.5 ? randomInRange(0.23, 0.5) : randomInRange(0.01, 0.2);
         break;
       case 'CBGa':
         // Expected Range: 0.30% – 1.20%, Show as ND if < 0.10%
@@ -115,19 +107,19 @@ const generateMinorCannabinoid = (
           return { value: 0, result: TEST_RESULT.NOT_DETECTED as CannabinoidResult };
         }
         break;
-      case 'CBC':
-        // Expected Range: 0.10% – 0.40%, Show as ND if < 0.10%
-        value = randomInRange(0.10, 0.40);
-        // Check if should be ND
-        if (value < 0.10) {
-          return { value: 0, result: TEST_RESULT.NOT_DETECTED as CannabinoidResult };
-        }
-        break;
-      case 'THCV':
+      case 'THCVa':
         // Expected Range: 0.05% – 0.25%, Show as ND if < 0.05%
         value = randomInRange(0.05, 0.25);
         // Check if should be ND
         if (value < 0.05) {
+          return { value: 0, result: TEST_RESULT.NOT_DETECTED as CannabinoidResult };
+        }
+        break;
+      case 'CBCa':
+        // Expected Range: 0.10% – 0.40%, Show as ND if < 0.10%
+        value = randomInRange(0.10, 0.40);
+        // Check if should be ND
+        if (value < 0.10) {
           return { value: 0, result: TEST_RESULT.NOT_DETECTED as CannabinoidResult };
         }
         break;
@@ -303,53 +295,36 @@ export const generateFullCannabinoidProfile = (
   const cbgLimits = generateRandomLimits(CANNABINOID_NAMES.CBG, sampleIndex);
   const cbcLimits = generateRandomLimits(CANNABINOID_NAMES.CBC, sampleIndex);
   
-  // Determine minor cannabinoid probabilities (for future use)
-  // const probabilities = profileType === 'hemp' 
-  //   ? MINOR_CANNABINOID_PROBABILITIES.hemp 
-  //   : MINOR_CANNABINOID_PROBABILITIES.default;
-  
-  // Randomly select 1-3 minor cannabinoids to show
+  // Randomly select 1-3 minor cannabinoids to show - excluding always ND cannabinoids
   const minorCannabinoidCount = Math.floor(Math.random() * 3) + 1;
-  const availableMinors = ['CBD', 'CBDa', 'CBC', 'CBN', 'THCV'];
+  const availableMinors = ['CBDa']; // Only CBDa is allowed to be detected from the trace cannabinoids
   const selectedMinors = new Set<string>();
   
-  while (selectedMinors.size < minorCannabinoidCount) {
-    const randomIndex = Math.floor(Math.random() * availableMinors.length);
-    selectedMinors.add(availableMinors[randomIndex]);
-  }
+  // Always include CBDa as it's the only one that can be detected
+  selectedMinors.add('CBDa');
 
-  // Generate minor cannabinoids
-  let cbdData: MinorCannabinoidData;
+  // Generate minor cannabinoids - all always-ND cannabinoids will return ND
+  let cbdData: MinorCannabinoidData = { value: 0, result: TEST_RESULT.NOT_DETECTED as CannabinoidResult };
   let cbdaData: MinorCannabinoidData;
   
   if (profileType === 'hemp') {
-    // Hemp always has CBD/CBDa
+    // Even hemp profiles - CBD is always ND now, but CBDa can still be detected
     const ranges = CANNABINOID_RANGES.hemp;
-    const cbd = parseFloat(randomInRange(ranges.cbd!.min, ranges.cbd!.max).toFixed(2));
     const cbda = parseFloat(randomInRange(ranges.cbda!.min, ranges.cbda!.max).toFixed(2));
-    cbdData = { value: cbd, result: 'detected' as CannabinoidResult };
+    cbdData = { value: 0, result: TEST_RESULT.NOT_DETECTED as CannabinoidResult }; // Always ND
     cbdaData = { value: cbda, result: 'detected' as CannabinoidResult };
   } else {
-    cbdData = selectedMinors.has('CBD') 
-      ? generateMinorCannabinoid('CBD', cbdLimits.loq, cbdLimits.lod, 0.9, sampleIndex)
-      : { value: 0, result: TEST_RESULT.NOT_DETECTED as CannabinoidResult };
-    cbdaData = selectedMinors.has('CBDa')
-      ? generateMinorCannabinoid('CBDa', cbdaLimits.loq, cbdaLimits.lod, 0.9, sampleIndex)
-      : { value: 0, result: TEST_RESULT.NOT_DETECTED as CannabinoidResult };
+    cbdData = { value: 0, result: TEST_RESULT.NOT_DETECTED as CannabinoidResult }; // Always ND
+    cbdaData = generateMinorCannabinoid('CBDa', cbdaLimits.loq, cbdaLimits.lod, 0.9, sampleIndex);
   }
   
-  const cbcData = selectedMinors.has('CBC')
-    ? generateMinorCannabinoid('CBC', cbcLimits.loq, cbcLimits.lod, 0.9, sampleIndex)
-    : { value: 0, result: TEST_RESULT.NOT_DETECTED as CannabinoidResult };
-  const cbnData = selectedMinors.has('CBN')
-    ? generateMinorCannabinoid('CBN', cbnLimits.loq, cbnLimits.lod, 0.9, sampleIndex)
-    : { value: 0, result: TEST_RESULT.NOT_DETECTED as CannabinoidResult };
-  const thcvData = selectedMinors.has('THCV')
-    ? generateMinorCannabinoid('THCV', thcvLimits.loq, thcvLimits.lod, 0.9, sampleIndex)
-    : { value: 0, result: TEST_RESULT.NOT_DETECTED as CannabinoidResult };
+  // All these are now always ND
+  const cbcData = { value: 0, result: TEST_RESULT.NOT_DETECTED as CannabinoidResult };
+  const cbnData = { value: 0, result: TEST_RESULT.NOT_DETECTED as CannabinoidResult };
+  const thcvData = { value: 0, result: TEST_RESULT.NOT_DETECTED as CannabinoidResult };
   
-  // Handle Δ8-THC separately with its special injection logic
-  const d8thcData = generateMinorCannabinoid('Δ8-THC', d8thcLimits.loq, d8thcLimits.lod, 0.15, sampleIndex);
+  // Handle Δ8-THC - always ND now
+  const d8thcData = { value: 0, result: TEST_RESULT.NOT_DETECTED as CannabinoidResult };
 
   // Create cannabinoid array - D9-THC will always show its value due to the createCannabinoid logic
   const cannabinoids = [
@@ -481,49 +456,34 @@ export const generateTHCAComplianceProfile = (
   // Calculate total THC (this will be > 0.3% due to THCA content, but D9 is compliant)
   const totalTHC = calculateTotalTHC(thca, d9thc);
   
-  // Randomly select 1-3 minor cannabinoids to show
-  const minorCannabinoidCount = Math.floor(Math.random() * 3) + 1;
-  const availableMinors = ['CBD', 'CBDa', 'CBC', 'CBN', 'THCV'];
-  const selectedMinors = new Set<string>();
-  
-  while (selectedMinors.size < minorCannabinoidCount) {
-    const randomIndex = Math.floor(Math.random() * availableMinors.length);
-    selectedMinors.add(availableMinors[randomIndex]);
-  }
+  // Only CBDa is allowed to be detected from trace cannabinoids
+  const selectedMinors = new Set<string>(['CBDa']);
   
   // Add typical cannabinoids based on profile
   let cbd: number, cbda: number, cbg: number, cbga: number;
   
   if (profileType === 'hemp') {
     const ranges = CANNABINOID_RANGES.hemp;
-    cbd = parseFloat(randomInRange(ranges.cbd!.min, ranges.cbd!.max).toFixed(2));
+    cbd = 0; // Always ND now
     cbda = parseFloat(randomInRange(ranges.cbda!.min, ranges.cbda!.max).toFixed(2));
     cbg = parseFloat(randomInRange(ranges.cbg.min, ranges.cbg.max).toFixed(2));
     cbga = parseFloat(randomInRange(ranges.cbga.min, ranges.cbga.max).toFixed(2));
   } else {
     // Generate minor cannabinoids with variation
-    cbd = selectedMinors.has('CBD') ? parseFloat(randomInRange(0.1, 2).toFixed(2)) : 0;
-    cbda = selectedMinors.has('CBDa') ? parseFloat(randomInRange(0.1, 1).toFixed(2)) : 0;
-    cbg = parseFloat(randomInRange(0, 0.5).toFixed(2));
-    cbga = parseFloat(randomInRange(0, 1).toFixed(2));
+    cbd = 0; // Always ND now
+    cbda = parseFloat(randomInRange(0.05, 0.10).toFixed(2)); // Use the trace range
+    cbg = parseFloat(randomInRange(0.05, 0.30).toFixed(2)); // Use the trace range
+    cbga = parseFloat(randomInRange(0.30, 1.20).toFixed(2)); // Use the trace range
   }
   
-  // Generate other minor cannabinoids
-  const cbcData = selectedMinors.has('CBC')
-    ? generateMinorCannabinoid('CBC', cbcLimits.loq, cbcLimits.lod, 0.9, sampleIndex)
-    : { value: 0, result: TEST_RESULT.NOT_DETECTED as CannabinoidResult };
-  const cbnData = selectedMinors.has('CBN')
-    ? generateMinorCannabinoid('CBN', cbnLimits.loq, cbnLimits.lod, 0.9, sampleIndex)
-    : { value: 0, result: TEST_RESULT.NOT_DETECTED as CannabinoidResult };
-  const thcvData = selectedMinors.has('THCV')
-    ? generateMinorCannabinoid('THCV', thcvLimits.loq, thcvLimits.lod, 0.9, sampleIndex)
-    : { value: 0, result: TEST_RESULT.NOT_DETECTED as CannabinoidResult };
+  // All these are now always ND
+  const cbcData = { value: 0, result: TEST_RESULT.NOT_DETECTED as CannabinoidResult };
+  const cbnData = { value: 0, result: TEST_RESULT.NOT_DETECTED as CannabinoidResult };
+  const thcvData = { value: 0, result: TEST_RESULT.NOT_DETECTED as CannabinoidResult };
   
-  // Handle Δ8-THC separately with its special injection logic
-  const d8thcData = generateMinorCannabinoid('Δ8-THC', d8thcLimits.loq, d8thcLimits.lod, 0.15, sampleIndex);
-  
-  const totalCBD = parseFloat(calculateTotalCBD(cbda, cbd).toFixed(2));
-  
+  // Handle Δ8-THC - always ND now
+  const d8thcData = { value: 0, result: TEST_RESULT.NOT_DETECTED as CannabinoidResult };
+
   // Create cannabinoid array
   const cannabinoids = [
     createCannabinoid(CANNABINOID_NAMES.THCA, thca, thcaLimits.loq, thcaLimits.lod),
@@ -550,7 +510,7 @@ export const generateTHCAComplianceProfile = (
   return {
     cannabinoids,
     totalTHC: parseFloat(totalTHC.toFixed(2)),
-    totalCBD,
+    totalCBD: parseFloat(calculateTotalCBD(cbda, cbd).toFixed(2)),
     totalCannabinoids
   };
 };
