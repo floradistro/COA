@@ -6,34 +6,34 @@ export const CANNABINOID_RANGES = {
   highTHC: {
     thca: { min: 22, max: 30 },
     d9thc: { min: 0.05, max: 0.29 },
-    cbga: { min: 0.1, max: 1.5 },
-    cbg: { min: 0.01, max: 1.0 }
+    cbga: { min: 0.30, max: 1.20 },
+    cbg: { min: 0.05, max: 0.30 }
   },
   mediumTHC: {
     thca: { min: 15, max: 20 },
     d9thc: { min: 0.05, max: 0.29 },
-    cbga: { min: 0.1, max: 1.5 },
-    cbg: { min: 0.01, max: 1.0 }
+    cbga: { min: 0.30, max: 1.20 },
+    cbg: { min: 0.05, max: 0.30 }
   },
   lowTHC: {
     thca: { min: 0, max: 15 },
     d9thc: { min: 0.05, max: 0.29 },
-    cbga: { min: 0.1, max: 1.5 },
-    cbg: { min: 0.01, max: 1.0 }
+    cbga: { min: 0.30, max: 1.20 },
+    cbg: { min: 0.05, max: 0.30 }
   },
   hemp: {
     thca: { min: 0.1, max: 0.3 },
     d9thc: { min: 0.05, max: 0.29 },
     cbda: { min: 10, max: 20 },
     cbd: { min: 0.1, max: 1.1 },
-    cbga: { min: 0, max: 1 },
-    cbg: { min: 0, max: 0.2 }
+    cbga: { min: 0.30, max: 1.20 },
+    cbg: { min: 0.05, max: 0.30 }
   },
   decarbed: {
     thca: { min: 1, max: 5 },
     d9thc: { min: 0.05, max: 0.29 },
-    cbga: { min: 0, max: 1 },
-    cbg: { min: 0, max: 2 }
+    cbga: { min: 0.30, max: 1.20 },
+    cbg: { min: 0.05, max: 0.30 }
   }
 };
 

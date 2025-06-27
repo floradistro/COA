@@ -70,7 +70,7 @@ const generateMinorCannabinoid = (
   
   // Occasional injection of THCV or Δ8-THC
   if (cannabinoidName === 'THCV' && Math.random() < 0.25) {
-    const value = parseFloat(randomInRange(0.1, 0.4).toFixed(2));
+    const value = parseFloat(randomInRange(0.05, 0.25).toFixed(2));
     return { value, result: 'detected' as CannabinoidResult };
   }
   
@@ -82,10 +82,15 @@ const generateMinorCannabinoid = (
   if (random < probability) {
     let value: number;
     
-    // Use realistic ranges based on high-quality flower data
+    // Use updated ranges based on specified trace cannabinoid ranges
     switch (cannabinoidName) {
       case 'CBDa':
-        value = randomInRange(0.01, 1.5);
+        // Expected Range: 0.05% – 0.10%, Show as ND if < 0.05% (but this seems low, keeping reasonable range)
+        value = randomInRange(0.05, 0.10);
+        // Check if should be ND
+        if (value < 0.05) {
+          return { value: 0, result: TEST_RESULT.NOT_DETECTED as CannabinoidResult };
+        }
         break;
       case 'CBD':
         value = randomInRange(0.01, 1.0);
@@ -95,17 +100,36 @@ const generateMinorCannabinoid = (
         value = Math.random() < 0.5 ? randomInRange(0.23, 0.5) : randomInRange(0.01, 0.2);
         break;
       case 'CBGa':
-        value = randomInRange(0.1, 1.5);
+        // Expected Range: 0.30% – 1.20%, Show as ND if < 0.10%
+        value = randomInRange(0.30, 1.20);
+        // Check if should be ND
+        if (value < 0.10) {
+          return { value: 0, result: TEST_RESULT.NOT_DETECTED as CannabinoidResult };
+        }
         break;
       case 'CBG':
-        value = randomInRange(0.01, 1.0);
+        // Expected Range: 0.05% – 0.30%, Show as ND if < 0.05%
+        value = randomInRange(0.05, 0.30);
+        // Check if should be ND
+        if (value < 0.05) {
+          return { value: 0, result: TEST_RESULT.NOT_DETECTED as CannabinoidResult };
+        }
         break;
       case 'CBC':
-        // Low but quantifiable values
-        value = randomInRange(0.15, 0.35);
+        // Expected Range: 0.10% – 0.40%, Show as ND if < 0.10%
+        value = randomInRange(0.10, 0.40);
+        // Check if should be ND
+        if (value < 0.10) {
+          return { value: 0, result: TEST_RESULT.NOT_DETECTED as CannabinoidResult };
+        }
         break;
       case 'THCV':
-        value = randomInRange(0.1, 1.0);
+        // Expected Range: 0.05% – 0.25%, Show as ND if < 0.05%
+        value = randomInRange(0.05, 0.25);
+        // Check if should be ND
+        if (value < 0.05) {
+          return { value: 0, result: TEST_RESULT.NOT_DETECTED as CannabinoidResult };
+        }
         break;
       default:
         // Fallback to original logic
