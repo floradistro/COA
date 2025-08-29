@@ -1,4 +1,5 @@
 import React from 'react';
+import Image from 'next/image';
 import { COAData, CustomRanges, CannabinoidProfile, ComprehensiveValidationResult } from '@/types';
 import { 
   generateTHCProfile, 
@@ -43,7 +44,7 @@ const COAForm: React.FC<COAFormProps> = ({
   const [showValidation, setShowValidation] = React.useState(false);
   const [validationResult, setValidationResult] = React.useState<ComprehensiveValidationResult | null>(null);
   const [isDragOver, setIsDragOver] = React.useState(false);
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  // Removed unused fileInputRef
   
   // Use a ref to store onChange to avoid stale closures
   const onChangeRef = React.useRef(onChange);
@@ -318,18 +319,7 @@ const COAForm: React.FC<COAFormProps> = ({
     }
   };
 
-  const handleUploadAreaClick = (e?: React.MouseEvent) => {
-    console.log('Upload area clicked, triggering file input');
-    console.log('Event:', e);
-    console.log('File input ref:', fileInputRef.current);
-    
-    if (fileInputRef.current) {
-      console.log('Clicking file input...');
-      fileInputRef.current.click();
-    } else {
-      console.error('File input ref is null!');
-    }
-  };
+  // Removed unused handleUploadAreaClick function
 
   return (
     <div className="space-y-8">
@@ -604,9 +594,11 @@ const COAForm: React.FC<COAFormProps> = ({
               {data.productImageUrl && (
                 <div className="flex-shrink-0">
                   <div className="w-20 h-20 border border-gray-300 rounded-md overflow-hidden bg-gray-50">
-                    <img 
+                    <Image 
                       src={data.productImageUrl} 
                       alt="Product preview"
+                      width={80}
+                      height={80}
                       className="w-full h-full object-cover"
                     />
                   </div>

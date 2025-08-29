@@ -1,4 +1,5 @@
 import React, { forwardRef, memo, useMemo } from 'react';
+import Image from 'next/image';
 import { COAData, ComprehensiveValidationResult } from '@/types';
 import { 
   calculateSumOfCannabinoids,
@@ -528,10 +529,11 @@ const COATemplate = forwardRef<HTMLDivElement, COATemplateProps>(({
           <div className="flex flex-col items-start">
             <div className="flex items-center gap-3">
               <div className="w-20 h-20 flex-shrink-0">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img 
+                <Image 
                   src="/quantixlogo.png" 
                   alt="Quantix Analytics Logo"
+                  width={80}
+                  height={80}
                   className="w-20 h-20 object-contain"
                   loading="eager"
                   onError={(e) => {
@@ -662,9 +664,11 @@ const COATemplate = forwardRef<HTMLDivElement, COATemplateProps>(({
                         : 'border-2 border-dashed border-gray-300 bg-gray-50 hover:border-gray-400 hover:bg-gray-100'
                     }`}>
                       {data.productImageUrl ? (
-                        <img 
+                        <Image 
                           src={data.productImageUrl} 
                           alt="Product Image"
+                          width={120}
+                          height={120}
                           className="w-full h-full object-cover rounded"
                           style={{ 
                             width: '140px',
@@ -854,10 +858,11 @@ const COATemplate = forwardRef<HTMLDivElement, COATemplateProps>(({
             <div className="float-left mr-2 mb-1">
               {data.qrCodeDataUrl ? (
                 <div className="flex flex-col items-center">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img 
+                  <Image 
                     key={data.qrCodeDataUrl} 
-                    src={data.qrCodeDataUrl} 
+                    src={data.qrCodeDataUrl}
+                    width={100}
+                    height={100} 
                     alt="QR Code for COA" 
                     className="w-16 h-16 border border-gray-300 bg-white p-0.5"
                     style={{ 
@@ -895,10 +900,11 @@ const COATemplate = forwardRef<HTMLDivElement, COATemplateProps>(({
               <div className="flex items-center justify-end gap-2">
                 {data.labDirector === 'Michael Minogue' && (
                   <div className="flex-shrink-0">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img 
+                    <Image 
                       src="/signature.png" 
                       alt="Michael Minogue Signature"
+                      width={80}
+                      height={40}
                       className="h-48 w-auto object-contain"
                       style={{ 
                         maxHeight: '192px',
@@ -909,10 +915,11 @@ const COATemplate = forwardRef<HTMLDivElement, COATemplateProps>(({
                 )}
                 {data.labDirector === 'Sarah Mitchell' && (
                   <div className="flex-shrink-0">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img 
+                    <Image 
                       src="/sarah-mitchell-signature.png" 
                       alt="Sarah Mitchell Signature"
+                      width={80}
+                      height={40}
                       className="h-48 w-auto object-contain"
                       style={{ 
                         maxHeight: '192px',
@@ -923,10 +930,11 @@ const COATemplate = forwardRef<HTMLDivElement, COATemplateProps>(({
                 )}
                 {data.labDirector === 'K. Patel' && (
                   <div className="flex-shrink-0">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img 
+                    <Image 
                       src="/k-patel-signature.png" 
                       alt="K. Patel Signature"
+                      width={80}
+                      height={40}
                       className="h-48 w-auto object-contain"
                       style={{ 
                         maxHeight: '192px',

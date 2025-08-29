@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { ProductType, CannabinoidProfile, ComprehensiveValidationResult } from '@/types';
+import { COAData, ProductType, CannabinoidProfile, ComprehensiveValidationResult } from '@/types';
 import { useCOAGeneration } from '@/hooks';
 import { useSupabaseUpload } from '@/hooks/useSupabaseUpload';
 import { 
@@ -108,22 +108,22 @@ export default function Home() {
         ? CLIENT_OPTIONS.find(c => c.name === selectedClient) || CLIENT_OPTIONS[0]
         : CLIENT_OPTIONS[0];
       
-      setCOAData(current => ({
-        ...current,
+      setCOAData({
+        ...coaData,
         clientName: selectedClientData.name,
         clientAddress: selectedClientData.address
-      }));
+      });
       
       // Also update all generated COAs in batch using current state
-      setGeneratedCOAs(currentCOAs => 
-        currentCOAs.map(coa => ({
+      setGeneratedCOAs(
+        generatedCOAs.map((coa: COAData) => ({
           ...coa,
           clientName: selectedClientData.name,
           clientAddress: selectedClientData.address
         }))
       );
     }
-  }, [selectedClient]); // Only trigger on client changes
+  }, [selectedClient, coaData, setCOAData, setGeneratedCOAs, generatedCOAs]); // Only trigger on client changes
 
   // Live update effect - instantly update COA when lab employee selection changes  
   useEffect(() => {
@@ -134,22 +134,22 @@ export default function Home() {
         ? LAB_EMPLOYEES.find(emp => emp.name === selectedLabEmployee) || LAB_EMPLOYEES[Math.floor(Math.random() * LAB_EMPLOYEES.length)]
         : LAB_EMPLOYEES[Math.floor(Math.random() * LAB_EMPLOYEES.length)];
       
-      setCOAData(current => ({
-        ...current,
+      setCOAData({
+        ...coaData,
         labDirector: selectedEmployeeData.name,
         directorTitle: selectedEmployeeData.role
-      }));
+      });
       
       // Also update all generated COAs in batch using current state
-      setGeneratedCOAs(currentCOAs => 
-        currentCOAs.map(coa => ({
+      setGeneratedCOAs(
+        generatedCOAs.map((coa: COAData) => ({
           ...coa,
           labDirector: selectedEmployeeData.name,
           directorTitle: selectedEmployeeData.role
         }))
       );
     }
-  }, [selectedLabEmployee]); // Only trigger on lab employee changes
+  }, [selectedLabEmployee, coaData, setCOAData, setGeneratedCOAs, generatedCOAs]); // Only trigger on lab employee changes
 
   // Sync current COA changes back to the batch array
   useEffect(() => {
@@ -163,14 +163,14 @@ export default function Home() {
         batchCOA.labDirector !== coaData.labDirector
       )) {
         console.log(`Syncing changes back to batch COA ${currentCOAIndex}`);
-        setGeneratedCOAs(currentCOAs => 
-          currentCOAs.map((coa, index) => 
+        setGeneratedCOAs(
+          generatedCOAs.map((coa: COAData, index: number) => 
             index === currentCOAIndex ? { ...coaData } : coa
           )
         );
       }
     }
-  }, [coaData, currentCOAIndex]); // Trigger when current COA data or index changes
+  }, [coaData, currentCOAIndex, generatedCOAs, setGeneratedCOAs]); // Trigger when current COA data or index changes
 
   // Validation effect - run validation whenever COA data changes
   useEffect(() => {
