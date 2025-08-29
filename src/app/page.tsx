@@ -10,7 +10,7 @@ import {
   setNotificationCallback,
   validateCOAComprehensive
 } from '@/utils';
-import { DEFAULT_SAMPLE_SIZE } from '@/constants/defaults';
+import { DEFAULT_SAMPLE_SIZE, CLIENT_OPTIONS, LAB_EMPLOYEES } from '@/constants/defaults';
 import COATemplate from '@/components/COATemplate';
 import COAForm from '@/components/COAForm';
 import { COAControls } from '@/components/COAControls';
@@ -49,6 +49,7 @@ export default function Home() {
   const [dateTestedEnd, setDateTestedEnd] = useState(getTodayString());
   const [selectedProfile, setSelectedProfile] = useState<CannabinoidProfile>('high-thc');
   const [selectedLabEmployee, setSelectedLabEmployee] = useState<string>('');
+  const [selectedClient, setSelectedClient] = useState<string>('');
   const [sampleSize, setSampleSize] = useState<string>(DEFAULT_SAMPLE_SIZE);
   const [productType, setProductType] = useState<ProductType>('flower');
   
@@ -98,6 +99,79 @@ export default function Home() {
     uploadProgress
   } = useSupabaseUpload(componentRef);
   
+  // Live update effect - instantly update COA when client selection changes
+  useEffect(() => {
+    // Only update if we have an existing COA
+    if (coaData && coaData.cannabinoids.length > 0) {
+      console.log('Instantly updating COA client information');
+      const selectedClientData = selectedClient 
+        ? CLIENT_OPTIONS.find(c => c.name === selectedClient) || CLIENT_OPTIONS[0]
+        : CLIENT_OPTIONS[0];
+      
+      setCOAData(current => ({
+        ...current,
+        clientName: selectedClientData.name,
+        clientAddress: selectedClientData.address
+      }));
+      
+      // Also update all generated COAs in batch using current state
+      setGeneratedCOAs(currentCOAs => 
+        currentCOAs.map(coa => ({
+          ...coa,
+          clientName: selectedClientData.name,
+          clientAddress: selectedClientData.address
+        }))
+      );
+    }
+  }, [selectedClient]); // Only trigger on client changes
+
+  // Live update effect - instantly update COA when lab employee selection changes  
+  useEffect(() => {
+    // Only update if we have an existing COA
+    if (coaData && coaData.cannabinoids.length > 0) {
+      console.log('Instantly updating COA lab employee information');
+      const selectedEmployeeData = selectedLabEmployee 
+        ? LAB_EMPLOYEES.find(emp => emp.name === selectedLabEmployee) || LAB_EMPLOYEES[Math.floor(Math.random() * LAB_EMPLOYEES.length)]
+        : LAB_EMPLOYEES[Math.floor(Math.random() * LAB_EMPLOYEES.length)];
+      
+      setCOAData(current => ({
+        ...current,
+        labDirector: selectedEmployeeData.name,
+        directorTitle: selectedEmployeeData.role
+      }));
+      
+      // Also update all generated COAs in batch using current state
+      setGeneratedCOAs(currentCOAs => 
+        currentCOAs.map(coa => ({
+          ...coa,
+          labDirector: selectedEmployeeData.name,
+          directorTitle: selectedEmployeeData.role
+        }))
+      );
+    }
+  }, [selectedLabEmployee]); // Only trigger on lab employee changes
+
+  // Sync current COA changes back to the batch array
+  useEffect(() => {
+    // Only sync if we have batch COAs and the current COA has been modified
+    if (generatedCOAs.length > 0 && coaData && currentCOAIndex >= 0 && currentCOAIndex < generatedCOAs.length) {
+      // Check if the current COA data differs from the one in the batch array
+      const batchCOA = generatedCOAs[currentCOAIndex];
+      if (batchCOA && (
+        batchCOA.productImageUrl !== coaData.productImageUrl ||
+        batchCOA.clientName !== coaData.clientName ||
+        batchCOA.labDirector !== coaData.labDirector
+      )) {
+        console.log(`Syncing changes back to batch COA ${currentCOAIndex}`);
+        setGeneratedCOAs(currentCOAs => 
+          currentCOAs.map((coa, index) => 
+            index === currentCOAIndex ? { ...coaData } : coa
+          )
+        );
+      }
+    }
+  }, [coaData, currentCOAIndex]); // Trigger when current COA data or index changes
+
   // Validation effect - run validation whenever COA data changes
   useEffect(() => {
     if (coaData && coaData.cannabinoids.length > 0) {
@@ -169,7 +243,7 @@ export default function Home() {
         dateCollectedEnd,
         dateTested,
         dateTestedEnd
-      }, selectedLabEmployee, sampleSize, edibleDosage);
+      }, selectedLabEmployee, sampleSize, edibleDosage, selectedClient);
       
       // Apply profile if not default
       if (selectedProfile !== 'high-thc') {
@@ -188,7 +262,7 @@ export default function Home() {
       const message = getUserFriendlyMessage(error);
       showNotification('error', message);
     }
-  }, [strain, dateReceived, dateReceivedEnd, dateCollected, dateCollectedEnd, dateTested, dateTestedEnd, productType, selectedProfile, selectedLabEmployee, sampleSize, edibleDosage, generateNewCOA, updateProfile, showNotification, setIsPreview, coaData]);
+  }, [strain, dateReceived, dateReceivedEnd, dateCollected, dateCollectedEnd, dateTested, dateTestedEnd, productType, selectedProfile, selectedLabEmployee, selectedClient, sampleSize, edibleDosage, generateNewCOA, updateProfile, showNotification, setIsPreview, coaData]);
   
   // Generate multiple COAs
   const handleGenerateBatch = useCallback(async () => {
@@ -210,7 +284,7 @@ export default function Home() {
         dateCollectedEnd,
         dateTested,
         dateTestedEnd
-      }, selectedLabEmployee, sampleSize, edibleDosage);
+      }, selectedLabEmployee, sampleSize, edibleDosage, selectedClient);
       
       setIsPreview(true);
       showNotification('success', `Generated ${strains.length} COAs successfully`);
@@ -218,7 +292,7 @@ export default function Home() {
       const message = getUserFriendlyMessage(error);
       showNotification('error', message);
     }
-  }, [strainList, dateReceived, dateReceivedEnd, dateCollected, dateCollectedEnd, dateTested, dateTestedEnd, productType, selectedProfile, selectedLabEmployee, sampleSize, edibleDosage, generateMultipleCOAs, showNotification]);
+  }, [strainList, dateReceived, dateReceivedEnd, dateCollected, dateCollectedEnd, dateTested, dateTestedEnd, productType, selectedProfile, selectedLabEmployee, selectedClient, sampleSize, edibleDosage, generateMultipleCOAs, showNotification]);
   
 
 
@@ -279,6 +353,7 @@ export default function Home() {
       setDateTestedEnd(getTodayString());
       setSelectedProfile('high-thc');
       setSelectedLabEmployee('');
+      setSelectedClient('');
       setSampleSize(DEFAULT_SAMPLE_SIZE);
       setProductType('flower');
       setFormProfile('high-thc');
@@ -372,6 +447,8 @@ export default function Home() {
           setSelectedProfile={setSelectedProfile}
           selectedLabEmployee={selectedLabEmployee}
           setSelectedLabEmployee={setSelectedLabEmployee}
+          selectedClient={selectedClient}
+          setSelectedClient={setSelectedClient}
           sampleSize={sampleSize}
           setSampleSize={setSampleSize}
           isMultiStrain={isMultiStrain}
@@ -433,6 +510,7 @@ export default function Home() {
                       onNavigateCOA={goToCOA}
                       validationResult={validationResult || undefined}
                       isPreviewMode={true}
+                      onUpdateData={setCOAData}
                     />
                   </div>
                 </div>
@@ -471,7 +549,7 @@ export default function Home() {
         >
           {coaData && coaData.cannabinoids && coaData.cannabinoids.length > 0 && (
             <div style={{ backgroundColor: 'white', padding: '8px' }}>
-              <COATemplate ref={componentRef} data={coaData} />
+              <COATemplate ref={componentRef} data={coaData} onUpdateData={setCOAData} />
             </div>
           )}
         </div>

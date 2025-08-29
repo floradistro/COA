@@ -17,6 +17,8 @@ interface COATemplateProps {
   validationResult?: ComprehensiveValidationResult;
   // Preview mode flag
   isPreviewMode?: boolean;
+  // Update function for template interactions
+  onUpdateData?: (data: COAData) => void;
 }
 
 // Pie Chart Component - Memoized
@@ -241,7 +243,8 @@ const COATemplate = forwardRef<HTMLDivElement, COATemplateProps>(({
   currentCOAIndex = 0,
   onNavigateCOA,
   validationResult,
-  isPreviewMode = false
+  isPreviewMode = false,
+  onUpdateData
 }, ref) => {
   // Memoize expensive calculations
   const calculatedValues = useMemo(() => {
@@ -563,6 +566,7 @@ const COATemplate = forwardRef<HTMLDivElement, COATemplateProps>(({
               </div>
               <div className="h-16 w-px bg-gray-300 mx-2"></div>
               <div className="flex flex-col justify-center">
+                <div className="text-[10px] font-medium text-gray-900 mb-1">Quantix Analytics LLC</div>
                 <div className="text-[10px] text-gray-800 whitespace-pre-line leading-tight">
                   {data.labContact}
                 </div>
@@ -571,8 +575,15 @@ const COATemplate = forwardRef<HTMLDivElement, COATemplateProps>(({
             <div className="text-base text-gray-800 leading-tight mt-2 ml-2">Certificate of Analysis</div>
           </div>
         </div>
-        <div className="text-right text-[10px] text-gray-800 leading-tight">
-          <div>Page 1 of 1</div>
+        
+        {/* Client Information - Moved to Header */}
+        <div className="text-left text-[10px] text-gray-800 leading-tight">
+          <div className="space-y-0.5">
+            <div><span className="font-medium text-gray-900">Client:</span></div>
+            <div className="font-medium text-gray-800">{data.clientName}</div>
+            <div><span className="font-medium text-gray-900">Lic #:</span></div>
+            <div className="whitespace-pre-line text-gray-800">{data.clientAddress}</div>
+          </div>
         </div>
       </div>
 
@@ -602,12 +613,79 @@ const COATemplate = forwardRef<HTMLDivElement, COATemplateProps>(({
               </div>
             </div>
             
+            {/* Product Image Area - Matching pie chart container structure */}
             <div className="text-[10px] leading-tight">
-              <div className="space-y-0.5">
-                <div><span className="font-medium text-gray-900">Client:</span></div>
-                <div className="font-medium text-gray-800">{data.clientName}</div>
-                <div><span className="font-medium text-gray-900">Lic #:</span></div>
-                <div className="whitespace-pre-line text-gray-800">{data.clientAddress}</div>
+              <div><span className="font-bold text-gray-900">Product Image</span></div>
+              <div className="mt-1 flex justify-center">
+                <div className="flex items-center">
+                  {/* Product Image */}
+                  <div className="relative">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          // Validate file type
+                          const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+                          if (!validTypes.includes(file.type)) {
+                            alert('Please select a valid image file (JPG, PNG, WebP)');
+                            return;
+                          }
+                          // Validate file size (5MB limit)
+                          const maxSize = 5 * 1024 * 1024;
+                          if (file.size > maxSize) {
+                            alert('File size must be less than 5MB');
+                            return;
+                          }
+                          // Convert to base64 and trigger update
+                          const reader = new FileReader();
+                          reader.onload = (event) => {
+                            const dataUrl = event.target?.result as string;
+                            console.log('Image selected in template:', dataUrl);
+                            if (onUpdateData) {
+                              onUpdateData({
+                                ...data,
+                                productImageUrl: dataUrl
+                              });
+                            }
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                      title="Click to upload product image"
+                    />
+                    <div className={`w-[140px] h-[140px] flex items-center justify-center rounded transition-colors cursor-pointer ${
+                      data.productImageUrl 
+                        ? 'border-0 bg-transparent' 
+                        : 'border-2 border-dashed border-gray-300 bg-gray-50 hover:border-gray-400 hover:bg-gray-100'
+                    }`}>
+                      {data.productImageUrl ? (
+                        <img 
+                          src={data.productImageUrl} 
+                          alt="Product Image"
+                          className="w-full h-full object-cover rounded"
+                          style={{ 
+                            width: '140px',
+                            height: '140px',
+                            objectFit: 'cover'
+                          }}
+                        />
+                      ) : (
+                        <div className="text-center text-gray-500 text-[8px] leading-tight">
+                          <div className="mb-2">
+                            <svg className="w-8 h-8 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                            </svg>
+                          </div>
+                          <div className="mb-1 font-medium">Add Image</div>
+                          <div>Click to Upload</div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
             

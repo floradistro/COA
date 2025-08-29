@@ -2,6 +2,7 @@ import { COAData, ProductType, CannabinoidProfile } from '@/types';
 import { 
   LAB_DEFAULTS, 
   CLIENT_DEFAULTS, 
+  CLIENT_OPTIONS,
   PRODUCT_CONFIGS, 
   PRODUCT_NOTES,
   DEFAULT_TEST_STATUS,
@@ -41,7 +42,8 @@ export const generateDefaultCOAData = (
     dateTested: string;
     dateTestedEnd: string;
   },
-  selectedLabEmployee?: string
+  selectedLabEmployee?: string,
+  selectedClient?: string
 ): COAData => {
   // Get product configuration
   const productConfig = PRODUCT_CONFIGS[productType];
@@ -66,6 +68,11 @@ export const generateDefaultCOAData = (
     : null;
   const employee = selectedEmployee || LAB_EMPLOYEES[Math.floor(Math.random() * LAB_EMPLOYEES.length)];
   
+  // Select client - use selected client or default
+  const client = selectedClient
+    ? CLIENT_OPTIONS.find(c => c.name === selectedClient) || CLIENT_OPTIONS[0]
+    : CLIENT_OPTIONS[0];
+  
   // Select random method reference
   const randomMethodReference = METHOD_REFERENCES[Math.floor(Math.random() * METHOD_REFERENCES.length)];
   
@@ -87,7 +94,8 @@ export const generateDefaultCOAData = (
     sampleType: productConfig.sampleType,
     
     // Client Information
-    ...CLIENT_DEFAULTS,
+    clientName: client.name,
+    clientAddress: client.address,
     
     // Dates
     dateCollected: dates.collected,

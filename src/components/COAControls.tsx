@@ -1,6 +1,6 @@
 import React from 'react';
 import { ProductType, CannabinoidProfile, COAData } from '@/types';
-import { PRODUCT_CONFIGS, LAB_EMPLOYEES, SAMPLE_SIZE_OPTIONS } from '@/constants/defaults';
+import { PRODUCT_CONFIGS, LAB_EMPLOYEES, SAMPLE_SIZE_OPTIONS, CLIENT_OPTIONS } from '@/constants/defaults';
 import LoadingSpinner from './LoadingSpinner';
 import ProgressBar from './ProgressBar';
 import { useRouter } from 'next/navigation';
@@ -26,6 +26,8 @@ interface COAControlsProps {
   setSelectedProfile: (profile: CannabinoidProfile) => void;
   selectedLabEmployee: string;
   setSelectedLabEmployee: (employee: string) => void;
+  selectedClient: string;
+  setSelectedClient: (client: string) => void;
   sampleSize: string;
   setSampleSize: (size: string) => void;
   isMultiStrain: boolean;
@@ -73,6 +75,8 @@ export const COAControls: React.FC<COAControlsProps> = ({
   setSelectedProfile,
   selectedLabEmployee,
   setSelectedLabEmployee,
+  selectedClient,
+  setSelectedClient,
   sampleSize,
   setSampleSize,
   isMultiStrain,
@@ -261,8 +265,8 @@ export const COAControls: React.FC<COAControlsProps> = ({
               </div>
             </div>
 
-            {/* Product Type, Cannabinoid Profile, Sample Size, and Lab Employee */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Product Type, Cannabinoid Profile, Sample Size, Lab Employee, and Client */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
               {/* Product Type */}
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">
@@ -353,6 +357,25 @@ export const COAControls: React.FC<COAControlsProps> = ({
                   {LAB_EMPLOYEES.map((employee) => (
                     <option key={employee.name} value={employee.name}>
                       {employee.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Client */}
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  Client
+                </label>
+                <select
+                  value={selectedClient}
+                  onChange={(e) => setSelectedClient(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all bg-white text-gray-900 text-sm"
+                >
+                  <option value="">Select Client</option>
+                  {CLIENT_OPTIONS.map((client) => (
+                    <option key={client.name} value={client.name}>
+                      {client.name}
                     </option>
                   ))}
                 </select>

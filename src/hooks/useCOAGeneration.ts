@@ -18,7 +18,7 @@ export interface UseCOAGenerationReturn {
     dateCollectedEnd?: string;
     dateTested?: string;
     dateTestedEnd?: string;
-  }, selectedLabEmployee?: string, sampleSize?: string, edibleDosage?: number) => void;
+  }, selectedLabEmployee?: string, sampleSize?: string, edibleDosage?: number, selectedClient?: string) => void;
   updateProfile: (profileType: CannabinoidProfile) => void;
   
   // Multiple COAs
@@ -32,7 +32,7 @@ export interface UseCOAGenerationReturn {
     dateCollectedEnd?: string;
     dateTested?: string;
     dateTestedEnd?: string;
-  }, selectedLabEmployee?: string, sampleSize?: string, edibleDosage?: number) => Promise<void>;
+  }, selectedLabEmployee?: string, sampleSize?: string, edibleDosage?: number, selectedClient?: string) => Promise<void>;
   goToCOA: (index: number) => void;
   clearGeneratedCOAs: () => void;
   burnAllData: () => void;
@@ -54,12 +54,25 @@ export const useCOAGeneration = (
   const [isGeneratingBatch, setIsGeneratingBatch] = useState(false);
   
   // Debug wrapper for setGeneratedCOAs
-  const debugSetGeneratedCOAs = useCallback((coas: COAData[]) => {
-    console.log('Updating generatedCOAs array with', coas.length, 'COAs');
-    coas.forEach((coa, index) => {
-      console.log(`COA ${index}: ${coa.sampleName} - Has QR: ${!!coa.qrCodeDataUrl}`);
-    });
-    setGeneratedCOAs(coas);
+  const debugSetGeneratedCOAs = useCallback((coasOrUpdater: COAData[] | ((prev: COAData[]) => COAData[])) => {
+    if (typeof coasOrUpdater === 'function') {
+      // Handle functional updates
+      setGeneratedCOAs((prev) => {
+        const newCoas = coasOrUpdater(prev);
+        console.log('Updating generatedCOAs array with', newCoas.length, 'COAs (functional update)');
+        newCoas.forEach((coa, index) => {
+          console.log(`COA ${index}: ${coa.sampleName} - Has QR: ${!!coa.qrCodeDataUrl}`);
+        });
+        return newCoas;
+      });
+    } else {
+      // Handle direct array updates
+      console.log('Updating generatedCOAs array with', coasOrUpdater.length, 'COAs');
+      coasOrUpdater.forEach((coa, index) => {
+        console.log(`COA ${index}: ${coa.sampleName} - Has QR: ${!!coa.qrCodeDataUrl}`);
+      });
+      setGeneratedCOAs(coasOrUpdater);
+    }
   }, []);
   
   // Generate a new single COA
@@ -76,7 +89,8 @@ export const useCOAGeneration = (
     },
     selectedLabEmployee?: string,
     sampleSize?: string,
-    edibleDosage?: number
+    edibleDosage?: number,
+    selectedClient?: string
   ) => {
     const newData = generateDefaultCOAData(
       strain || 'Sample Strain', 
@@ -92,7 +106,8 @@ export const useCOAGeneration = (
         dateTested: dateRanges.dateTested || dateReceived,
         dateTestedEnd: dateRanges.dateTestedEnd || dateReceived
       } : undefined,
-      selectedLabEmployee
+      selectedLabEmployee,
+      selectedClient
     );
     
     // Update sample size if provided
@@ -135,7 +150,8 @@ export const useCOAGeneration = (
     },
     selectedLabEmployee?: string,
     sampleSize?: string,
-    edibleDosage?: number
+    edibleDosage?: number,
+    selectedClient?: string
   ): Promise<void> => {
     // Validate input
     if (strains.length === 0) {
@@ -169,7 +185,8 @@ export const useCOAGeneration = (
               dateTested: dateRanges.dateTested || dateReceived,
               dateTestedEnd: dateRanges.dateTestedEnd || dateReceived
             } : undefined,
-            selectedLabEmployee
+            selectedLabEmployee,
+            selectedClient
           );
           
           // Update sample size if provided

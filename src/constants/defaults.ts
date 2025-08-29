@@ -43,6 +43,18 @@ export const CLIENT_DEFAULTS = {
   clientAddress: '4111 E Rose Lake Dr\nCharlotte, NC 28217'
 };
 
+// Client options for dropdown selection
+export const CLIENT_OPTIONS = [
+  { 
+    name: 'Flora Distribution Group LLC', 
+    address: '4111 E Rose Lake Dr\nCharlotte, NC 28217' 
+  },
+  { 
+    name: 'Davidson Hemp Co', 
+    address: '19756 Hagen Knoll Drive\nDavidson NC 28036' 
+  }
+];
+
 // Product configurations
 export const PRODUCT_CONFIGS: Record<ProductType, ProductConfig> = {
   flower: {

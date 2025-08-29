@@ -11,7 +11,7 @@ import {
   CANNABINOID_NAMES,
   CANNABINOID_LIMITS
 } from '@/constants';
-import { LAB_EMPLOYEES, SAMPLE_SIZE_OPTIONS } from '@/constants/defaults';
+import { LAB_EMPLOYEES, SAMPLE_SIZE_OPTIONS, CLIENT_OPTIONS } from '@/constants/defaults';
 import ValidationPanel from './ValidationPanel';
 
 interface COAFormProps {
@@ -42,6 +42,8 @@ const COAForm: React.FC<COAFormProps> = ({
 }) => {
   const [showValidation, setShowValidation] = React.useState(false);
   const [validationResult, setValidationResult] = React.useState<ComprehensiveValidationResult | null>(null);
+  const [isDragOver, setIsDragOver] = React.useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
   
   // Use a ref to store onChange to avoid stale closures
   const onChangeRef = React.useRef(onChange);
@@ -251,6 +253,81 @@ const COAForm: React.FC<COAFormProps> = ({
     if (selectedEmployee) {
       updateField('labDirector', selectedEmployee.name);
       updateField('directorTitle', selectedEmployee.role);
+    }
+  };
+
+  const handleClientChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedClient = CLIENT_OPTIONS.find(client => client.name === e.target.value);
+    if (selectedClient) {
+      updateField('clientName', selectedClient.name);
+      updateField('clientAddress', selectedClient.address);
+    }
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    processImageFile(file);
+  };
+
+  const processImageFile = (file: File) => {
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+      alert('Please select a valid image file (JPG, PNG, WebP)');
+      return;
+    }
+
+    // Validate file size (5MB limit)
+    const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+    if (file.size > maxSize) {
+      alert('File size must be less than 5MB');
+      return;
+    }
+
+    // Convert to base64 data URL for immediate preview and storage
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const dataUrl = event.target?.result as string;
+      updateField('productImageUrl', dataUrl);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      processImageFile(files[0]);
+    }
+  };
+
+  const handleUploadAreaClick = (e?: React.MouseEvent) => {
+    console.log('Upload area clicked, triggering file input');
+    console.log('Event:', e);
+    console.log('File input ref:', fileInputRef.current);
+    
+    if (fileInputRef.current) {
+      console.log('Clicking file input...');
+      fileInputRef.current.click();
+    } else {
+      console.error('File input ref is null!');
     }
   };
 
@@ -484,6 +561,66 @@ const COAForm: React.FC<COAFormProps> = ({
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
+
+          {/* Product Image Upload */}
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Product Image</label>
+            <div className="flex items-start gap-4">
+              <div className="flex-1">
+                <div className="space-y-3">
+                  {/* Traditional file input as fallback */}
+                  <div>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Select a product image (JPG, PNG, WebP). Max size: 5MB
+                    </p>
+                  </div>
+                  
+                  {/* Drag and drop area */}
+                  <div 
+                    className={`border-2 border-dashed rounded-md p-4 text-center transition-colors ${
+                      isDragOver ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'
+                    }`}
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                  >
+                    <div className="space-y-1">
+                      <svg className="w-6 h-6 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                      </svg>
+                      <div className="text-xs text-gray-500">
+                        {isDragOver ? 'Drop image here' : 'Or drag & drop an image here'}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              {data.productImageUrl && (
+                <div className="flex-shrink-0">
+                  <div className="w-20 h-20 border border-gray-300 rounded-md overflow-hidden bg-gray-50">
+                    <img 
+                      src={data.productImageUrl} 
+                      alt="Product preview"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => updateField('productImageUrl', '')}
+                    className="mt-1 text-xs text-red-600 hover:text-red-800"
+                  >
+                    Remove
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
           
           {/* Edible Specific Fields */}
           {data.sampleType === 'Cannabis Edible' && (
@@ -507,15 +644,21 @@ const COAForm: React.FC<COAFormProps> = ({
       {/* Client Information */}
       <div className="space-y-4">
         <h3 className="text-lg font-medium text-gray-900 border-b border-gray-200 pb-2">Client Information</h3>
-        <div className="grid grid-cols-1 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Client Name</label>
-            <input
-              type="text"
+            <label className="block text-sm font-medium text-gray-700 mb-1">Client</label>
+            <select
               value={data.clientName}
-              onChange={(e) => updateField('clientName', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
+              onChange={handleClientChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+            >
+              <option value="">Select Client</option>
+              {CLIENT_OPTIONS.map((client) => (
+                <option key={client.name} value={client.name}>
+                  {client.name}
+                </option>
+              ))}
+            </select>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Client Address</label>
