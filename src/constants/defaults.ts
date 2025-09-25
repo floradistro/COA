@@ -40,7 +40,8 @@ export const METHOD_REFERENCES = [
 // Client information defaults
 export const CLIENT_DEFAULTS = {
   clientName: 'Flora Distribution Group LLC',
-  clientAddress: '4111 E Rose Lake Dr\nCharlotte, NC 28217'
+  clientAddress: '4111 E Rose Lake Dr\nCharlotte, NC 28217',
+  licenseNumber: 'USDA_37_0979'
 };
 
 // Product configurations

@@ -606,8 +606,8 @@ const COATemplate = forwardRef<HTMLDivElement, COATemplateProps>(({
               <div className="space-y-0.5">
                 <div><span className="font-medium text-gray-900">Client:</span></div>
                 <div className="font-medium text-gray-800">{data.clientName}</div>
-                <div><span className="font-medium text-gray-900">Lic #:</span></div>
                 <div className="whitespace-pre-line text-gray-800">{data.clientAddress}</div>
+                <div><span className="font-medium text-gray-900">Lic #:</span> <span className="text-gray-800">{data.licenseNumber}</span></div>
               </div>
             </div>
             
