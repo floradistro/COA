@@ -163,26 +163,16 @@ export default function Home() {
         const coaWidth = 794; // Fixed COA width
         const scaleFactor = Math.min(1, containerWidth / coaWidth);
         
-        container.style.setProperty('--scale-factor', scaleFactor.toString());
-        
-        // Adjust container height based on scale with a slight delay
-        setTimeout(() => {
-          const scaledContainer = container.querySelector('.transform-gpu') as HTMLElement;
-          if (scaledContainer) {
-            const originalHeight = scaledContainer.scrollHeight / scaleFactor;
-            container.style.height = `${originalHeight * scaleFactor}px`;
-          }
-        }, 100);
+        container.style.transform = `scale(${scaleFactor})`;
+        container.style.transformOrigin = 'top center';
+        container.style.width = '794px';
+        container.style.height = 'auto';
       }
     };
 
-    // Initial resize with delay to ensure DOM is ready
     setTimeout(handleResize, 200);
-    
-    // Add resize listener
     window.addEventListener('resize', handleResize);
     
-    // Cleanup
     return () => window.removeEventListener('resize', handleResize);
   }, [coaData]);
   
@@ -515,24 +505,27 @@ export default function Home() {
           {coaData && (
             <div className="bg-neutral-800/50 backdrop-blur-sm rounded-2xl shadow-xl p-4 sm:p-8 border border-neutral-700/50">
               <h2 className="text-xl sm:text-2xl font-bold text-neutral-100 mb-4 sm:mb-6">COA Preview</h2>
-              <div className="border-2 border-neutral-700/50 rounded-xl overflow-hidden bg-neutral-900/50 p-1 sm:p-2 coa-preview-container">
-                <div ref={previewRef} className="bg-neutral-900/50 mx-auto shadow-lg w-full overflow-hidden">
-                  <div className="w-full transform-gpu" style={{ 
-                    transformOrigin: 'top left',
-                    transform: 'scale(var(--scale-factor, 1))'
-                  }}>
-                    <div style={{ backgroundColor: 'white', padding: '8px' }}>
-                      <COATemplate 
-                        ref={componentRef}
-                        data={coaData}
-                        isMultiStrain={formState.isMultiStrain}
-                        generatedCOAs={generatedCOAs}
-                        currentCOAIndex={currentCOAIndex}
-                        onNavigateCOA={goToCOA}
-                        validationResult={validationResult || undefined}
-                        isPreviewMode={true}
-                      />
-                    </div>
+              <div className="border-2 border-neutral-700/50 rounded-xl overflow-auto bg-neutral-900/50 p-1 sm:p-2 coa-preview-container flex justify-center">
+                <div 
+                  ref={previewRef} 
+                  className="bg-white shadow-lg"
+                  style={{ 
+                    width: '794px',
+                    minWidth: '794px',
+                    transformOrigin: 'top center'
+                  }}
+                >
+                  <div style={{ padding: '8px' }}>
+                    <COATemplate 
+                      ref={componentRef}
+                      data={coaData}
+                      isMultiStrain={formState.isMultiStrain}
+                      generatedCOAs={generatedCOAs}
+                      currentCOAIndex={currentCOAIndex}
+                      onNavigateCOA={goToCOA}
+                      validationResult={validationResult || undefined}
+                      isPreviewMode={true}
+                    />
                   </div>
                 </div>
               </div>

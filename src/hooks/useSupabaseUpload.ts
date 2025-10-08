@@ -67,10 +67,13 @@ export const useSupabaseUpload = (componentRef?: React.RefObject<HTMLDivElement 
     const cleanup = prepareForPdfExport(element);
     
     try {
+      // Ensure all images are loaded before capture
       await waitForImagesLoaded(element);
-      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      // Single animation frame wait for layout
       await new Promise(resolve => requestAnimationFrame(resolve));
       
+      // Template is always 794px full size - capture directly
       const canvas = await html2canvas(element, {
         ...EXPORT_CONFIG.image,
         logging: false,
@@ -138,19 +141,13 @@ export const useSupabaseUpload = (componentRef?: React.RefObject<HTMLDivElement 
           updateGeneratedCOAs(updatedCOAs);
         }
         
-        // Wait for re-render
-        await new Promise(resolve => setTimeout(resolve, 500));
-        await new Promise(resolve => requestAnimationFrame(() => {
-          requestAnimationFrame(resolve);
-        }));
+        // Wait for QR code to render
+        await new Promise(resolve => setTimeout(resolve, 300));
       }
       
       setUploadProgress(40);
       
-      // Wait for QR code to render
-      await new Promise(resolve => setTimeout(resolve, 300));
-      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-      
+      // Capture the template - it's always full size, no transforms to worry about
       const canvas = await renderCOAToCanvas(componentRef.current!);
       
       const imgData = canvas.toDataURL('image/png', 1.0);
@@ -292,12 +289,9 @@ export const useSupabaseUpload = (componentRef?: React.RefObject<HTMLDivElement 
           
           // Update the display with QR code
           updateCurrentCOA(updatedCOAData);
-          await new Promise(resolve => setTimeout(resolve, 500));
-          await new Promise(resolve => requestAnimationFrame(() => {
-            requestAnimationFrame(resolve);
-          }));
+          await new Promise(resolve => setTimeout(resolve, 300));
           
-          // Render and upload this COA with QR code
+          // Render and upload - template is always full size, no transform manipulation needed
           const canvas = await renderCOAToCanvas(element);
           
           const imgData = canvas.toDataURL('image/png', 1.0);
@@ -363,21 +357,21 @@ export const useSupabaseUpload = (componentRef?: React.RefObject<HTMLDivElement 
         } catch (error) {
           console.error(`Failed to upload COA for ${coaData.sampleName}:`, error);
           logError(error, `Failed to upload COA for ${coaData.sampleName}`);
-          // Continue with other COAs even if one fails
         }
         
+        // Brief delay between uploads
         if (i < coaDataArray.length - 1) {
-          await new Promise(resolve => setTimeout(resolve, 500));
+          await new Promise(resolve => setTimeout(resolve, 300));
         }
       }
       
       setUploadProgress(90);
       
-      // Restore original COA, but preserve QR code if it was added during upload
+      // Restore original COA with QR code if added
       let finalCOAData = originalCOAData;
       if (updateGeneratedCOAs && coaDataArray) {
         const currentCOAInArray = coaDataArray.find(coa => coa.sampleId === originalCOAData.sampleId);
-        if (currentCOAInArray && currentCOAInArray.qrCodeDataUrl) {
+        if (currentCOAInArray?.qrCodeDataUrl) {
           finalCOAData = {
             ...originalCOAData,
             qrCodeDataUrl: currentCOAInArray.qrCodeDataUrl,
@@ -386,26 +380,12 @@ export const useSupabaseUpload = (componentRef?: React.RefObject<HTMLDivElement 
         }
       }
       updateCurrentCOA(finalCOAData);
-      await new Promise(resolve => setTimeout(resolve, 500));
       
       setUploadProgress(100);
       return uploadedUrls;
       
     } catch (error) {
-      // Restore original COA, but preserve QR code if it was added during upload
-      let finalCOAData = originalCOAData;
-      if (updateGeneratedCOAs && coaDataArray) {
-        // Find the current COA in the updated array to get its QR code data
-        const currentCOAInArray = coaDataArray.find(coa => coa.sampleId === originalCOAData.sampleId);
-        if (currentCOAInArray && currentCOAInArray.qrCodeDataUrl) {
-          finalCOAData = {
-            ...originalCOAData,
-            qrCodeDataUrl: currentCOAInArray.qrCodeDataUrl,
-            publicUrl: currentCOAInArray.publicUrl
-          };
-        }
-      }
-      updateCurrentCOA(finalCOAData);
+      updateCurrentCOA(originalCOAData);
       logError(error, 'Upload all COAs to Supabase');
       throw new COAError(
         'Failed to upload COAs to cloud storage. Please try again.',
