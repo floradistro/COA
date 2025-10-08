@@ -491,11 +491,9 @@ export default function Home() {
                 <div 
                   ref={previewRef}
                   style={{ 
-                    width: '794px',
-                    minWidth: '794px',
-                    transformOrigin: 'top center',
-                    backgroundColor: 'white',
-                    padding: '8px'
+                    width: '802px',
+                    minWidth: '802px',
+                    transformOrigin: 'top center'
                   }}
                 >
                   <COATemplate 
