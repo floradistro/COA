@@ -113,6 +113,7 @@ export default function ClientsPage() {
             email: formData.email,
             password: formData.password,
             options: {
+              emailRedirectTo: 'https://quantixanalytics.com/client-portal',
               data: {
                 client_name: formData.name,
               }
@@ -141,6 +142,7 @@ export default function ClientsPage() {
             email: formData.email,
             password: formData.password,
             options: {
+              emailRedirectTo: 'https://quantixanalytics.com/client-portal',
               data: {
                 client_name: formData.name,
               }
