@@ -161,9 +161,19 @@ export default function Home() {
     licenseNumber: selectedClient.license_number
   } : undefined;
   
-  // AUTO-UPDATE EFFECTS DISABLED - were causing infinite re-render loops
-  // Click "Generate COA" button after making dropdown changes
-  // This is more explicit and prevents state sync bugs
+  // Instant update on client change - safe because it's event-driven, not effect-driven
+  const handleClientChange = useCallback((clientId: string) => {
+    setSelectedClientId(clientId);
+    const client = clients.find(c => c.id === clientId);
+    if (client && coaData && coaData.sampleId) {
+      setCOAData((prev: COAData) => ({
+        ...prev,
+        clientName: client.name,
+        clientAddress: client.address,
+        licenseNumber: client.license_number
+      }));
+    }
+  }, [clients, coaData?.sampleId, setCOAData]);
   
   // Generate single COA
   const handleGenerateSingle = useCallback(() => {
@@ -321,7 +331,7 @@ export default function Home() {
               <select
                 id="client-select"
                 value={selectedClientId}
-                onChange={(e) => setSelectedClientId(e.target.value)}
+                onChange={(e) => handleClientChange(e.target.value)}
                 disabled={loadingClients || clients.length === 0}
                 className="px-4 py-2 bg-neutral-800 border border-neutral-700 text-neutral-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50"
               >
