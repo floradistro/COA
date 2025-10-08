@@ -42,8 +42,8 @@ export const generateDefaultCOAData = (
   selectedLabEmployee?: string,
   clientData?: {
     clientName: string;
-    clientAddress: string;
-    licenseNumber: string;
+    clientAddress: string | null;
+    licenseNumber: string | null;
   }
 ): COAData => {
   // Get product configuration
@@ -72,6 +72,13 @@ export const generateDefaultCOAData = (
   // Select random method reference
   const randomMethodReference = METHOD_REFERENCES[Math.floor(Math.random() * METHOD_REFERENCES.length)];
   
+  // Process client data to handle null values
+  const processedClientData = clientData ? {
+    clientName: clientData.clientName,
+    clientAddress: clientData.clientAddress || CLIENT_DEFAULTS.clientAddress,
+    licenseNumber: clientData.licenseNumber || CLIENT_DEFAULTS.licenseNumber
+  } : CLIENT_DEFAULTS;
+  
   // Create COA data object
   return {
     // Lab Information
@@ -90,7 +97,7 @@ export const generateDefaultCOAData = (
     sampleType: productConfig.sampleType,
     
     // Client Information
-    ...(clientData || CLIENT_DEFAULTS),
+    ...processedClientData,
     
     // Dates
     dateCollected: dates.collected,
