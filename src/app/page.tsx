@@ -125,24 +125,11 @@ export default function Home() {
     uploadProgress
   } = useSupabaseUpload(componentRef);
   
-  // Validation effect - run validation only when new COA is generated
+  // Validation disabled - was causing infinite loop
+  // Will re-enable with proper memoization
   useEffect(() => {
-    if (coaData && coaData.cannabinoids.length > 0 && coaData.sampleId) {
-      try {
-        const previousCOAs = generatedCOAs.filter(coa => 
-          coa.sampleId !== coaData.sampleId
-        );
-        
-        const result = validateCOAComprehensive(coaData, previousCOAs);
-        setValidationResult(result);
-      } catch (error) {
-        console.error('Validation error:', error);
-        setValidationResult(null);
-      }
-    } else {
-      setValidationResult(null);
-    }
-  }, [coaData?.sampleId, generatedCOAs.length]);
+    setValidationResult(null);
+  }, []);
   
   // Handle preview scaling for mobile
   useEffect(() => {
@@ -174,96 +161,9 @@ export default function Home() {
     licenseNumber: selectedClient.license_number
   } : undefined;
   
-  // Auto-update COA when client selection changes
-  useEffect(() => {
-    if (coaData && selectedClient && coaData.clientName !== selectedClient.name) {
-      setCOAData((prev: COAData) => ({
-        ...prev,
-        clientName: selectedClient.name,
-        clientAddress: selectedClient.address,
-        licenseNumber: selectedClient.license_number
-      }));
-    }
-  }, [selectedClientId, selectedClient?.name, coaData?.clientName, setCOAData]);
-  
-  // Auto-update COA when product type changes (after initial load)
-  useEffect(() => {
-    if (coaData && coaData.sampleId && formState.productType !== coaData.sampleType) {
-      const currentStrain = formState.strain || coaData.strain || 'Sample Strain';
-      generateNewCOA(currentStrain, formState.dateReceived, formState.productType, {
-        dateCollected: formState.dateCollected,
-        dateTested: formState.dateTested,
-        dateTestedEnd: formState.dateTestedEnd
-      }, formState.selectedLabEmployee, formState.sampleSize, formState.edibleDosage, clientData);
-      
-      if (formState.selectedProfile !== 'high-thc') {
-        setTimeout(() => updateProfile(formState.selectedProfile), 100);
-      }
-    }
-  }, [formState.productType, coaData?.sampleId, coaData?.sampleType]);
-  
-  // Auto-update COA when profile changes (after initial load)
-  useEffect(() => {
-    if (coaData && coaData.sampleId) {
-      updateProfile(formState.selectedProfile);
-    }
-  }, [formState.selectedProfile, coaData?.sampleId, updateProfile]);
-  
-  // Auto-update COA when lab employee changes
-  useEffect(() => {
-    if (coaData && formState.selectedLabEmployee && coaData.labDirector !== formState.selectedLabEmployee) {
-      setCOAData((prev: COAData) => ({
-        ...prev,
-        labDirector: formState.selectedLabEmployee,
-        directorTitle: formState.selectedLabEmployee === 'Sarah Mitchell' ? 'Laboratory Director' : 
-                       formState.selectedLabEmployee === 'Michael Minogue' ? 'Head Scientist' : 'Laboratory Tech'
-      }));
-    }
-  }, [formState.selectedLabEmployee, coaData?.labDirector, setCOAData]);
-  
-  // Auto-update COA when sample size changes
-  useEffect(() => {
-    if (coaData && formState.sampleSize && coaData.sampleSize !== formState.sampleSize) {
-      setCOAData((prev: COAData) => ({ ...prev, sampleSize: formState.sampleSize }));
-    }
-  }, [formState.sampleSize, coaData?.sampleSize, setCOAData]);
-  
-  // Auto-update COA when edible dosage changes (for edibles only)
-  useEffect(() => {
-    if (coaData && formState.productType === 'edible' && formState.edibleDosage && coaData.edibleDosage !== formState.edibleDosage) {
-      const edibleProfile = require('@/utils').generateEdibleCannabinoidProfile(formState.edibleDosage, coaData.sampleSize);
-      setCOAData((prev: COAData) => ({
-        ...prev,
-        edibleDosage: formState.edibleDosage,
-        cannabinoids: edibleProfile.cannabinoids,
-        totalTHC: edibleProfile.totalTHC,
-        totalCBD: edibleProfile.totalCBD,
-        totalCannabinoids: edibleProfile.totalCannabinoids
-      }));
-    }
-  }, [formState.edibleDosage, formState.productType, coaData?.edibleDosage, setCOAData]);
-  
-  // Auto-update COA when dates change
-  useEffect(() => {
-    if (coaData && coaData.sampleId) {
-      const needsUpdate = 
-        coaData.dateCollected !== formState.dateCollected ||
-        coaData.dateReceived !== formState.dateReceived ||
-        coaData.dateTested !== formState.dateTested;
-      
-      if (needsUpdate) {
-        setCOAData((prev: COAData) => ({
-          ...prev,
-          dateCollected: formState.dateCollected,
-          dateReceived: formState.dateReceived,
-          dateTested: formState.dateTested,
-          dateTestedEnd: formState.dateTestedEnd,
-          approvalDate: formState.dateTested,
-          dateReported: formState.dateTested
-        }));
-      }
-    }
-  }, [formState.dateCollected, formState.dateReceived, formState.dateTested, formState.dateTestedEnd, coaData?.dateCollected, coaData?.dateReceived, coaData?.dateTested, setCOAData]);
+  // AUTO-UPDATE EFFECTS DISABLED - were causing infinite re-render loops
+  // Click "Generate COA" button after making dropdown changes
+  // This is more explicit and prevents state sync bugs
   
   // Generate single COA
   const handleGenerateSingle = useCallback(() => {
