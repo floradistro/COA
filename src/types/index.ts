@@ -31,8 +31,8 @@ export interface COAData {
   
   // Client Information
   clientName: string;
-  clientAddress: string;
-  licenseNumber: string;
+  clientAddress: string | null;
+  licenseNumber: string | null;
   
   // Dates
   dateCollected: string;
