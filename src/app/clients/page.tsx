@@ -98,7 +98,7 @@ export default function ClientsPage() {
             name: formData.name,
             address: formData.address || null,
             license_number: formData.license_number || null,
-            email: formData.email || null
+            email: formData.email ? formData.email.toLowerCase().trim() : null
           })
           .eq('id', editingClient.id)
           .select()
@@ -109,9 +109,9 @@ export default function ClientsPage() {
         }
 
         // If email was added/changed and password provided, create/update auth
-        if (formData.email && formData.password && formData.email !== editingClient.email) {
+        if (formData.email && formData.password && formData.email.toLowerCase().trim() !== editingClient.email?.toLowerCase().trim()) {
           const { error: authError } = await supabase.auth.signUp({
-            email: formData.email,
+            email: formData.email.toLowerCase().trim(),
             password: formData.password,
             options: {
               emailRedirectTo: 'https://quantixanalytics.com/client-portal',
@@ -142,7 +142,7 @@ export default function ClientsPage() {
         // Create Supabase auth account if email/password provided
         if (formData.email && formData.password) {
           const { data: authData, error: authError } = await supabase.auth.signUp({
-            email: formData.email,
+            email: formData.email.toLowerCase().trim(),
             password: formData.password,
             options: {
               emailRedirectTo: 'https://quantixanalytics.com/client-portal',
@@ -159,7 +159,7 @@ export default function ClientsPage() {
             
             const { error: resendError } = await supabase.auth.resend({
               type: 'signup',
-              email: formData.email,
+              email: formData.email.toLowerCase().trim(),
               options: {
                 emailRedirectTo: 'https://quantixanalytics.com/client-portal'
               }
@@ -185,7 +185,7 @@ export default function ClientsPage() {
             name: formData.name,
             address: formData.address || null,
             license_number: formData.license_number || null,
-            email: formData.email || null
+            email: formData.email ? formData.email.toLowerCase().trim() : null
           }])
           .select()
           .single();
@@ -264,7 +264,7 @@ export default function ClientsPage() {
 
       const { error } = await supabase.auth.resend({
         type: 'signup',
-        email: client.email,
+        email: client.email.toLowerCase().trim(),
         options: {
           emailRedirectTo: 'https://quantixanalytics.com/client-portal'
         }
