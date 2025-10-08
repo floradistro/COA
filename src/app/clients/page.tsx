@@ -24,6 +24,7 @@ export default function ClientsPage() {
     password: ''
   });
   const [submitting, setSubmitting] = useState(false);
+  const [resendingEmail, setResendingEmail] = useState<Set<string>>(new Set());
 
   // Handle mounting to prevent hydration issues
   useEffect(() => {
@@ -136,6 +137,8 @@ export default function ClientsPage() {
       } 
       // ADD MODE
       else {
+        let wasAuthAccountReused = false;
+        
         // Create Supabase auth account if email/password provided
         if (formData.email && formData.password) {
           const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -149,15 +152,30 @@ export default function ClientsPage() {
             }
           });
 
-          if (authError) {
+          // If user already exists, try to resend verification email
+          if (authError && authError.message.includes('already registered')) {
+            console.log('Auth account already exists, attempting to resend verification...');
+            wasAuthAccountReused = true;
+            
+            const { error: resendError } = await supabase.auth.resend({
+              type: 'signup',
+              email: formData.email,
+              options: {
+                emailRedirectTo: 'https://quantixanalytics.com/client-portal'
+              }
+            });
+            
+            if (resendError) {
+              console.warn('Could not resend verification:', resendError);
+              // Don't fail the client creation if resend fails
+            } else {
+              console.log('✅ Verification email resent to:', formData.email);
+            }
+          } else if (authError) {
             throw new Error(`Failed to create Quantix portal account: ${authError.message}`);
+          } else if (authData.user) {
+            console.log('✅ Created Quantix portal account for:', authData.user.email);
           }
-
-          if (!authData.user) {
-            throw new Error('Failed to create portal account');
-          }
-
-          console.log('✅ Created Quantix portal account for:', authData.user.email);
         }
 
         // Insert client record
@@ -183,9 +201,16 @@ export default function ClientsPage() {
         setFormData({ name: '', address: '', license_number: '', email: '', password: '' });
         setShowAddForm(false);
         
-        const message = formData.email 
-          ? `✅ Successfully added client "${formData.name}"\n✅ Quantix portal account created for ${formData.email}\n\nClient can now login at www.quantixanalytics.com/client-portal`
-          : `✅ Successfully added client "${formData.name}"`;
+        // Determine the appropriate success message
+        let message = `✅ Successfully added client "${formData.name}"`;
+        if (formData.email) {
+          if (wasAuthAccountReused) {
+            message += `\n✅ Verification email resent to ${formData.email}`;
+          } else {
+            message += `\n✅ Quantix portal account created for ${formData.email}`;
+          }
+          message += `\n\nClient can login at www.quantixanalytics.com/client-portal after verifying their email`;
+        }
         alert(message);
       }
     } catch (err) {
@@ -225,6 +250,41 @@ export default function ClientsPage() {
     setEditingClient(null);
     setFormData({ name: '', address: '', license_number: '', email: '', password: '' });
     setShowAddForm(false);
+  };
+
+  // Handle resend verification email
+  const handleResendVerification = async (client: Client) => {
+    if (!client.email) {
+      alert('No email address associated with this client');
+      return;
+    }
+
+    try {
+      setResendingEmail(prev => new Set([...prev, client.id]));
+
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: client.email,
+        options: {
+          emailRedirectTo: 'https://quantixanalytics.com/client-portal'
+        }
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      alert(`✅ Verification email sent to ${client.email}\n\nPlease check the inbox (and spam folder) for the verification link.`);
+    } catch (err) {
+      console.error('Error resending verification:', err);
+      alert(err instanceof Error ? err.message : 'Failed to resend verification email');
+    } finally {
+      setResendingEmail(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(client.id);
+        return newSet;
+      });
+    }
   };
 
   // Handle delete client
@@ -523,6 +583,29 @@ export default function ClientsPage() {
                     </svg>
                     Edit Client
                   </button>
+                  
+                  {client.email && (
+                    <button
+                      onClick={() => handleResendVerification(client)}
+                      disabled={resendingEmail.has(client.id)}
+                      className="w-full px-4 py-2 bg-blue-900/30 text-blue-300 rounded-lg hover:bg-blue-900/50 hover:border-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium text-sm flex items-center justify-center gap-2 border border-blue-800"
+                    >
+                      {resendingEmail.has(client.id) ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-blue-300 border-t-transparent rounded-full animate-spin" />
+                          Sending...
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                          </svg>
+                          Resend Verification Email
+                        </>
+                      )}
+                    </button>
+                  )}
+                  
                   <button
                     onClick={() => handleDeleteClient(client)}
                     disabled={deletingClients.has(client.id)}
