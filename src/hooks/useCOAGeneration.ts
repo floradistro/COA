@@ -73,8 +73,8 @@ export const useCOAGeneration = (
     edibleDosage?: number,
     clientData?: {
       clientName: string;
-      clientAddress: string;
-      licenseNumber: string;
+      clientAddress: string | null;
+      licenseNumber: string | null;
     }
   ) => {
     const newData = generateDefaultCOAData(
