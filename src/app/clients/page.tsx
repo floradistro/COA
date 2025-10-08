@@ -273,7 +273,7 @@ export default function ClientsPage() {
               No clients added yet
             </h3>
             <p className="text-neutral-400">
-              Click "Add Client" to create your first client
+              Click &quot;Add Client&quot; to create your first client
             </p>
           </div>
         )}

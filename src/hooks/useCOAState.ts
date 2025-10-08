@@ -1,4 +1,4 @@
-import { useReducer, useCallback, useMemo } from 'react';
+import { useReducer, useCallback } from 'react';
 import { COAData, CannabinoidProfile } from '@/types';
 import { generateEdibleCannabinoidProfile, updateCOAWithProfile } from '@/utils';
 import { getEmployeeTitle } from '@/constants/labEmployees';

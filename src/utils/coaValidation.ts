@@ -12,7 +12,7 @@ import { DECARB_FACTOR } from '@/constants/cannabinoids';
 /**
  * Debug logging for validation
  */
-const debugLog = (message: string, data?: unknown) => {
+const debugLog = () => {
   // Validation logging disabled - was causing console spam
   return;
 };

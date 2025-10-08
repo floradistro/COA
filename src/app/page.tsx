@@ -9,7 +9,7 @@ import {
   getTodayString,
   getUserFriendlyMessage,
   setNotificationCallback,
-  validateCOAComprehensive
+  generateEdibleCannabinoidProfile
 } from '@/utils';
 import { DEFAULT_SAMPLE_SIZE } from '@/constants/defaults';
 import { getEmployeeTitle } from '@/constants/labEmployees';
@@ -53,11 +53,8 @@ export default function Home() {
   const [selectedClientId, setSelectedClientId] = useState<string>('');
   const [loadingClients, setLoadingClients] = useState(true);
   
-  // Batch progress state
-  const [batchProgress, setBatchProgress] = useState<{ current: number; total: number } | null>(null);
-  
-  // Validation state
-  const [validationResult, setValidationResult] = useState<ComprehensiveValidationResult | null>(null);
+  // Validation state (disabled to prevent loops)
+  const validationResult = null;
   
   // Use custom hooks
   const {
@@ -129,11 +126,6 @@ export default function Home() {
     uploadProgress
   } = useSupabaseUpload(componentRef);
   
-  // Validation disabled - was causing infinite loop
-  // Will re-enable with proper memoization
-  useEffect(() => {
-    setValidationResult(null);
-  }, []);
   
   // Handle preview scaling for mobile
   useEffect(() => {
@@ -233,7 +225,7 @@ export default function Home() {
   const handleEdibleDosageChange = useCallback((dosage: number) => {
     setFormState(prev => ({ ...prev, edibleDosage: dosage }));
     if (coaData && coaData.sampleId && formState.productType === 'edible') {
-      const edibleProfile = require('@/utils').generateEdibleCannabinoidProfile(dosage, coaData.sampleSize);
+      const edibleProfile = generateEdibleCannabinoidProfile(dosage, coaData.sampleSize);
       setCOAData((prev: COAData) => ({
         ...prev,
         edibleDosage: dosage,
@@ -299,21 +291,13 @@ export default function Home() {
   // Supabase upload handlers
   const handleUploadToSupabase = useCallback(async () => {
     try {
-      // Check validation before upload
-      if (validationResult && validationResult.errors.length > 0) {
-        const confirmed = window.confirm(
-          `This COA has ${validationResult.errors.length} validation error(s). Do you want to upload anyway?`
-        );
-        if (!confirmed) return;
-      }
-      
       await uploadSingleCOA(coaData, setCOAData, generatedCOAs, setGeneratedCOAs, currentCOAIndex);
       showNotification('success', 'COA uploaded successfully to cloud storage!');
     } catch (error) {
       const message = getUserFriendlyMessage(error);
       showNotification('error', message);
     }
-  }, [coaData, uploadSingleCOA, showNotification, validationResult, generatedCOAs, setGeneratedCOAs, currentCOAIndex, setCOAData]);
+  }, [coaData, uploadSingleCOA, showNotification, generatedCOAs, setGeneratedCOAs, currentCOAIndex, setCOAData]);
   
   const handleUploadAllToSupabase = useCallback(async () => {
     try {
@@ -353,8 +337,6 @@ export default function Home() {
         isMultiStrain: false,
         strainList: ''
       });
-      
-      setValidationResult(null);
       
       setTimeout(() => {
         showNotification('success', `Successfully burned ${coaCount > 0 ? coaCount + ' COA(s) and' : ''} all session data`);
