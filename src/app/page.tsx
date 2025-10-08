@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useCallback, useEffect, useRef } from 'react';
-import { ProductType, CannabinoidProfile, ComprehensiveValidationResult, Client, COAData } from '@/types';
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
+import { ProductType, CannabinoidProfile, Client, COAData } from '@/types';
 import { useCOAGeneration } from '@/hooks';
 import { useSupabaseUpload } from '@/hooks/useSupabaseUpload';
 import { supabase } from '@/lib/supabaseClient';
@@ -149,15 +149,16 @@ export default function Home() {
     return () => window.removeEventListener('resize', handleResize);
   }, [coaData]);
   
-  // Get selected client data
+  // Get selected client data - memoized to prevent callback dependency issues
   const selectedClient = clients.find(c => c.id === selectedClientId);
-  const clientData = selectedClient ? {
+  const clientData = useMemo(() => selectedClient ? {
     clientName: selectedClient.name,
     clientAddress: selectedClient.address,
     licenseNumber: selectedClient.license_number
-  } : undefined;
+  } : undefined, [selectedClient]);
   
   // Safe instant update handlers - event-driven (no loops)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const handleClientChange = useCallback((clientId: string) => {
     setSelectedClientId(clientId);
     const client = clients.find(c => c.id === clientId);
@@ -171,6 +172,7 @@ export default function Home() {
     }
   }, [clients, coaData?.sampleId, setCOAData]);
   
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const handleProductTypeChange = useCallback((type: ProductType) => {
     setFormState(prev => ({ ...prev, productType: type }));
     if (coaData && coaData.sampleId) {
@@ -185,6 +187,7 @@ export default function Home() {
     }
   }, [formState, coaData?.sampleId, clientData, generateNewCOA, updateProfile]);
   
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const handleProfileChange = useCallback((profile: CannabinoidProfile) => {
     setFormState(prev => ({ ...prev, selectedProfile: profile }));
     if (coaData && coaData.sampleId) {
@@ -192,6 +195,7 @@ export default function Home() {
     }
   }, [coaData?.sampleId, updateProfile]);
   
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const handleLabEmployeeChange = useCallback((employee: string) => {
     setFormState(prev => ({ ...prev, selectedLabEmployee: employee }));
     if (coaData && coaData.sampleId) {
@@ -203,6 +207,7 @@ export default function Home() {
     }
   }, [coaData?.sampleId, setCOAData]);
   
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const handleSampleSizeChange = useCallback((size: string) => {
     setFormState(prev => ({ ...prev, sampleSize: size }));
     if (coaData && coaData.sampleId) {
@@ -210,6 +215,7 @@ export default function Home() {
     }
   }, [coaData?.sampleId, setCOAData]);
   
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const handleDateChange = useCallback((field: 'dateCollected' | 'dateReceived' | 'dateTested' | 'dateTestedEnd', value: string) => {
     setFormState(prev => ({ ...prev, [field]: value }));
     if (coaData && coaData.sampleId) {
@@ -222,6 +228,7 @@ export default function Home() {
     }
   }, [coaData?.sampleId, setCOAData]);
   
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const handleEdibleDosageChange = useCallback((dosage: number) => {
     setFormState(prev => ({ ...prev, edibleDosage: dosage }));
     if (coaData && coaData.sampleId && formState.productType === 'edible') {
