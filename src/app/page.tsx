@@ -125,26 +125,16 @@ export default function Home() {
     uploadProgress
   } = useSupabaseUpload(componentRef);
   
-  // Validation effect - run validation whenever COA data changes
+  // Validation effect - run validation only when new COA is generated
   useEffect(() => {
-    if (coaData && coaData.cannabinoids.length > 0) {
+    if (coaData && coaData.cannabinoids.length > 0 && coaData.sampleId) {
       try {
-        // Filter out the current COA from the comparison to avoid false positives
-        // Only exclude the exact same COA (same sample ID), but allow comparison with other COAs
         const previousCOAs = generatedCOAs.filter(coa => 
           coa.sampleId !== coaData.sampleId
         );
         
         const result = validateCOAComprehensive(coaData, previousCOAs);
         setValidationResult(result);
-        
-        // Show notification for critical errors
-        if (result.errors.length > 0) {
-          const criticalErrors = result.errors.filter(e => e.severity === 'error');
-          if (criticalErrors.length > 0) {
-            showNotification('warning', `Validation found ${criticalErrors.length} critical error(s)`);
-          }
-        }
       } catch (error) {
         console.error('Validation error:', error);
         setValidationResult(null);
@@ -152,7 +142,7 @@ export default function Home() {
     } else {
       setValidationResult(null);
     }
-  }, [coaData, generatedCOAs, showNotification]);
+  }, [coaData?.sampleId, generatedCOAs.length]);
   
   // Handle preview scaling for mobile
   useEffect(() => {

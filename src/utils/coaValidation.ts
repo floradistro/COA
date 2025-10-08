@@ -13,9 +13,8 @@ import { DECARB_FACTOR } from '@/constants/cannabinoids';
  * Debug logging for validation
  */
 const debugLog = (message: string, data?: unknown) => {
-  if (process.env.NODE_ENV === 'development') {
-    console.log(`[COA Validation] ${message}`, data);
-  }
+  // Validation logging disabled - was causing console spam
+  return;
 };
 
 /**
