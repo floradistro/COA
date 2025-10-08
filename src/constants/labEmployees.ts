@@ -1,7 +1,6 @@
 // Lab employee definitions with their roles/titles
 export const LAB_EMPLOYEE_ROLES = {
   'Sarah Mitchell': 'Laboratory Director',
-  'Michael Minogue': 'Head Scientist',
   'K. Patel': 'Laboratory Tech'
 } as const;
 

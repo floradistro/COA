@@ -12,7 +12,6 @@ export const LAB_DEFAULTS = {
 // Lab employees with roles for approval signatures
 export const LAB_EMPLOYEES = [
   { name: 'Sarah Mitchell', role: 'Laboratory Director' },
-  { name: 'Michael Minogue', role: 'Head Scientist' },
   { name: 'K. Patel', role: 'Laboratory Tech' }
 ];
 

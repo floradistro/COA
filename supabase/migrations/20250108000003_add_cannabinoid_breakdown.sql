@@ -1,0 +1,14 @@
+-- Add individual cannabinoid columns
+ALTER TABLE coa_metadata
+ADD COLUMN IF NOT EXISTS thca NUMERIC,
+ADD COLUMN IF NOT EXISTS delta9_thc NUMERIC,
+ADD COLUMN IF NOT EXISTS cbda NUMERIC,
+ADD COLUMN IF NOT EXISTS cbg NUMERIC,
+ADD COLUMN IF NOT EXISTS cbga NUMERIC,
+ADD COLUMN IF NOT EXISTS cbn NUMERIC,
+ADD COLUMN IF NOT EXISTS cbc NUMERIC;
+
+-- Add comment
+COMMENT ON COLUMN coa_metadata.thca IS 'THCA percentage';
+COMMENT ON COLUMN coa_metadata.delta9_thc IS 'Delta-9 THC percentage';
+

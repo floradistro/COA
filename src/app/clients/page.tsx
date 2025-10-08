@@ -13,12 +13,15 @@ export default function ClientsPage() {
   const [mounted, setMounted] = useState(false);
   const [deletingClients, setDeletingClients] = useState<Set<string>>(new Set());
   const [showAddForm, setShowAddForm] = useState(false);
+  const [editingClient, setEditingClient] = useState<Client | null>(null);
   
   // Form state
   const [formData, setFormData] = useState({
     name: '',
     address: '',
-    license_number: ''
+    license_number: '',
+    email: '',
+    password: ''
   });
   const [submitting, setSubmitting] = useState(false);
 
@@ -61,42 +64,165 @@ export default function ClientsPage() {
   const handleAddClient = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.name || !formData.address || !formData.license_number) {
-      alert('Please fill in all fields');
+    if (!formData.name) {
+      alert('Please enter a client name');
+      return;
+    }
+
+    // Validate email/password if provided
+    if (formData.email && !formData.password && !editingClient) {
+      alert('Please provide a password for Quantix portal access');
+      return;
+    }
+
+    if (formData.password && formData.password.length < 6) {
+      alert('Password must be at least 6 characters');
+      return;
+    }
+
+    if (formData.password && !formData.email) {
+      alert('Please provide an email address for Quantix portal access');
       return;
     }
 
     try {
       setSubmitting(true);
 
-      const { data, error: insertError } = await supabase
-        .from('clients')
-        .insert([{
-          name: formData.name,
-          address: formData.address,
-          license_number: formData.license_number
-        }])
-        .select()
-        .single();
+      // EDIT MODE
+      if (editingClient) {
+        // Update existing client
+        const { data, error: updateError } = await supabase
+          .from('clients')
+          .update({
+            name: formData.name,
+            address: formData.address || null,
+            license_number: formData.license_number || null,
+            email: formData.email || null
+          })
+          .eq('id', editingClient.id)
+          .select()
+          .single();
 
-      if (insertError) {
-        throw insertError;
+        if (updateError) {
+          throw updateError;
+        }
+
+        // If email was added/changed and password provided, create/update auth
+        if (formData.email && formData.password && formData.email !== editingClient.email) {
+          const { error: authError } = await supabase.auth.signUp({
+            email: formData.email,
+            password: formData.password,
+            options: {
+              data: {
+                client_name: formData.name,
+              }
+            }
+          });
+
+          if (authError && !authError.message.includes('already registered')) {
+            console.warn('Auth account creation warning:', authError);
+          }
+        }
+
+        // Update local state
+        setClients(prev => prev.map(c => c.id === editingClient.id ? data : c).sort((a, b) => a.name.localeCompare(b.name)));
+        
+        setFormData({ name: '', address: '', license_number: '', email: '', password: '' });
+        setEditingClient(null);
+        setShowAddForm(false);
+        
+        alert(`✅ Successfully updated client "${formData.name}"`);
+      } 
+      // ADD MODE
+      else {
+        // Create Supabase auth account if email/password provided
+        if (formData.email && formData.password) {
+          const { data: authData, error: authError } = await supabase.auth.signUp({
+            email: formData.email,
+            password: formData.password,
+            options: {
+              data: {
+                client_name: formData.name,
+              }
+            }
+          });
+
+          if (authError) {
+            throw new Error(`Failed to create Quantix portal account: ${authError.message}`);
+          }
+
+          if (!authData.user) {
+            throw new Error('Failed to create portal account');
+          }
+
+          console.log('✅ Created Quantix portal account for:', authData.user.email);
+        }
+
+        // Insert client record
+        const { data, error: insertError } = await supabase
+          .from('clients')
+          .insert([{
+            name: formData.name,
+            address: formData.address || null,
+            license_number: formData.license_number || null,
+            email: formData.email || null
+          }])
+          .select()
+          .single();
+
+        if (insertError) {
+          throw insertError;
+        }
+
+        // Add to local state
+        setClients(prev => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)));
+        
+        // Reset form
+        setFormData({ name: '', address: '', license_number: '', email: '', password: '' });
+        setShowAddForm(false);
+        
+        const message = formData.email 
+          ? `✅ Successfully added client "${formData.name}"\n✅ Quantix portal account created for ${formData.email}\n\nClient can now login at www.quantixanalytics.com/client-portal`
+          : `✅ Successfully added client "${formData.name}"`;
+        alert(message);
       }
-
-      // Add to local state
-      setClients(prev => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)));
-      
-      // Reset form
-      setFormData({ name: '', address: '', license_number: '' });
-      setShowAddForm(false);
-      
-      alert(`Successfully added client: ${formData.name}`);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error adding client:', err);
-      alert(err instanceof Error ? err.message : 'Failed to add client');
+      
+      // Extract detailed error message
+      let errorMessage = 'Failed to add client';
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      } else if (err?.message) {
+        errorMessage = err.message;
+      } else if (err?.error) {
+        errorMessage = err.error;
+      } else if (typeof err === 'string') {
+        errorMessage = err;
+      }
+      
+      alert(errorMessage);
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleEditClient = (client: Client) => {
+    setEditingClient(client);
+    setFormData({
+      name: client.name,
+      address: client.address || '',
+      license_number: client.license_number || '',
+      email: client.email || '',
+      password: ''
+    });
+    setShowAddForm(true);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingClient(null);
+    setFormData({ name: '', address: '', license_number: '', email: '', password: '' });
+    setShowAddForm(false);
   };
 
   // Handle delete client
@@ -175,8 +301,14 @@ export default function ClientsPage() {
               </p>
             </div>
             <button
-              onClick={() => setShowAddForm(!showAddForm)}
-              className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+              onClick={() => {
+                if (showAddForm) {
+                  handleCancelEdit();
+                } else {
+                  setShowAddForm(true);
+                }
+              }}
+              className="px-6 py-3 bg-neutral-200 text-neutral-900 rounded-lg hover:bg-white transition-colors font-medium"
             >
               {showAddForm ? 'Cancel' : '+ Add Client'}
             </button>
@@ -189,10 +321,12 @@ export default function ClientsPage() {
           )}
         </div>
 
-        {/* Add Client Form */}
+        {/* Add/Edit Client Form */}
         {showAddForm && (
           <div className="mb-8 bg-neutral-800/50 backdrop-blur-sm rounded-2xl p-6 sm:p-8 border border-neutral-700/50 shadow-xl">
-            <h3 className="text-2xl font-bold text-neutral-100 mb-6">Add New Client</h3>
+            <h3 className="text-2xl font-bold text-neutral-100 mb-6">
+              {editingClient ? 'Edit Client' : 'Add New Client'}
+            </h3>
             <form onSubmit={handleAddClient} className="space-y-4">
               <div>
                 <label htmlFor="name" className="block text-sm font-medium text-neutral-300 mb-2">
@@ -204,14 +338,14 @@ export default function ClientsPage() {
                   value={formData.name}
                   onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                   placeholder="e.g., Flora Distribution Group LLC"
-                  className="w-full px-4 py-2 bg-neutral-800 border border-neutral-700 text-neutral-100 placeholder-neutral-500 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-2 bg-neutral-900 border border-neutral-700 text-neutral-100 placeholder-neutral-500 rounded-lg focus:ring-1 focus:ring-neutral-500 focus:border-neutral-500"
                   required
                 />
               </div>
               
               <div>
                 <label htmlFor="address" className="block text-sm font-medium text-neutral-300 mb-2">
-                  Address *
+                  Address
                 </label>
                 <textarea
                   id="address"
@@ -219,14 +353,13 @@ export default function ClientsPage() {
                   onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
                   placeholder="e.g., 4111 E Rose Lake Dr&#10;Charlotte, NC 28217"
                   rows={3}
-                  className="w-full px-4 py-2 bg-neutral-800 border border-neutral-700 text-neutral-100 placeholder-neutral-500 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  required
+                  className="w-full px-4 py-2 bg-neutral-900 border border-neutral-700 text-neutral-100 placeholder-neutral-500 rounded-lg focus:ring-1 focus:ring-neutral-500 focus:border-neutral-500"
                 />
               </div>
               
               <div>
                 <label htmlFor="license_number" className="block text-sm font-medium text-neutral-300 mb-2">
-                  License Number *
+                  License Number
                 </label>
                 <input
                   type="text"
@@ -234,22 +367,83 @@ export default function ClientsPage() {
                   value={formData.license_number}
                   onChange={(e) => setFormData(prev => ({ ...prev, license_number: e.target.value }))}
                   placeholder="e.g., USDA_37_0979"
-                  className="w-full px-4 py-2 bg-neutral-800 border border-neutral-700 text-neutral-100 placeholder-neutral-500 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  required
+                  className="w-full px-4 py-2 bg-neutral-900 border border-neutral-700 text-neutral-100 placeholder-neutral-500 rounded-lg focus:ring-1 focus:ring-neutral-500 focus:border-neutral-500"
                 />
+              </div>
+
+              {/* Quantix Portal Access Section */}
+              <div className="border-t border-neutral-700 pt-6 mt-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-2 bg-neutral-700 rounded-lg">
+                    <svg className="w-5 h-5 text-neutral-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h4 className="text-lg font-semibold text-neutral-200">Quantix Portal Access</h4>
+                    <p className="text-xs text-neutral-400">Give client access to view their COAs online</p>
+                  </div>
+                </div>
+                
+                <div className="space-y-4 bg-neutral-800/30 p-4 rounded-lg border border-neutral-700">
+                  <div>
+                    <label htmlFor="email" className="block text-sm font-medium text-neutral-300 mb-2">
+                      Email Address
+                    </label>
+                    <input
+                      type="email"
+                      id="email"
+                      value={formData.email}
+                      onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                      placeholder="client@company.com"
+                      className="w-full px-4 py-2 bg-neutral-900 border border-neutral-700 text-neutral-100 placeholder-neutral-500 rounded-lg focus:ring-1 focus:ring-neutral-500 focus:border-neutral-500"
+                    />
+                    <p className="text-xs text-neutral-500 mt-1">Client will use this to login at quantixanalytics.com</p>
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="password" className="block text-sm font-medium text-neutral-300 mb-2">
+                      Password {editingClient && '(leave blank to keep current)'}
+                    </label>
+                    <input
+                      type="password"
+                      id="password"
+                      value={formData.password}
+                      onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+                      placeholder={editingClient ? "Leave blank to keep current password" : "Minimum 6 characters"}
+                      className="w-full px-4 py-2 bg-neutral-900 border border-neutral-700 text-neutral-100 placeholder-neutral-500 rounded-lg focus:ring-1 focus:ring-neutral-500 focus:border-neutral-500"
+                    />
+                    <p className="text-xs text-neutral-500 mt-1">
+                      {editingClient ? 'Only enter if changing password' : 'Create a secure password for the client'}
+                    </p>
+                  </div>
+
+                  <div className="bg-neutral-900/50 border border-neutral-700 rounded-lg p-3">
+                    <div className="flex gap-2">
+                      <svg className="w-5 h-5 text-neutral-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <p className="text-xs text-neutral-400">
+                        {editingClient 
+                          ? 'Update email/password to modify portal access'
+                          : 'Leave blank to skip portal access. You can add it later by editing the client.'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
               
               <div className="flex gap-3">
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+                  className="px-6 py-2 bg-neutral-200 text-neutral-900 rounded-lg hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
                 >
-                  {submitting ? 'Adding...' : 'Add Client'}
+                  {submitting ? (editingClient ? 'Saving...' : 'Adding...') : (editingClient ? 'Save Changes' : 'Add Client')}
                 </button>
                 <button
                   type="button"
-                  onClick={() => setShowAddForm(false)}
+                  onClick={handleCancelEdit}
                   className="px-6 py-2 bg-neutral-700 text-neutral-100 rounded-lg hover:bg-neutral-600 transition-colors font-medium"
                 >
                   Cancel
@@ -287,22 +481,50 @@ export default function ClientsPage() {
                 className="bg-neutral-800/50 backdrop-blur-sm rounded-xl shadow-lg border border-neutral-700/50 p-6"
               >
                 <div className="mb-4">
-                  <h3 className="text-xl font-semibold text-neutral-100 mb-2">
-                    {client.name}
-                  </h3>
-                  <div className="text-sm text-neutral-400 whitespace-pre-line mb-2">
-                    {client.address}
+                  <div className="flex items-start justify-between mb-2">
+                    <h3 className="text-xl font-semibold text-neutral-100">
+                      {client.name}
+                    </h3>
+                    {client.email && (
+                      <span className="text-xs bg-neutral-700 text-neutral-300 px-2 py-1 rounded border border-neutral-600 flex items-center gap-1">
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                        Portal
+                      </span>
+                    )}
                   </div>
-                  <div className="text-sm text-neutral-400">
-                    <span className="font-medium">License:</span> {client.license_number}
-                  </div>
+                  {client.address && (
+                    <div className="text-sm text-neutral-400 whitespace-pre-line mb-2">
+                      {client.address}
+                    </div>
+                  )}
+                  {client.license_number && (
+                    <div className="text-sm text-neutral-400 mb-1">
+                      <span className="font-medium">License:</span> {client.license_number}
+                    </div>
+                  )}
+                  {client.email && (
+                    <div className="text-sm text-neutral-400">
+                      <span className="font-medium">Email:</span> {client.email}
+                    </div>
+                  )}
                 </div>
                 
-                <div className="pt-4 border-t border-neutral-700">
+                <div className="pt-4 border-t border-neutral-700 space-y-2">
+                  <button
+                    onClick={() => handleEditClient(client)}
+                    className="w-full px-4 py-2 bg-neutral-700 text-neutral-100 rounded-lg hover:bg-neutral-600 transition-colors font-medium text-sm flex items-center justify-center gap-2"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    Edit Client
+                  </button>
                   <button
                     onClick={() => handleDeleteClient(client)}
                     disabled={deletingClients.has(client.id)}
-                    className="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium text-sm flex items-center justify-center gap-2"
+                    className="w-full px-4 py-2 bg-neutral-800 text-neutral-400 rounded-lg hover:bg-neutral-900 hover:text-red-400 hover:border-red-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium text-sm flex items-center justify-center gap-2 border border-neutral-700"
                   >
                     {deletingClients.has(client.id) ? (
                       <>
@@ -336,4 +558,5 @@ export default function ClientsPage() {
     </div>
   );
 }
+
 

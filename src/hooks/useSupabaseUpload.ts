@@ -81,8 +81,8 @@ export const useSupabaseUpload = (componentRef?: React.RefObject<HTMLDivElement 
       
       setUploadProgress(60);
       
-      // Upload PDF to storage
-      const publicUrl = await uploadPDF(uniqueFilename, pdfBuffer);
+      // Upload PDF to storage with metadata
+      const publicUrl = await uploadPDF(uniqueFilename, pdfBuffer, updatedCOAData);
       
       setUploadProgress(80);
       
@@ -197,9 +197,9 @@ export const useSupabaseUpload = (componentRef?: React.RefObject<HTMLDivElement 
           updateCurrentCOA(updatedCOAData);
           await new Promise(resolve => setTimeout(resolve, 300));
           
-          // Export to PDF and upload
+          // Export to PDF and upload with metadata
           const pdfBuffer = await exportToPDF(element);
-          const publicUrl = await uploadPDF(uniqueFilename, pdfBuffer);
+          const publicUrl = await uploadPDF(uniqueFilename, pdfBuffer, updatedCOAData);
           
           // Update the COA in the array if this is the current one
           if (coaDataArray[i].sampleId === currentCOAData.sampleId) {

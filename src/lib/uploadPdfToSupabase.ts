@@ -1,6 +1,7 @@
 import { supabase } from './supabaseClient'
+import { COAData } from '@/types'
 
-export async function uploadPdfToSupabase(filename: string, fileBuffer: Buffer, useProvidedFilename: boolean = false): Promise<string> {
+export async function uploadPdfToSupabase(filename: string, fileBuffer: Buffer, useProvidedFilename: boolean = false, coaData?: COAData): Promise<string> {
   try {
     // Use provided filename if specified, otherwise add timestamp for uniqueness
     const finalFilename = useProvidedFilename ? filename : `${Date.now()}_${filename}`;
@@ -71,6 +72,64 @@ export async function uploadPdfToSupabase(filename: string, fileBuffer: Buffer, 
     console.log('Generated lab site viewer URL:', viewerUrl);
     console.log('Clean filename (without .pdf):', cleanFilename);
     console.log('=== END UPLOAD DEBUG ===');
+    
+    // Save COA metadata to database
+    if (coaData) {
+      try {
+        const parts = cleanFilename.split('/');
+        const clientName = parts.length > 1 ? parts[0] : 'Uncategorized';
+        const strainName = parts.length > 1 ? parts[1] : parts[0];
+
+        // Find THCA and Delta-9 THC from cannabinoids array
+        const thcaCannabinoid = coaData.cannabinoids.find(c => c.name === 'THCa');
+        const delta9Cannabinoid = coaData.cannabinoids.find(c => c.name === 'Δ9-THC');
+        const cbdaCannabinoid = coaData.cannabinoids.find(c => c.name === 'CBDa');
+        const cbgCannabinoid = coaData.cannabinoids.find(c => c.name === 'CBG');
+        const cbgaCannabinoid = coaData.cannabinoids.find(c => c.name === 'CBGa');
+        const cbnCannabinoid = coaData.cannabinoids.find(c => c.name === 'CBN');
+        const cbcCannabinoid = coaData.cannabinoids.find(c => c.name === 'CBC');
+
+        const { error: metadataError } = await supabase
+          .from('coa_metadata')
+          .upsert({
+            file_path: cleanFilename,
+            client_name: clientName,
+            strain_name: strainName,
+            sample_id: coaData.sampleId,
+            batch_id: coaData.batchId,
+            sample_type: coaData.sampleType,
+            total_thc: coaData.totalTHC,
+            total_cbd: coaData.totalCBD,
+            total_cannabinoids: coaData.totalCannabinoids,
+            thca: thcaCannabinoid?.percentWeight || null,
+            delta9_thc: delta9Cannabinoid?.percentWeight || null,
+            cbda: cbdaCannabinoid?.percentWeight || null,
+            cbg: cbgCannabinoid?.percentWeight || null,
+            cbga: cbgaCannabinoid?.percentWeight || null,
+            cbn: cbnCannabinoid?.percentWeight || null,
+            cbc: cbcCannabinoid?.percentWeight || null,
+            date_collected: coaData.dateCollected,
+            date_received: coaData.dateReceived,
+            date_tested: coaData.dateTested,
+            date_reported: coaData.dateReported,
+            approval_date: coaData.approvalDate,
+            method_reference: coaData.methodReference,
+            lab_name: coaData.labName,
+            lab_director: coaData.labDirector,
+            client_address: coaData.clientAddress,
+            client_license: coaData.licenseNumber,
+            test_status: 'Complete'
+          });
+
+        if (metadataError) {
+          console.error('Error saving COA metadata:', metadataError);
+        } else {
+          console.log('✅ Saved COA metadata to database');
+        }
+      } catch (err) {
+        console.error('Error in metadata save:', err);
+      }
+    }
     
     // Note: We cannot test the URL accessibility directly anymore since it requires
     // the quantixanalytics.com backend to fetch from private Supabase
