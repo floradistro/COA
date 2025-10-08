@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import JSZip from 'jszip';
-import Link from 'next/link';
 
 interface COAFile {
   id: string;
@@ -492,129 +491,122 @@ export default function LiveCOAsPage() {
   return (
     <div className="min-h-screen bg-neutral-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Header */}
-        <div className="mb-8 bg-neutral-800/50 backdrop-blur-sm rounded-2xl p-6 sm:p-8 border border-neutral-700/50 shadow-xl">
-          <div className="flex items-center gap-4 mb-4">
-            <Link href="/" className="text-neutral-400 hover:text-neutral-200 transition-colors">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-              </svg>
-            </Link>
-            <h1 className="text-4xl font-bold text-neutral-100" style={{ fontFamily: 'Lobster, cursive' }}>
-              WhaleTools
-            </h1>
-            <span className="text-2xl text-neutral-500">•</span>
-            <h2 className="text-3xl font-bold text-neutral-100">Live COAs</h2>
+        {/* Error Display */}
+        {error && (
+          <div className="mb-8 p-4 bg-red-900/50 text-red-200 rounded-lg whitespace-pre-line border border-red-700/50">
+            {error}
           </div>
-          <p className="text-lg text-neutral-300">
-            View and manage all uploaded Certificates of Analysis. These COAs are accessible via www.quantixanalytics.com.
-          </p>
-          {error && (
-            <div className="mt-4 p-4 bg-red-900/50 text-red-200 rounded-lg whitespace-pre-line border border-red-700/50">
-              {error}
-            </div>
-          )}
-        </div>
+        )}
 
-        {/* Search Bar, Client Filter, and Bulk Actions */}
-        <div className="mb-8 flex flex-col gap-4">
-          {/* Search and Client Filter Row */}
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1 max-w-md">
-              <label htmlFor="search" className="block text-sm font-medium text-neutral-300 mb-2">
-                Search COAs
-              </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  id="search"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Search by strain, client, or filename..."
-                  className="w-full px-4 py-2 pl-10 bg-neutral-800 border border-neutral-700 text-neutral-100 placeholder-neutral-500 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-                <svg
-                  className="absolute left-3 top-2.5 h-5 w-5 text-neutral-500"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
-              </div>
-            </div>
-
-            <div className="flex-1 max-w-md">
-              <label htmlFor="clientFilter" className="block text-sm font-medium text-neutral-300 mb-2">
-                Filter by Client
-              </label>
-              <select
-                id="clientFilter"
-                value={selectedClient}
-                onChange={(e) => setSelectedClient(e.target.value)}
-                className="w-full px-4 py-2 bg-neutral-800 border border-neutral-700 text-neutral-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        {/* VSCode-Style Toolbar */}
+        <div className="mb-8 bg-neutral-800/90 backdrop-blur-sm border border-neutral-700 rounded-lg shadow-lg">
+          <div className="flex flex-wrap items-center gap-2 p-2">
+            {/* Search Input */}
+            <div className="relative flex-1 min-w-[200px] max-w-xs">
+              <input
+                type="text"
+                id="search"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search..."
+                className="w-full px-3 py-1.5 pl-8 bg-neutral-900 border border-neutral-700 text-neutral-100 placeholder-neutral-500 rounded text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+              />
+              <svg
+                className="absolute left-2.5 top-2 h-4 w-4 text-neutral-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
               >
-                <option value="all">All Clients ({coaFiles.length})</option>
-                {clientFolders.map(folder => {
-                  const count = coaFiles.filter(coa => coa.clientFolder === folder).length;
-                  return (
-                    <option key={folder} value={folder}>
-                      {folder.replace(/_/g, ' ')} ({count})
-                    </option>
-                  );
-                })}
-              </select>
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
             </div>
-          </div>
 
-          {/* Bulk Actions Row */}
-          <div className="flex flex-wrap gap-2 items-center">
+            {/* Divider */}
+            <div className="h-6 w-px bg-neutral-700"></div>
+
+            {/* Client Filter */}
+            <select
+              id="clientFilter"
+              value={selectedClient}
+              onChange={(e) => setSelectedClient(e.target.value)}
+              className="px-3 py-1.5 bg-neutral-900 border border-neutral-700 text-neutral-100 rounded text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500 focus:outline-none cursor-pointer"
+            >
+              <option value="all">All Clients ({coaFiles.length})</option>
+              {clientFolders.map(folder => {
+                const count = coaFiles.filter(coa => coa.clientFolder === folder).length;
+                return (
+                  <option key={folder} value={folder}>
+                    {folder.replace(/_/g, ' ')} ({count})
+                  </option>
+                );
+              })}
+            </select>
+
+            {/* Divider */}
+            {filteredCOAs.length > 0 && <div className="h-6 w-px bg-neutral-700"></div>}
+
+            {/* Action Buttons */}
             {filteredCOAs.length > 0 && (
               <>
                 <button
                   onClick={handleSelectAll}
-                  className="px-4 py-2 bg-neutral-700 text-neutral-100 rounded-lg hover:bg-neutral-600 transition-colors font-medium text-sm border border-neutral-600"
+                  className="px-3 py-1.5 bg-neutral-700 text-neutral-200 rounded hover:bg-neutral-600 transition-colors text-sm font-medium flex items-center gap-1.5"
+                  title={selectedCOAs.size === filteredCOAs.length ? 'Deselect All' : 'Select All'}
                 >
-                  {selectedCOAs.size === filteredCOAs.length ? 'Deselect All' : 'Select All'}
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  {selectedCOAs.size === filteredCOAs.length ? 'Deselect' : 'Select All'}
                 </button>
+
                 {selectedCOAs.size > 0 && (
                   <>
                     <button
                       onClick={handleExportSelected}
                       disabled={exporting}
-                      className="px-4 py-2 bg-neutral-800 text-neutral-100 rounded-lg hover:bg-neutral-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium text-sm flex items-center gap-2 border border-neutral-700"
+                      className="px-3 py-1.5 bg-neutral-700 text-neutral-200 rounded hover:bg-neutral-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium flex items-center gap-1.5"
+                      title={`Export ${selectedCOAs.size} COA${selectedCOAs.size !== 1 ? 's' : ''}`}
                     >
                       {exporting ? (
-                        <div className="w-4 h-4 border-2 border-neutral-100 border-t-transparent rounded-full animate-spin" />
+                        <div className="w-4 h-4 border-2 border-neutral-200 border-t-transparent rounded-full animate-spin" />
                       ) : (
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
                       )}
-                      Export {selectedCOAs.size} COA{selectedCOAs.size !== 1 ? 's' : ''}
+                      Export ({selectedCOAs.size})
                     </button>
                     <button
                       onClick={handleClearSelection}
-                      className="px-4 py-2 bg-neutral-700 text-neutral-100 rounded-lg hover:bg-neutral-600 transition-colors font-medium text-sm border border-neutral-600"
+                      className="px-3 py-1.5 bg-neutral-700 text-neutral-200 rounded hover:bg-neutral-600 transition-colors text-sm font-medium flex items-center gap-1.5"
+                      title="Clear Selection"
                     >
-                      Clear Selection
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                      Clear
                     </button>
                   </>
                 )}
+
+                {/* Divider */}
+                <div className="h-6 w-px bg-neutral-700"></div>
+
                 <button
                   onClick={handleDeleteAll}
                   disabled={loading}
-                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium text-sm flex items-center gap-2"
+                  className="px-3 py-1.5 bg-red-600/90 text-white rounded hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium flex items-center gap-1.5"
+                  title={`Delete All${searchTerm ? ` (${filteredCOAs.length})` : ''}`}
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                   </svg>
-                  Delete All {searchTerm && `(${filteredCOAs.length})`}
+                  Delete All{searchTerm && ` (${filteredCOAs.length})`}
                 </button>
               </>
             )}
@@ -687,9 +679,8 @@ export default function LiveCOAsPage() {
                     ? 'bg-neutral-700/50 border-neutral-400 shadow-neutral-700/50 backdrop-blur-sm' 
                     : 'bg-neutral-900/90 border-neutral-800 backdrop-blur-sm hover:border-neutral-700'
                 }`}
-                style={{ aspectRatio: '3/4' }}
               >
-                <div className="h-full flex flex-col p-5 relative">
+                <div className="flex flex-col p-5 relative min-h-full">
                   {/* Selection Indicator */}
                   {selectedCOAs.has(coa.id) && (
                     <div className="absolute top-3 right-3 w-6 h-6 bg-neutral-400 rounded-full flex items-center justify-center">
