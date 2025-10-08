@@ -45,8 +45,12 @@ export default function Home() {
     productType: 'flower' as ProductType,
     edibleDosage: 10,
     isMultiStrain: false,
-    strainList: ''
+    strainList: '',
+    includeImage: false
   });
+  
+  // Image state for batch COAs
+  const [batchImages, setBatchImages] = useState<Record<number, string>>({});
   
   // Client state
   const [clients, setClients] = useState<Client[]>([]);
@@ -257,12 +261,22 @@ export default function Home() {
         setTimeout(() => updateProfile(formState.selectedProfile), 100);
       }
       
+      // Set image mode on the new COA if enabled
+      if (formState.includeImage) {
+        setTimeout(() => {
+          setCOAData(prev => ({
+            ...prev,
+            includeImage: true
+          }));
+        }, 150);
+      }
+      
       showNotification('success', 'COA generated successfully');
     } catch (error) {
       const message = getUserFriendlyMessage(error);
       showNotification('error', message);
     }
-  }, [formState, clientData, generateNewCOA, updateProfile, showNotification]);
+  }, [formState, clientData, generateNewCOA, updateProfile, showNotification, setCOAData]);
   
   // Generate multiple COAs
   const handleGenerateBatch = useCallback(async () => {
@@ -284,13 +298,134 @@ export default function Home() {
         dateTestedEnd: formState.dateTestedEnd
       }, formState.selectedLabEmployee, formState.sampleSize, formState.edibleDosage, clientData);
       
+      // Set image mode on all generated COAs if enabled
+      if (formState.includeImage) {
+        setTimeout(() => {
+          const currentCOAs = generatedCOAs;
+          const updatedCOAs = currentCOAs.map(coa => ({
+            ...coa,
+            includeImage: true
+          }));
+          setGeneratedCOAs(updatedCOAs);
+          setCOAData(prev => ({
+            ...prev,
+            includeImage: true
+          }));
+        }, 150);
+      }
+      
       showNotification('success', `Generated ${strains.length} COAs successfully`);
     } catch (error) {
       const message = getUserFriendlyMessage(error);
       showNotification('error', message);
     }
-  }, [formState, clientData, generateMultipleCOAs, showNotification]);
+  }, [formState, clientData, generateMultipleCOAs, showNotification, generatedCOAs, setGeneratedCOAs, setCOAData]);
   
+  // Handle image upload for current COA
+  const handleImageUpload = useCallback((file: File) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const imageUrl = reader.result as string;
+      
+      if (formState.isMultiStrain && generatedCOAs.length > 0) {
+        // Update batch images for multi-strain
+        setBatchImages(prev => ({
+          ...prev,
+          [currentCOAIndex]: imageUrl
+        }));
+        
+        // Update current COA
+        setCOAData(prev => ({
+          ...prev,
+          productImageUrl: imageUrl,
+          includeImage: true
+        }));
+        
+        // Update in generatedCOAs array
+        const updatedCOAs = [...generatedCOAs];
+        updatedCOAs[currentCOAIndex] = {
+          ...updatedCOAs[currentCOAIndex],
+          productImageUrl: imageUrl,
+          includeImage: true
+        };
+        setGeneratedCOAs(updatedCOAs);
+      } else {
+        // Single COA mode
+        setCOAData(prev => ({
+          ...prev,
+          productImageUrl: imageUrl,
+          includeImage: true
+        }));
+      }
+      
+      showNotification('success', 'Image uploaded successfully');
+    };
+    reader.readAsDataURL(file);
+  }, [formState.isMultiStrain, generatedCOAs.length, currentCOAIndex, setCOAData, setGeneratedCOAs, showNotification]);
+  
+  // Handle removing image
+  const handleRemoveImage = useCallback(() => {
+    if (formState.isMultiStrain && generatedCOAs.length > 0) {
+      // Remove from batch images
+      setBatchImages(prev => {
+        const updated = { ...prev };
+        delete updated[currentCOAIndex];
+        return updated;
+      });
+      
+      // Update current COA
+      setCOAData(prev => ({
+        ...prev,
+        productImageUrl: undefined,
+        includeImage: formState.includeImage
+      }));
+      
+      // Update in generatedCOAs array
+      const updatedCOAs = [...generatedCOAs];
+      updatedCOAs[currentCOAIndex] = {
+        ...updatedCOAs[currentCOAIndex],
+        productImageUrl: undefined,
+        includeImage: formState.includeImage
+      };
+      setGeneratedCOAs(updatedCOAs);
+    } else {
+      // Single COA mode
+      setCOAData(prev => ({
+        ...prev,
+        productImageUrl: undefined,
+        includeImage: formState.includeImage
+      }));
+    }
+    
+    showNotification('info', 'Image removed');
+  }, [formState.isMultiStrain, formState.includeImage, generatedCOAs.length, currentCOAIndex, setCOAData, setGeneratedCOAs, showNotification]);
+
+  // Handle toggling image mode
+  const handleToggleImageMode = useCallback((enabled: boolean) => {
+    setFormState(prev => ({ ...prev, includeImage: enabled }));
+    
+    // Update all COAs with image mode
+    if (formState.isMultiStrain && generatedCOAs.length > 0) {
+      const updatedCOAs = generatedCOAs.map((coa: COAData, idx: number) => ({
+        ...coa,
+        includeImage: enabled,
+        productImageUrl: enabled ? batchImages[idx] : undefined
+      }));
+      setGeneratedCOAs(updatedCOAs);
+      
+      setCOAData(prev => ({
+        ...prev,
+        includeImage: enabled,
+        productImageUrl: enabled ? batchImages[currentCOAIndex] : undefined
+      }));
+    } else {
+      setCOAData(prev => ({
+        ...prev,
+        includeImage: enabled,
+        productImageUrl: enabled ? prev.productImageUrl : undefined
+      }));
+    }
+  }, [formState.isMultiStrain, generatedCOAs.length, currentCOAIndex, batchImages, setCOAData, setGeneratedCOAs]);
 
 
 
@@ -342,8 +477,12 @@ export default function Home() {
         productType: 'flower',
         edibleDosage: 10,
         isMultiStrain: false,
-        strainList: ''
+        strainList: '',
+        includeImage: false
       });
+      
+      // Clear batch images
+      setBatchImages({});
       
       setTimeout(() => {
         showNotification('success', `Successfully burned ${coaCount > 0 ? coaCount + ' COA(s) and' : ''} all session data`);
@@ -475,7 +614,49 @@ export default function Home() {
           {/* Preview Display */}
           {coaData && (
             <div className="bg-neutral-800/50 backdrop-blur-sm rounded-2xl shadow-xl p-4 sm:p-8 border border-neutral-700/50">
-              <h2 className="text-xl sm:text-2xl font-bold text-neutral-100 mb-4 sm:mb-6">COA Preview</h2>
+              <div className="flex items-center justify-between mb-4 sm:mb-6">
+                <h2 className="text-xl sm:text-2xl font-bold text-neutral-100">COA Preview</h2>
+                
+                {/* Image Mode Toggle and Upload */}
+                <div className="flex items-center gap-3">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formState.includeImage}
+                      onChange={(e) => handleToggleImageMode(e.target.checked)}
+                      className="w-4 h-4 bg-neutral-700 border-neutral-600 rounded focus:ring-2 focus:ring-neutral-500"
+                    />
+                    <span className="text-sm text-neutral-300 font-medium">Include Image</span>
+                  </label>
+                  
+                  {formState.includeImage && (
+                    <div className="flex items-center gap-2">
+                      <label className="px-3 py-1.5 bg-neutral-600/30 border border-neutral-500/50 text-neutral-100 rounded-md hover:bg-neutral-600/40 cursor-pointer transition-all text-sm font-medium">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleImageUpload(file);
+                          }}
+                          className="hidden"
+                        />
+                        {coaData.productImageUrl ? 'Change' : 'Upload'} Image
+                      </label>
+                      
+                      {coaData.productImageUrl && (
+                        <button
+                          onClick={handleRemoveImage}
+                          className="px-3 py-1.5 bg-transparent border border-red-500/30 text-red-300 rounded-md hover:bg-red-600/10 transition-all text-sm font-medium"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+              
               <div className="border-2 border-neutral-700/50 rounded-xl overflow-auto bg-neutral-900/50 p-4 flex justify-center">
                 <div 
                   ref={previewRef}

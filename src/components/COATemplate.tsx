@@ -571,6 +571,18 @@ const COATemplate = forwardRef<HTMLDivElement, COATemplateProps>(({
             <div className="text-base text-gray-800 leading-tight mt-2 ml-2">Certificate of Analysis</div>
           </div>
         </div>
+        
+        {/* Client info in header - only when image mode is active */}
+        {data.includeImage && data.productImageUrl && (
+          <div className="text-left text-[10px] leading-tight ml-4">
+            <div className="space-y-0.5">
+              <div><span className="font-medium text-gray-900">Client:</span></div>
+              <div className="font-medium text-gray-800">{data.clientName}</div>
+              <div className="whitespace-pre-line text-gray-800">{data.clientAddress}</div>
+              <div><span className="font-medium text-gray-900">Lic #:</span> <span className="text-gray-800">{data.licenseNumber}</span></div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Sample Information and Pie Chart Section */}
@@ -599,14 +611,35 @@ const COATemplate = forwardRef<HTMLDivElement, COATemplateProps>(({
               </div>
             </div>
             
-            <div className="text-[10px] leading-tight">
-              <div className="space-y-0.5">
-                <div><span className="font-medium text-gray-900">Client:</span></div>
-                <div className="font-medium text-gray-800">{data.clientName}</div>
-                <div className="whitespace-pre-line text-gray-800">{data.clientAddress}</div>
-                <div><span className="font-medium text-gray-900">Lic #:</span> <span className="text-gray-800">{data.licenseNumber}</span></div>
+            {/* Client info or Product Image */}
+            {data.includeImage && data.productImageUrl ? (
+              <div className="text-[10px] leading-tight">
+                <div className="space-y-0.5">
+                  <div><span className="font-medium text-gray-900">Photo of Sample:</span></div>
+                  <div className="mt-1 flex items-start justify-start">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img 
+                      src={data.productImageUrl} 
+                      alt="Product Sample"
+                      className="max-w-full object-contain border border-gray-300 rounded"
+                      style={{
+                        maxWidth: '150px',
+                        maxHeight: '110px'
+                      }}
+                    />
+                  </div>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="text-[10px] leading-tight">
+                <div className="space-y-0.5">
+                  <div><span className="font-medium text-gray-900">Client:</span></div>
+                  <div className="font-medium text-gray-800">{data.clientName}</div>
+                  <div className="whitespace-pre-line text-gray-800">{data.clientAddress}</div>
+                  <div><span className="font-medium text-gray-900">Lic #:</span> <span className="text-gray-800">{data.licenseNumber}</span></div>
+                </div>
+              </div>
+            )}
             
             {/* Pie Chart - Fourth Column */}
             <div className="text-[10px] leading-tight pr-2">

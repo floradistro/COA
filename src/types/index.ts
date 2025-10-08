@@ -68,6 +68,10 @@ export interface COAData {
   // QR Code
   qrCodeDataUrl?: string;
   publicUrl?: string;
+  
+  // Image Mode
+  includeImage?: boolean;
+  productImageUrl?: string;
 }
 
 // Product types
