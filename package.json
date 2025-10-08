@@ -1,0 +1,47 @@
+{
+  "name": "whaletools",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --turbopack",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "analyze": "ANALYZE=true next build",
+    "type-check": "tsc --noEmit",
+    "clean": "rm -rf .next out node_modules/.cache"
+  },
+  "dependencies": {
+    "@heroicons/react": "^2.2.0",
+    "@supabase/supabase-js": "^2.50.0",
+    "date-fns": "^4.1.0",
+    "file-saver": "^2.0.5",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^3.0.1",
+    "jszip": "^3.10.1",
+    "next": "15.3.4",
+    "pdf-lib": "^1.17.1",
+    "pdfjs-dist": "^5.3.31",
+    "qrcode": "^1.5.4",
+    "react": "^19.0.0",
+    "react-day-picker": "^9.7.0",
+    "react-dom": "^19.0.0",
+    "react-to-print": "^3.1.0"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3",
+    "@tailwindcss/postcss": "^4",
+    "@types/file-saver": "^2.0.7",
+    "@types/node": "^20.19.1",
+    "@types/pdfjs-dist": "^2.10.377",
+    "@types/qrcode": "^1.5.5",
+    "@types/react": "^19",
+    "@types/react-day-picker": "^5.2.1",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "15.3.4",
+    "tailwindcss": "^4",
+    "typescript": "^5",
+    "webpack-bundle-analyzer": "^4.10.1"
+  }
+}

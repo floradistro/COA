@@ -1,0 +1,276 @@
+@import "tailwindcss";
+
+/* Lobster Font Import */
+@font-face {
+  font-family: 'Lobster';
+  src: url('/lobster/Lobster 1.4.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Tiempo Font Import */
+@font-face {
+  font-family: 'Tiempo';
+  src: url('/Tiempos Text Regular.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --background: #1a1a1a;
+  --foreground: #ededed;
+  
+  /* Force RGB colors instead of oklch for html2canvas compatibility */
+  --color-gray-50: rgb(249, 250, 251);
+  --color-gray-100: rgb(243, 244, 246);
+  --color-gray-200: rgb(229, 231, 235);
+  --color-gray-300: rgb(209, 213, 219);
+  --color-gray-400: rgb(156, 163, 175);
+  --color-gray-500: rgb(107, 114, 128);
+  --color-gray-600: rgb(75, 85, 99);
+  --color-gray-700: rgb(55, 65, 81);
+  --color-gray-800: rgb(31, 41, 55);
+  --color-gray-900: rgb(17, 24, 39);
+  
+  --color-green-50: rgb(240, 253, 244);
+  --color-green-500: rgb(34, 197, 94);
+  --color-green-600: rgb(22, 163, 74);
+  --color-green-700: rgb(21, 128, 61);
+  
+  --color-blue-50: rgb(239, 246, 255);
+  --color-blue-500: rgb(59, 130, 246);
+  --color-blue-600: rgb(37, 99, 235);
+  --color-blue-700: rgb(29, 78, 216);
+  
+  --color-purple-50: rgb(250, 245, 255);
+  --color-purple-500: rgb(168, 85, 247);
+  --color-purple-600: rgb(147, 51, 234);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-lobster: 'Lobster', cursive;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: 'Tiempo', serif;
+  position: relative;
+}
+
+/* Improved placeholder text contrast - White placeholders */
+input::placeholder,
+textarea::placeholder {
+  color: #ffffff !important;
+  opacity: 0.6 !important;
+  font-weight: 400 !important;
+}
+
+input::-webkit-input-placeholder,
+textarea::-webkit-input-placeholder {
+  color: #ffffff !important;
+  opacity: 0.6 !important;
+  font-weight: 400 !important;
+}
+
+input::-moz-placeholder,
+textarea::-moz-placeholder {
+  color: #ffffff !important;
+  opacity: 0.6 !important;
+  font-weight: 400 !important;
+}
+
+input:-ms-input-placeholder,
+textarea:-ms-input-placeholder {
+  color: #ffffff !important;
+  opacity: 0.6 !important;
+  font-weight: 400 !important;
+}
+
+input:-moz-placeholder,
+textarea:-moz-placeholder {
+  color: #ffffff !important;
+  opacity: 0.6 !important;
+  font-weight: 400 !important;
+}
+
+/* PDF Generation specific styles */
+.coa-template {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  background: white !important;
+  color: black !important;
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+.coa-template * {
+  box-sizing: border-box !important;
+}
+
+/* Hide any elements that might interfere with PDF generation */
+.pdf-hidden {
+  display: none !important;
+}
+
+/* Simplified print styles - component handles the main layout */
+@media print {
+  body {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  
+  /* Hide non-print elements */
+  .no-print {
+    display: none !important;
+  }
+}
+
+/* Screen-specific styles - minimal to avoid conflicts */
+@media screen {
+  .coa-template {
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1) !important;
+  }
+}
+
+/* Override Tailwind colors with RGB values for PDF export to avoid oklch issues */
+.pdf-export .bg-white { background-color: rgb(255, 255, 255) !important; }
+.pdf-export .bg-gray-50 { background-color: rgb(249, 250, 251) !important; }
+.pdf-export .bg-gray-100 { background-color: rgb(243, 244, 246) !important; }
+.pdf-export .bg-gray-200 { background-color: rgb(229, 231, 235) !important; }
+.pdf-export .bg-gray-300 { background-color: rgb(209, 213, 219) !important; }
+.pdf-export .bg-green-50 { background-color: rgb(240, 253, 244) !important; }
+
+.pdf-export .text-gray-700 { color: rgb(55, 65, 81) !important; }
+.pdf-export .text-gray-800 { color: rgb(31, 41, 55) !important; }
+.pdf-export .text-gray-900 { color: rgb(17, 24, 39) !important; }
+.pdf-export .text-green-700 { color: rgb(21, 128, 61) !important; }
+.pdf-export .text-black { color: rgb(0, 0, 0) !important; }
+
+.pdf-export .border-gray-200 { border-color: rgb(229, 231, 235) !important; }
+.pdf-export .border-gray-300 { border-color: rgb(209, 213, 219) !important; }
+.pdf-export .border-green-500 { border-color: rgb(34, 197, 94) !important; }
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+@keyframes slide-in {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-in {
+  animation: slide-in 0.3s ease-out;
+}
+
+/* COA Preview Scaling */
+.transform-gpu {
+  transition: transform 0.2s ease-out;
+  will-change: transform;
+}
+
+/* Ensure mobile preview container doesn't overflow */
+@media (max-width: 768px) {
+  .coa-preview-container {
+    overflow-x: hidden !important;
+  }
+}
+
+/* Animated 3D Wave Background */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  background: linear-gradient(135deg, 
+    #2a2a2a 0%, 
+    #343434 25%, 
+    #2e2e2e 50%, 
+    #323232 75%, 
+    #2a2a2a 100%);
+  opacity: 0.95;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 120%;
+  height: 120%;
+  z-index: -1;
+  background: 
+    radial-gradient(ellipse 600px 400px at 50% 120%, rgba(60, 60, 60, 0.7) 0%, rgba(50, 50, 50, 0.4) 30%, transparent 65%),
+    radial-gradient(ellipse 500px 350px at 80% 10%, rgba(55, 55, 55, 0.55) 0%, rgba(45, 45, 45, 0.25) 35%, transparent 70%),
+    radial-gradient(ellipse 400px 250px at 20% 50%, rgba(52, 52, 52, 0.6) 0%, rgba(42, 42, 42, 0.3) 40%, transparent 75%),
+    radial-gradient(ellipse 350px 200px at 70% 80%, rgba(48, 48, 48, 0.5) 0%, transparent 60%);
+  animation: waveFloat 20s ease-in-out infinite;
+  transform: translateZ(0);
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+}
+
+@keyframes waveFloat {
+  0%, 100% {
+    transform: translate(-10%, -10%) rotate(0deg) scale(1);
+    opacity: 0.8;
+  }
+  25% {
+    transform: translate(-5%, -15%) rotate(1deg) scale(1.02);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translate(-15%, -5%) rotate(-0.5deg) scale(0.98);
+    opacity: 0.9;
+  }
+  75% {
+    transform: translate(-8%, -12%) rotate(0.5deg) scale(1.01);
+    opacity: 0.7;
+  }
+}
+
+/* Apple-style smooth scrolling */
+* {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+*::-webkit-scrollbar {
+  display: none;
+}
+
+/* Smooth hover transitions */
+.smooth-hover {
+  contain: layout style paint;
+  will-change: background-color, color, border-color, transform, box-shadow;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+  transition: background-color 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              color 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              border-color 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              transform 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
