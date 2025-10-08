@@ -12,6 +12,7 @@ import {
   validateCOAComprehensive
 } from '@/utils';
 import { DEFAULT_SAMPLE_SIZE } from '@/constants/defaults';
+import { getEmployeeTitle } from '@/constants/labEmployees';
 import COATemplate from '@/components/COATemplate';
 import { COAControls } from '@/components/COAControls';
 import { useNotifications } from '@/components/NotificationSystem';
@@ -51,6 +52,9 @@ export default function Home() {
   const [clients, setClients] = useState<Client[]>([]);
   const [selectedClientId, setSelectedClientId] = useState<string>('');
   const [loadingClients, setLoadingClients] = useState(true);
+  
+  // Batch progress state
+  const [batchProgress, setBatchProgress] = useState<{ current: number; total: number } | null>(null);
   
   // Validation state
   const [validationResult, setValidationResult] = useState<ComprehensiveValidationResult | null>(null);
@@ -161,7 +165,7 @@ export default function Home() {
     licenseNumber: selectedClient.license_number
   } : undefined;
   
-  // Instant update on client change - safe because it's event-driven, not effect-driven
+  // Safe instant update handlers - event-driven (no loops)
   const handleClientChange = useCallback((clientId: string) => {
     setSelectedClientId(clientId);
     const client = clients.find(c => c.id === clientId);
@@ -174,6 +178,72 @@ export default function Home() {
       }));
     }
   }, [clients, coaData?.sampleId, setCOAData]);
+  
+  const handleProductTypeChange = useCallback((type: ProductType) => {
+    setFormState(prev => ({ ...prev, productType: type }));
+    if (coaData && coaData.sampleId) {
+      const currentStrain = formState.strain || coaData.strain || 'Sample Strain';
+      generateNewCOA(currentStrain, formState.dateReceived, type, {
+        dateCollected: formState.dateCollected,
+        dateTested: formState.dateTested,
+        dateTestedEnd: formState.dateTestedEnd
+      }, formState.selectedLabEmployee, formState.sampleSize, formState.edibleDosage, clientData);
+      
+      setTimeout(() => updateProfile(formState.selectedProfile), 100);
+    }
+  }, [formState, coaData?.sampleId, clientData, generateNewCOA, updateProfile]);
+  
+  const handleProfileChange = useCallback((profile: CannabinoidProfile) => {
+    setFormState(prev => ({ ...prev, selectedProfile: profile }));
+    if (coaData && coaData.sampleId) {
+      updateProfile(profile);
+    }
+  }, [coaData?.sampleId, updateProfile]);
+  
+  const handleLabEmployeeChange = useCallback((employee: string) => {
+    setFormState(prev => ({ ...prev, selectedLabEmployee: employee }));
+    if (coaData && coaData.sampleId) {
+      setCOAData((prev: COAData) => ({
+        ...prev,
+        labDirector: employee,
+        directorTitle: getEmployeeTitle(employee)
+      }));
+    }
+  }, [coaData?.sampleId, setCOAData]);
+  
+  const handleSampleSizeChange = useCallback((size: string) => {
+    setFormState(prev => ({ ...prev, sampleSize: size }));
+    if (coaData && coaData.sampleId) {
+      setCOAData((prev: COAData) => ({ ...prev, sampleSize: size }));
+    }
+  }, [coaData?.sampleId, setCOAData]);
+  
+  const handleDateChange = useCallback((field: 'dateCollected' | 'dateReceived' | 'dateTested' | 'dateTestedEnd', value: string) => {
+    setFormState(prev => ({ ...prev, [field]: value }));
+    if (coaData && coaData.sampleId) {
+      const updates: Partial<COAData> = { [field]: value };
+      if (field === 'dateTested') {
+        updates.approvalDate = value;
+        updates.dateReported = value;
+      }
+      setCOAData((prev: COAData) => ({ ...prev, ...updates }));
+    }
+  }, [coaData?.sampleId, setCOAData]);
+  
+  const handleEdibleDosageChange = useCallback((dosage: number) => {
+    setFormState(prev => ({ ...prev, edibleDosage: dosage }));
+    if (coaData && coaData.sampleId && formState.productType === 'edible') {
+      const edibleProfile = require('@/utils').generateEdibleCannabinoidProfile(dosage, coaData.sampleSize);
+      setCOAData((prev: COAData) => ({
+        ...prev,
+        edibleDosage: dosage,
+        cannabinoids: edibleProfile.cannabinoids,
+        totalTHC: edibleProfile.totalTHC,
+        totalCBD: edibleProfile.totalCBD,
+        totalCannabinoids: edibleProfile.totalCannabinoids
+      }));
+    }
+  }, [coaData?.sampleId, coaData?.sampleSize, formState.productType, setCOAData]);
   
   // Generate single COA
   const handleGenerateSingle = useCallback(() => {
@@ -361,32 +431,44 @@ export default function Home() {
           </div>
         </div>
 
+        {/* Batch Progress Indicator */}
+        {isGeneratingBatch && (
+          <div className="mb-4 bg-blue-900/30 border border-blue-700/50 rounded-lg p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-5 h-5 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
+              <span className="text-blue-200 font-medium">
+                Generating batch COAs... Please wait
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* Controls */}
         <COAControls
           strain={formState.strain}
           setStrain={(value) => setFormState(prev => ({ ...prev, strain: value }))}
           dateReceived={formState.dateReceived}
-          setDateReceived={(value) => setFormState(prev => ({ ...prev, dateReceived: value }))}
+          setDateReceived={(value) => handleDateChange('dateReceived', value)}
           dateCollected={formState.dateCollected}
-          setDateCollected={(value) => setFormState(prev => ({ ...prev, dateCollected: value }))}
+          setDateCollected={(value) => handleDateChange('dateCollected', value)}
           dateTested={formState.dateTested}
-          setDateTested={(value) => setFormState(prev => ({ ...prev, dateTested: value }))}
+          setDateTested={(value) => handleDateChange('dateTested', value)}
           dateTestedEnd={formState.dateTestedEnd}
-          setDateTestedEnd={(value) => setFormState(prev => ({ ...prev, dateTestedEnd: value }))}
+          setDateTestedEnd={(value) => handleDateChange('dateTestedEnd', value)}
           productType={formState.productType}
-          setProductType={(value) => setFormState(prev => ({ ...prev, productType: value }))}
+          setProductType={handleProductTypeChange}
           selectedProfile={formState.selectedProfile}
-          setSelectedProfile={(value) => setFormState(prev => ({ ...prev, selectedProfile: value }))}
+          setSelectedProfile={handleProfileChange}
           selectedLabEmployee={formState.selectedLabEmployee}
-          setSelectedLabEmployee={(value) => setFormState(prev => ({ ...prev, selectedLabEmployee: value }))}
+          setSelectedLabEmployee={handleLabEmployeeChange}
           sampleSize={formState.sampleSize}
-          setSampleSize={(value) => setFormState(prev => ({ ...prev, sampleSize: value }))}
+          setSampleSize={handleSampleSizeChange}
           isMultiStrain={formState.isMultiStrain}
           setIsMultiStrain={(value) => setFormState(prev => ({ ...prev, isMultiStrain: value }))}
           strainList={formState.strainList}
           setStrainList={(value) => setFormState(prev => ({ ...prev, strainList: value }))}
           edibleDosage={formState.edibleDosage}
-          setEdibleDosage={(value) => setFormState(prev => ({ ...prev, edibleDosage: value }))}
+          setEdibleDosage={handleEdibleDosageChange}
           onGenerate={handleGenerateSingle}
           onGenerateBatch={handleGenerateBatch}
           isGeneratingBatch={isGeneratingBatch}
