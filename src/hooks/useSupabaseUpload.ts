@@ -1,18 +1,14 @@
 import { useState, useCallback } from 'react';
 import { COAData } from '@/types';
-import { generateQrCode } from '@/lib/generateQrCode';
-import { uploadPdfToSupabase } from '@/lib/uploadPdfToSupabase';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
-import { prepareForPdfExport } from '@/utils/colorConversion';
-import { EXPORT_CONFIG } from '@/constants/defaults';
 import { 
   COAError, 
   ErrorType, 
   withErrorHandling,
   logError 
 } from '@/utils/errorHandling';
-import { ensureSupabaseReady } from '@/utils/supabaseUtils';
+import { useQRGeneration } from './useQRGeneration';
+import { usePDFExport } from './usePDFExport';
+import { useStorageUpload } from './useStorageUpload';
 
 export interface UseSupabaseUploadReturn {
   uploadSingleCOA: (coaData: COAData, updateCOAData?: (data: COAData) => void, generatedCOAs?: COAData[], updateGeneratedCOAs?: (coas: COAData[]) => void, currentIndex?: number) => Promise<string>;
@@ -28,76 +24,10 @@ export const useSupabaseUpload = (componentRef?: React.RefObject<HTMLDivElement 
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
 
-  // Helper function to wait for images to load
-  const waitForImagesLoaded = async (element: HTMLElement): Promise<void> => {
-    const images = element.querySelectorAll('img');
-    if (images.length === 0) return;
-    
-    const imagePromises = Array.from(images).map(img => {
-      if (img.complete && img.naturalHeight !== 0) {
-        return Promise.resolve();
-      }
-      
-      return new Promise<void>((resolve, reject) => {
-        const timeout = setTimeout(() => {
-          reject(new Error(`Image failed to load: ${img.src}`));
-        }, 5000);
-        
-        img.onload = () => {
-          clearTimeout(timeout);
-          resolve();
-        };
-        
-        img.onerror = () => {
-          clearTimeout(timeout);
-          resolve(); // Don't reject, just continue
-        };
-      });
-    });
-    
-    try {
-      await Promise.all(imagePromises);
-    } catch (error) {
-      console.warn('Some images failed to load:', error);
-    }
-  };
-
-  // Helper function to render COA to canvas
-  const renderCOAToCanvas = useCallback(async (element: HTMLElement): Promise<HTMLCanvasElement> => {
-    const cleanup = prepareForPdfExport(element);
-    
-    try {
-      // Ensure all images are loaded before capture
-      await waitForImagesLoaded(element);
-      
-      // Single animation frame wait for layout
-      await new Promise(resolve => requestAnimationFrame(resolve));
-      
-      // Template is always 794px full size - capture directly
-      const canvas = await html2canvas(element, {
-        ...EXPORT_CONFIG.image,
-        logging: false,
-        width: 794,
-        height: 1123,
-        windowWidth: 794,
-        windowHeight: 1123,
-        useCORS: true,
-        allowTaint: false,
-        backgroundColor: '#ffffff',
-        scale: 2
-      });
-      
-      return canvas;
-    } finally {
-      cleanup();
-    }
-  }, []);
-
-  // Helper function to generate lab site viewer URL
-  const generateViewerUrl = (filename: string): string => {
-    const cleanFilename = filename.replace('.pdf', '');
-    return `https://www.quantixanalytics.com/coa/${cleanFilename}`;
-  };
+  // Use focused hooks
+  const { generateQRForURL, generateViewerUrl } = useQRGeneration();
+  const { exportToPDF } = usePDFExport();
+  const { uploadPDF } = useStorageUpload();
 
   // Upload single COA to Supabase with QR code
   const uploadSingleCOA = useCallback(async (coaData: COAData, updateCOAData?: (data: COAData) => void, generatedCOAs?: COAData[], updateGeneratedCOAs?: (coas: COAData[]) => void, currentIndex?: number): Promise<string> => {
@@ -109,7 +39,6 @@ export const useSupabaseUpload = (componentRef?: React.RefObject<HTMLDivElement 
     setUploadProgress(0);
     
     try {
-      await ensureSupabaseReady();
       setUploadProgress(20);
       
       // Generate clean filename using client folder and strain name
@@ -123,7 +52,7 @@ export const useSupabaseUpload = (componentRef?: React.RefObject<HTMLDivElement 
       let updatedCOAData = coaData;
       if (!coaData.qrCodeDataUrl && updateCOAData) {
         const expectedUrl = generateViewerUrl(uniqueFilename);
-        const qrCodeDataUrl = await generateQrCode(expectedUrl);
+        const qrCodeDataUrl = await generateQRForURL(expectedUrl);
         
         updatedCOAData = {
           ...coaData,
@@ -147,39 +76,19 @@ export const useSupabaseUpload = (componentRef?: React.RefObject<HTMLDivElement 
       
       setUploadProgress(40);
       
-      // Capture the template - it's always full size, no transforms to worry about
-      const canvas = await renderCOAToCanvas(componentRef.current!);
-      
-      const imgData = canvas.toDataURL('image/png', 1.0);
-      const pdf = new jsPDF({
-        ...EXPORT_CONFIG.pdf,
-        format: [210, 297]
-      });
-      
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      const imgWidth = canvas.width;
-      const imgHeight = canvas.height;
-      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
-      const scaledWidth = imgWidth * ratio;
-      const scaledHeight = imgHeight * ratio;
-      const x = (pdfWidth - scaledWidth) / 2;
-      const y = 0;
-      
-      pdf.addImage(imgData, 'PNG', x, y, scaledWidth, scaledHeight);
+      // Export COA to PDF buffer
+      const pdfBuffer = await exportToPDF(componentRef.current!);
       
       setUploadProgress(60);
       
-      // Upload PDF
-      const pdfBlob = pdf.output('blob');
-      const pdfBuffer = Buffer.from(await pdfBlob.arrayBuffer());
-      const publicUrl = await uploadPdfToSupabase(uniqueFilename, pdfBuffer, true);
+      // Upload PDF to storage
+      const publicUrl = await uploadPDF(uniqueFilename, pdfBuffer);
       
       setUploadProgress(80);
       
       // Verify URLs match - if not, update QR code
       if (updatedCOAData.publicUrl !== publicUrl && updateCOAData) {
-        const correctQrCodeDataUrl = await generateQrCode(publicUrl);
+        const correctQrCodeDataUrl = await generateQRForURL(publicUrl);
         const finalCOAData = {
           ...updatedCOAData,
           qrCodeDataUrl: correctQrCodeDataUrl,
@@ -210,7 +119,7 @@ export const useSupabaseUpload = (componentRef?: React.RefObject<HTMLDivElement 
         setUploadProgress(0);
       }, 500);
     }
-  }, [componentRef, renderCOAToCanvas]);
+  }, [componentRef, generateQRForURL, generateViewerUrl, exportToPDF, uploadPDF]);
 
   // Upload all COAs to Supabase
   const uploadAllCOAs = useCallback(async (
@@ -278,7 +187,7 @@ export const useSupabaseUpload = (componentRef?: React.RefObject<HTMLDivElement 
           
           // Generate the expected lab site viewer URL
           const expectedUrl = generateViewerUrl(uniqueFilename);
-          const qrCodeDataUrl = await generateQrCode(expectedUrl);
+          const qrCodeDataUrl = await generateQRForURL(expectedUrl);
           
           // Update the COA data with QR code
           const updatedCOAData = {
@@ -291,37 +200,15 @@ export const useSupabaseUpload = (componentRef?: React.RefObject<HTMLDivElement 
           updateCurrentCOA(updatedCOAData);
           await new Promise(resolve => setTimeout(resolve, 300));
           
-          // Render and upload - template is always full size, no transform manipulation needed
-          const canvas = await renderCOAToCanvas(element);
-          
-          const imgData = canvas.toDataURL('image/png', 1.0);
-          const pdf = new jsPDF({
-            ...EXPORT_CONFIG.pdf,
-            format: [210, 297]
-          });
-          
-          const pdfWidth = pdf.internal.pageSize.getWidth();
-          const pdfHeight = pdf.internal.pageSize.getHeight();
-          const imgWidth = canvas.width;
-          const imgHeight = canvas.height;
-          const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
-          const scaledWidth = imgWidth * ratio;
-          const scaledHeight = imgHeight * ratio;
-          const x = (pdfWidth - scaledWidth) / 2;
-          const y = 0;
-          
-          pdf.addImage(imgData, 'PNG', x, y, scaledWidth, scaledHeight);
-          
-          // Upload PDF
-          const pdfBlob = pdf.output('blob');
-          const pdfBuffer = Buffer.from(await pdfBlob.arrayBuffer());
-          const publicUrl = await uploadPdfToSupabase(uniqueFilename, pdfBuffer, true);
+          // Export to PDF and upload
+          const pdfBuffer = await exportToPDF(element);
+          const publicUrl = await uploadPDF(uniqueFilename, pdfBuffer);
           
           // Update the COA in the array if this is the current one
           if (coaDataArray[i].sampleId === currentCOAData.sampleId) {
             // Verify URL matches
             if (publicUrl !== expectedUrl) {
-              const correctQrCodeDataUrl = await generateQrCode(publicUrl);
+              const correctQrCodeDataUrl = await generateQRForURL(publicUrl);
               const finalCOAData = {
                 ...updatedCOAData,
                 qrCodeDataUrl: correctQrCodeDataUrl,
@@ -398,7 +285,7 @@ export const useSupabaseUpload = (componentRef?: React.RefObject<HTMLDivElement 
         setUploadProgress(0);
       }, 500);
     }
-  }, [componentRef, renderCOAToCanvas]);
+  }, [componentRef, generateQRForURL, generateViewerUrl, exportToPDF, uploadPDF]);
 
   // Generate QR code for preview using a placeholder URL
   const generateQRCodeForPreview = useCallback(async (coaData: COAData, updateCOAData: (data: COAData) => void, generatedCOAs?: COAData[], updateGeneratedCOAs?: (coas: COAData[]) => void, currentIndex?: number): Promise<void> => {
@@ -412,7 +299,7 @@ export const useSupabaseUpload = (componentRef?: React.RefObject<HTMLDivElement 
       const previewUrl = generateViewerUrl(uniqueFilename);
       
       // Generate QR code for the preview URL
-      const qrCodeDataUrl = await generateQrCode(previewUrl);
+      const qrCodeDataUrl = await generateQRForURL(previewUrl);
       
       // Update the COA data with QR code information
       const updatedCOAData = {
@@ -438,14 +325,14 @@ export const useSupabaseUpload = (componentRef?: React.RefObject<HTMLDivElement 
         error
       );
     }
-  }, []);
+  }, [generateQRForURL, generateViewerUrl]);
 
   // Sync QR codes from uploaded COAs back to the preview
   const syncQRCodesFromUploaded = useCallback(async (coaData: COAData, updateCOAData: (data: COAData) => void, generatedCOAs?: COAData[], updateGeneratedCOAs?: (coas: COAData[]) => void, currentIndex?: number): Promise<void> => {
     try {
       // If the current COA already has a publicUrl, generate a fresh QR code for it
       if (coaData.publicUrl) {
-        const qrCodeDataUrl = await generateQrCode(coaData.publicUrl);
+        const qrCodeDataUrl = await generateQRForURL(coaData.publicUrl);
         
         const updatedCOAData = {
           ...coaData,
@@ -471,7 +358,7 @@ export const useSupabaseUpload = (componentRef?: React.RefObject<HTMLDivElement 
           
           if (uploadedCOA && uploadedCOA.publicUrl) {
             // Generate fresh QR code for the public URL
-            const qrCodeDataUrl = await generateQrCode(uploadedCOA.publicUrl);
+            const qrCodeDataUrl = await generateQRForURL(uploadedCOA.publicUrl);
             
             // Update the preview COA with the fresh QR code
             const updatedCOAData = {
@@ -498,7 +385,7 @@ export const useSupabaseUpload = (componentRef?: React.RefObject<HTMLDivElement 
         
         if (uploadedCOA && uploadedCOA.publicUrl) {
           // Generate fresh QR code for the public URL
-          const qrCodeDataUrl = await generateQrCode(uploadedCOA.publicUrl);
+          const qrCodeDataUrl = await generateQRForURL(uploadedCOA.publicUrl);
           
           // Update the preview COA with the fresh QR code
           const updatedCOAData = {
@@ -535,7 +422,7 @@ export const useSupabaseUpload = (componentRef?: React.RefObject<HTMLDivElement 
         error
       );
     }
-  }, []);
+  }, [generateQRForURL]);
 
   // Refresh QR codes for all uploaded COAs
   const refreshAllQRCodes = useCallback(async (generatedCOAs: COAData[], updateGeneratedCOAs: (coas: COAData[]) => void, currentCOAData: COAData, updateCurrentCOA: (data: COAData) => void, currentIndex: number): Promise<void> => {
@@ -543,7 +430,7 @@ export const useSupabaseUpload = (componentRef?: React.RefObject<HTMLDivElement 
       const updatedCOAs = await Promise.all(
         generatedCOAs.map(async (coa) => {
           if (coa.publicUrl) {
-            const qrCodeDataUrl = await generateQrCode(coa.publicUrl);
+            const qrCodeDataUrl = await generateQRForURL(coa.publicUrl);
             return {
               ...coa,
               qrCodeDataUrl
@@ -569,7 +456,7 @@ export const useSupabaseUpload = (componentRef?: React.RefObject<HTMLDivElement 
         error
       );
     }
-  }, []);
+  }, [generateQRForURL]);
 
   // Wrap functions with error handling
   const safeUploadSingleCOA = withErrorHandling(
