@@ -1,0 +1,40 @@
+
+> whaletools@0.1.0 build
+> next build
+
+   ▲ Next.js 15.3.4
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully in 3.0s
+   Linting and checking validity of types ...
+
+./src/app/page.tsx
+161:3  Warning: Unused eslint-disable directive (no problems were reported from 'react-hooks/exhaustive-deps').
+173:6  Warning: React Hook useCallback has a missing dependency: 'coaData'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+175:3  Warning: Unused eslint-disable directive (no problems were reported from 'react-hooks/exhaustive-deps').
+188:6  Warning: React Hook useCallback has a missing dependency: 'coaData'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+190:3  Warning: Unused eslint-disable directive (no problems were reported from 'react-hooks/exhaustive-deps').
+196:6  Warning: React Hook useCallback has a missing dependency: 'coaData'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+198:3  Warning: Unused eslint-disable directive (no problems were reported from 'react-hooks/exhaustive-deps').
+208:6  Warning: React Hook useCallback has a missing dependency: 'coaData'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+210:3  Warning: Unused eslint-disable directive (no problems were reported from 'react-hooks/exhaustive-deps').
+216:6  Warning: React Hook useCallback has a missing dependency: 'coaData'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+218:3  Warning: Unused eslint-disable directive (no problems were reported from 'react-hooks/exhaustive-deps').
+229:6  Warning: React Hook useCallback has a missing dependency: 'coaData'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+231:3  Warning: Unused eslint-disable directive (no problems were reported from 'react-hooks/exhaustive-deps').
+245:6  Warning: React Hook useCallback has a missing dependency: 'coaData'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/app/api-reference/config/eslint#disabling-rules
+Failed to compile.
+
+./src/app/live-coas/page.tsx:261:52
+Type error: Property 'statusCode' does not exist on type 'StorageError'.
+
+[0m [90m 259 |[39m         console[33m.[39merror([32m'❌ DELETE FAILED - Error details:'[39m[33m,[39m deleteError)[33m;[39m[0m
+[0m [90m 260 |[39m         console[33m.[39merror([32m'Error message:'[39m[33m,[39m deleteError[33m.[39mmessage)[33m;[39m[0m
+[0m[31m[1m>[22m[39m[90m 261 |[39m         console[33m.[39merror([32m'Error status:'[39m[33m,[39m deleteError[33m.[39mstatusCode)[33m;[39m[0m
+[0m [90m     |[39m                                                    [31m[1m^[22m[39m[0m
+[0m [90m 262 |[39m         [0m
+[0m [90m 263 |[39m         [36mif[39m (deleteError[33m.[39mmessage[33m?[39m[33m.[39mincludes([32m'not authorized'[39m) [33m||[39m deleteError[33m.[39mmessage[33m?[39m[33m.[39mincludes([32m'Invalid JWT'[39m)) {[0m
+[0m [90m 264 |[39m           [36mthrow[39m [36mnew[39m [33mError[39m([0m
+Next.js build worker exited with code: 1 and signal: null

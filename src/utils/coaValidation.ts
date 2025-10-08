@@ -12,7 +12,8 @@ import { DECARB_FACTOR } from '@/constants/cannabinoids';
 /**
  * Debug logging for validation
  */
-const debugLog = () => {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const debugLog = (message: string, data?: unknown) => {
   // Validation logging disabled - was causing console spam
   return;
 };

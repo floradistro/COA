@@ -258,7 +258,6 @@ export default function LiveCOAsPage() {
       if (deleteError) {
         console.error('❌ DELETE FAILED - Error details:', deleteError);
         console.error('Error message:', deleteError.message);
-        console.error('Error status:', deleteError.statusCode);
         
         if (deleteError.message?.includes('not authorized') || deleteError.message?.includes('Invalid JWT')) {
           throw new Error(

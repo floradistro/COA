@@ -143,9 +143,6 @@ export const useSupabaseUpload = (componentRef?: React.RefObject<HTMLDivElement 
     const uploadedUrls: string[] = [];
     
     try {
-      // Ensure Supabase is ready
-      await ensureSupabaseReady();
-      
       const progressPerCOA = 80 / coaDataArray.length;
       
       for (let i = 0; i < coaDataArray.length; i++) {
