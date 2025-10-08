@@ -186,17 +186,17 @@ export default function ClientsPage() {
           : `✅ Successfully added client "${formData.name}"`;
         alert(message);
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error adding client:', err);
       
       // Extract detailed error message
       let errorMessage = 'Failed to add client';
       if (err instanceof Error) {
         errorMessage = err.message;
-      } else if (err?.message) {
-        errorMessage = err.message;
-      } else if (err?.error) {
-        errorMessage = err.error;
+      } else if (err && typeof err === 'object' && 'message' in err) {
+        errorMessage = String((err as { message: unknown }).message);
+      } else if (err && typeof err === 'object' && 'error' in err) {
+        errorMessage = String((err as { error: unknown }).error);
       } else if (typeof err === 'string') {
         errorMessage = err;
       }
