@@ -34,8 +34,8 @@ export interface UseCOAGenerationReturn {
     dateTestedEnd?: string;
   }, selectedLabEmployee?: string, sampleSize?: string, edibleDosage?: number, clientData?: {
     clientName: string;
-    clientAddress: string;
-    licenseNumber: string;
+    clientAddress: string | null;
+    licenseNumber: string | null;
   }) => Promise<void>;
   goToCOA: (index: number) => void;
   clearGeneratedCOAs: () => void;
