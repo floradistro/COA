@@ -487,28 +487,27 @@ export default function Home() {
           {coaData && (
             <div className="bg-neutral-800/50 backdrop-blur-sm rounded-2xl shadow-xl p-4 sm:p-8 border border-neutral-700/50">
               <h2 className="text-xl sm:text-2xl font-bold text-neutral-100 mb-4 sm:mb-6">COA Preview</h2>
-              <div className="border-2 border-neutral-700/50 rounded-xl overflow-auto bg-neutral-900/50 p-1 sm:p-2 coa-preview-container flex justify-center">
+              <div className="border-2 border-neutral-700/50 rounded-xl overflow-auto bg-neutral-900/50 p-4 flex justify-center">
                 <div 
-                  ref={previewRef} 
-                  className="bg-white shadow-lg"
+                  ref={previewRef}
                   style={{ 
                     width: '794px',
                     minWidth: '794px',
-                    transformOrigin: 'top center'
+                    transformOrigin: 'top center',
+                    backgroundColor: 'white',
+                    padding: '8px'
                   }}
                 >
-                  <div style={{ padding: '8px' }}>
-                    <COATemplate 
-                      ref={componentRef}
-                      data={coaData}
-                      isMultiStrain={formState.isMultiStrain}
-                      generatedCOAs={generatedCOAs}
-                      currentCOAIndex={currentCOAIndex}
-                      onNavigateCOA={goToCOA}
-                      validationResult={validationResult || undefined}
-                      isPreviewMode={true}
-                    />
-                  </div>
+                  <COATemplate 
+                    ref={componentRef}
+                    data={coaData}
+                    isMultiStrain={formState.isMultiStrain}
+                    generatedCOAs={generatedCOAs}
+                    currentCOAIndex={currentCOAIndex}
+                    onNavigateCOA={goToCOA}
+                    validationResult={validationResult || undefined}
+                    isPreviewMode={true}
+                  />
                 </div>
               </div>
             </div>
