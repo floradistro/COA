@@ -18,8 +18,8 @@ export interface UseCOAGenerationReturn {
     dateTestedEnd?: string;
   }, selectedLabEmployee?: string, sampleSize?: string, edibleDosage?: number, clientData?: {
     clientName: string;
-    clientAddress: string;
-    licenseNumber: string;
+    clientAddress: string | null;
+    licenseNumber: string | null;
   }) => void;
   updateProfile: (profileType: CannabinoidProfile) => void;
   
@@ -134,8 +134,8 @@ export const useCOAGeneration = (
     edibleDosage?: number,
     clientData?: {
       clientName: string;
-      clientAddress: string;
-      licenseNumber: string;
+      clientAddress: string | null;
+      licenseNumber: string | null;
     }
   ): Promise<void> => {
     // Validate input
