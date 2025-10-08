@@ -192,8 +192,9 @@ export interface ComprehensiveValidationResult extends ValidationResult {
 export interface Client {
   id: string;
   name: string;
-  address: string;
-  license_number: string;
+  address: string | null;
+  license_number: string | null;
+  email?: string | null;
   created_at: string;
   updated_at: string;
 } 
