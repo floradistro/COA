@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { COAData, ProductType, CannabinoidProfile } from '@/types';
 import { 
   generateDefaultCOAData, 
@@ -11,7 +11,7 @@ import { BATCH_LIMITS } from '@/constants';
 export interface UseCOAGenerationReturn {
   // Single COA
   coaData: COAData;
-  setCOAData: (data: COAData) => void;
+  setCOAData: React.Dispatch<React.SetStateAction<COAData>>;
   generateNewCOA: (strain: string, dateReceived: string, productType: ProductType, dateRanges?: {
     dateCollected?: string;
     dateTested?: string;
@@ -57,14 +57,6 @@ export const useCOAGeneration = (
   const [currentCOAIndex, setCurrentCOAIndex] = useState(0);
   const [isGeneratingBatch, setIsGeneratingBatch] = useState(false);
   
-  // Debug wrapper for setGeneratedCOAs
-  const debugSetGeneratedCOAs = useCallback((coas: COAData[]) => {
-    console.log('Updating generatedCOAs array with', coas.length, 'COAs');
-    coas.forEach((coa, index) => {
-      console.log(`COA ${index}: ${coa.sampleName} - Has QR: ${!!coa.qrCodeDataUrl}`);
-    });
-    setGeneratedCOAs(coas);
-  }, []);
   
   // Generate a new single COA
   const generateNewCOA = useCallback((
@@ -222,11 +214,7 @@ export const useCOAGeneration = (
   const goToCOA = useCallback((index: number) => {
     if (index >= 0 && index < generatedCOAs.length) {
       setCurrentCOAIndex(index);
-      const targetCOA = generatedCOAs[index];
-      console.log(`Navigating to COA ${index}: ${targetCOA.sampleName}`);
-      console.log('COA has QR code:', !!targetCOA.qrCodeDataUrl);
-      console.log('COA QR code URL:', targetCOA.qrCodeDataUrl ? targetCOA.qrCodeDataUrl.substring(0, 50) + '...' : 'none');
-      setCOAData(targetCOA);
+      setCOAData(generatedCOAs[index]);
     }
   }, [generatedCOAs]);
   
@@ -256,7 +244,7 @@ export const useCOAGeneration = (
     
     // Multiple COAs
     generatedCOAs,
-    setGeneratedCOAs: debugSetGeneratedCOAs,
+    setGeneratedCOAs,
     currentCOAIndex,
     isGeneratingBatch,
     generateMultipleCOAs,

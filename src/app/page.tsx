@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { ProductType, CannabinoidProfile, ComprehensiveValidationResult, Client } from '@/types';
+import { ProductType, CannabinoidProfile, ComprehensiveValidationResult, Client, COAData } from '@/types';
 import { useCOAGeneration } from '@/hooks';
 import { useSupabaseUpload } from '@/hooks/useSupabaseUpload';
 import { supabase } from '@/lib/supabaseClient';
@@ -31,29 +31,26 @@ export default function Home() {
   // Preview scaling ref
   const previewRef = useRef<HTMLDivElement>(null);
   
-  // Form state
-  const [strain, setStrain] = useState('');
-  const [dateReceived, setDateReceived] = useState(getTodayString());
-  const [dateCollected, setDateCollected] = useState(getTodayString());
-  const [dateTested, setDateTested] = useState(getTodayString());
-  const [dateTestedEnd, setDateTestedEnd] = useState(getTodayString());
-  const [selectedProfile, setSelectedProfile] = useState<CannabinoidProfile>('high-thc');
-  const [selectedLabEmployee, setSelectedLabEmployee] = useState<string>('');
-  const [sampleSize, setSampleSize] = useState<string>(DEFAULT_SAMPLE_SIZE);
-  const [productType, setProductType] = useState<ProductType>('flower');
-  
-  // Edible specific state
-  const [edibleDosage, setEdibleDosage] = useState<number>(10); // mg
+  // Consolidated form state
+  const [formState, setFormState] = useState({
+    strain: '',
+    dateReceived: getTodayString(),
+    dateCollected: getTodayString(),
+    dateTested: getTodayString(),
+    dateTestedEnd: getTodayString(),
+    selectedProfile: 'high-thc' as CannabinoidProfile,
+    selectedLabEmployee: '',
+    sampleSize: DEFAULT_SAMPLE_SIZE,
+    productType: 'flower' as ProductType,
+    edibleDosage: 10,
+    isMultiStrain: false,
+    strainList: ''
+  });
   
   // Client state
   const [clients, setClients] = useState<Client[]>([]);
   const [selectedClientId, setSelectedClientId] = useState<string>('');
   const [loadingClients, setLoadingClients] = useState(true);
-
-  
-  // Multi-strain state
-  const [isMultiStrain, setIsMultiStrain] = useState(false);
-  const [strainList, setStrainList] = useState('');
   
   // Validation state
   const [validationResult, setValidationResult] = useState<ComprehensiveValidationResult | null>(null);
@@ -71,7 +68,7 @@ export default function Home() {
     generateMultipleCOAs,
     goToCOA,
     burnAllData
-  } = useCOAGeneration('Sample Strain', dateReceived, productType);
+  } = useCOAGeneration('Sample Strain', formState.dateReceived, formState.productType);
   
   useEffect(() => {
     setIsClient(true);
@@ -99,7 +96,7 @@ export default function Home() {
           setSelectedClientId(data[0].id);
           
           // Update the initial COA with client data
-          setCOAData(prev => ({
+          setCOAData((prev: COAData) => ({
             ...prev,
             clientName: data[0].name,
             clientAddress: data[0].address,
@@ -200,157 +197,140 @@ export default function Home() {
   // Auto-update COA when client selection changes
   useEffect(() => {
     if (coaData && selectedClient && coaData.clientName !== selectedClient.name) {
-      console.log('Client changed, updating COA with new client data:', selectedClient.name);
-      const updatedCOA = {
-        ...coaData,
+      setCOAData((prev: COAData) => ({
+        ...prev,
         clientName: selectedClient.name,
         clientAddress: selectedClient.address,
         licenseNumber: selectedClient.license_number
-      };
-      setCOAData(updatedCOA);
+      }));
     }
-  }, [selectedClientId, selectedClient, coaData, setCOAData]);
+  }, [selectedClientId, selectedClient?.name, coaData?.clientName, setCOAData]);
   
   // Auto-update COA when product type changes (after initial load)
   useEffect(() => {
-    if (coaData && coaData.sampleId && productType !== coaData.sampleType) {
-      console.log('Product type changed, regenerating COA:', productType);
-      const currentStrain = strain || coaData.strain || 'Sample Strain';
-      generateNewCOA(currentStrain, dateReceived, productType, {
-        dateCollected,
-        dateTested,
-        dateTestedEnd
-      }, selectedLabEmployee, sampleSize, edibleDosage, clientData);
+    if (coaData && coaData.sampleId && formState.productType !== coaData.sampleType) {
+      const currentStrain = formState.strain || coaData.strain || 'Sample Strain';
+      generateNewCOA(currentStrain, formState.dateReceived, formState.productType, {
+        dateCollected: formState.dateCollected,
+        dateTested: formState.dateTested,
+        dateTestedEnd: formState.dateTestedEnd
+      }, formState.selectedLabEmployee, formState.sampleSize, formState.edibleDosage, clientData);
       
-      if (selectedProfile !== 'high-thc') {
-        setTimeout(() => updateProfile(selectedProfile), 100);
+      if (formState.selectedProfile !== 'high-thc') {
+        setTimeout(() => updateProfile(formState.selectedProfile), 100);
       }
     }
-  }, [productType]);
+  }, [formState.productType, coaData?.sampleId, coaData?.sampleType]);
   
   // Auto-update COA when profile changes (after initial load)
   useEffect(() => {
     if (coaData && coaData.sampleId) {
-      console.log('Profile changed, updating COA:', selectedProfile);
-      updateProfile(selectedProfile);
+      updateProfile(formState.selectedProfile);
     }
-  }, [selectedProfile]);
+  }, [formState.selectedProfile, coaData?.sampleId, updateProfile]);
   
   // Auto-update COA when lab employee changes
   useEffect(() => {
-    if (coaData && selectedLabEmployee) {
-      console.log('Lab employee changed, updating COA:', selectedLabEmployee);
-      const updatedCOA = {
-        ...coaData,
-        labDirector: selectedLabEmployee,
-        directorTitle: selectedLabEmployee === 'Sarah Mitchell' ? 'Laboratory Director' : 
-                       selectedLabEmployee === 'Michael Minogue' ? 'Head Scientist' : 'Laboratory Tech'
-      };
-      setCOAData(updatedCOA);
+    if (coaData && formState.selectedLabEmployee && coaData.labDirector !== formState.selectedLabEmployee) {
+      setCOAData((prev: COAData) => ({
+        ...prev,
+        labDirector: formState.selectedLabEmployee,
+        directorTitle: formState.selectedLabEmployee === 'Sarah Mitchell' ? 'Laboratory Director' : 
+                       formState.selectedLabEmployee === 'Michael Minogue' ? 'Head Scientist' : 'Laboratory Tech'
+      }));
     }
-  }, [selectedLabEmployee, coaData?.sampleId, setCOAData]);
+  }, [formState.selectedLabEmployee, coaData?.labDirector, setCOAData]);
   
   // Auto-update COA when sample size changes
   useEffect(() => {
-    if (coaData && sampleSize && coaData.sampleSize !== sampleSize) {
-      console.log('Sample size changed, updating COA:', sampleSize);
-      setCOAData(prev => ({ ...prev, sampleSize }));
+    if (coaData && formState.sampleSize && coaData.sampleSize !== formState.sampleSize) {
+      setCOAData((prev: COAData) => ({ ...prev, sampleSize: formState.sampleSize }));
     }
-  }, [sampleSize, coaData, setCOAData]);
+  }, [formState.sampleSize, coaData?.sampleSize, setCOAData]);
   
   // Auto-update COA when edible dosage changes (for edibles only)
   useEffect(() => {
-    if (coaData && productType === 'edible' && edibleDosage && coaData.edibleDosage !== edibleDosage) {
-      console.log('Edible dosage changed, regenerating cannabinoid profile:', edibleDosage);
-      const edibleProfile = require('@/utils').generateEdibleCannabinoidProfile(edibleDosage, coaData.sampleSize);
-      setCOAData(prev => ({
+    if (coaData && formState.productType === 'edible' && formState.edibleDosage && coaData.edibleDosage !== formState.edibleDosage) {
+      const edibleProfile = require('@/utils').generateEdibleCannabinoidProfile(formState.edibleDosage, coaData.sampleSize);
+      setCOAData((prev: COAData) => ({
         ...prev,
-        edibleDosage,
+        edibleDosage: formState.edibleDosage,
         cannabinoids: edibleProfile.cannabinoids,
         totalTHC: edibleProfile.totalTHC,
         totalCBD: edibleProfile.totalCBD,
         totalCannabinoids: edibleProfile.totalCannabinoids
       }));
     }
-  }, [edibleDosage, productType, coaData?.sampleId, coaData?.sampleSize, setCOAData]);
+  }, [formState.edibleDosage, formState.productType, coaData?.edibleDosage, setCOAData]);
   
   // Auto-update COA when dates change
   useEffect(() => {
     if (coaData && coaData.sampleId) {
       const needsUpdate = 
-        coaData.dateCollected !== dateCollected ||
-        coaData.dateReceived !== dateReceived ||
-        coaData.dateTested !== dateTested;
+        coaData.dateCollected !== formState.dateCollected ||
+        coaData.dateReceived !== formState.dateReceived ||
+        coaData.dateTested !== formState.dateTested;
       
       if (needsUpdate) {
-        console.log('Dates changed, updating COA');
-        setCOAData(prev => ({
+        setCOAData((prev: COAData) => ({
           ...prev,
-          dateCollected,
-          dateReceived,
-          dateTested,
-          dateTestedEnd,
-          approvalDate: dateTested,
-          dateReported: dateTested
+          dateCollected: formState.dateCollected,
+          dateReceived: formState.dateReceived,
+          dateTested: formState.dateTested,
+          dateTestedEnd: formState.dateTestedEnd,
+          approvalDate: formState.dateTested,
+          dateReported: formState.dateTested
         }));
       }
     }
-  }, [dateCollected, dateReceived, dateTested, dateTestedEnd, coaData?.sampleId, setCOAData]);
+  }, [formState.dateCollected, formState.dateReceived, formState.dateTested, formState.dateTestedEnd, coaData?.dateCollected, coaData?.dateReceived, coaData?.dateTested, setCOAData]);
   
   // Generate single COA
   const handleGenerateSingle = useCallback(() => {
     try {
-      console.log('Generating single COA with:', { strain, dateReceived, productType, selectedProfile, client: clientData?.clientName });
-      generateNewCOA(strain || 'Sample Strain', dateReceived, productType, {
-        dateCollected,
-        dateTested,
-        dateTestedEnd
-      }, selectedLabEmployee, sampleSize, edibleDosage, clientData);
+      generateNewCOA(formState.strain || 'Sample Strain', formState.dateReceived, formState.productType, {
+        dateCollected: formState.dateCollected,
+        dateTested: formState.dateTested,
+        dateTestedEnd: formState.dateTestedEnd
+      }, formState.selectedLabEmployee, formState.sampleSize, formState.edibleDosage, clientData);
       
-      // Apply profile if not default
-      if (selectedProfile !== 'high-thc') {
-        setTimeout(() => updateProfile(selectedProfile), 100);
+      if (formState.selectedProfile !== 'high-thc') {
+        setTimeout(() => updateProfile(formState.selectedProfile), 100);
       }
       
       showNotification('success', 'COA generated successfully');
-      
-      // Debug: Check COA data after generation
-      setTimeout(() => {
-        console.log('COA data after generation:', coaData);
-        console.log('Cannabinoids count:', coaData?.cannabinoids?.length);
-      }, 200);
     } catch (error) {
       const message = getUserFriendlyMessage(error);
       showNotification('error', message);
     }
-  }, [strain, dateReceived, dateCollected, dateTested, dateTestedEnd, productType, selectedProfile, selectedLabEmployee, sampleSize, edibleDosage, clientData, generateNewCOA, updateProfile, showNotification, coaData]);
+  }, [formState, clientData, generateNewCOA, updateProfile, showNotification]);
   
   // Generate multiple COAs
   const handleGenerateBatch = useCallback(async () => {
     try {
-      const strains = strainList
+      const strains = formState.strainList
         .split('\n')
         .map(s => s.trim())
         .filter(s => s.length > 0)
-        .slice(0, 25); // Limit to 25
+        .slice(0, 25);
       
       if (strains.length === 0) {
         showNotification('warning', 'Please enter at least one strain name');
         return;
       }
       
-      await generateMultipleCOAs(strains, dateReceived, productType, selectedProfile, {
-        dateCollected,
-        dateTested,
-        dateTestedEnd
-      }, selectedLabEmployee, sampleSize, edibleDosage, clientData);
+      await generateMultipleCOAs(strains, formState.dateReceived, formState.productType, formState.selectedProfile, {
+        dateCollected: formState.dateCollected,
+        dateTested: formState.dateTested,
+        dateTestedEnd: formState.dateTestedEnd
+      }, formState.selectedLabEmployee, formState.sampleSize, formState.edibleDosage, clientData);
       
       showNotification('success', `Generated ${strains.length} COAs successfully`);
     } catch (error) {
       const message = getUserFriendlyMessage(error);
       showNotification('error', message);
     }
-  }, [strainList, dateReceived, dateCollected, dateTested, dateTestedEnd, productType, selectedProfile, selectedLabEmployee, sampleSize, edibleDosage, clientData, generateMultipleCOAs, showNotification]);
+  }, [formState, clientData, generateMultipleCOAs, showNotification]);
   
 
 
@@ -394,28 +374,28 @@ export default function Home() {
       if (!confirmed) return;
       
       const coaCount = generatedCOAs.length;
-      
-      // Show burning notification
       showNotification('info', 'Burning all session data...');
       
-      // Clear all COA data
       burnAllData();
       
-      // Reset all form states to defaults
-      setStrain('');
-      setDateReceived(getTodayString());
-      setDateCollected(getTodayString());
-      setDateTested(getTodayString());
-      setDateTestedEnd(getTodayString());
-      setSelectedProfile('high-thc');
-      setSelectedLabEmployee('');
-      setSampleSize(DEFAULT_SAMPLE_SIZE);
-      setProductType('flower');
-      setIsMultiStrain(false);
-      setStrainList('');
+      // Reset form state to defaults
+      setFormState({
+        strain: '',
+        dateReceived: getTodayString(),
+        dateCollected: getTodayString(),
+        dateTested: getTodayString(),
+        dateTestedEnd: getTodayString(),
+        selectedProfile: 'high-thc',
+        selectedLabEmployee: '',
+        sampleSize: DEFAULT_SAMPLE_SIZE,
+        productType: 'flower',
+        edibleDosage: 10,
+        isMultiStrain: false,
+        strainList: ''
+      });
+      
       setValidationResult(null);
       
-      // Show success notification after a brief delay
       setTimeout(() => {
         showNotification('success', `Successfully burned ${coaCount > 0 ? coaCount + ' COA(s) and' : ''} all session data`);
       }, 500);
@@ -424,18 +404,7 @@ export default function Home() {
       const message = getUserFriendlyMessage(error);
       showNotification('error', message);
     }
-  }, [
-    generatedCOAs.length, 
-    burnAllData, 
-    showNotification,
-    setStrain,
-    setDateReceived,
-    setSelectedProfile,
-    setProductType,
-    setIsMultiStrain,
-    setStrainList,
-    setValidationResult
-  ]);
+  }, [generatedCOAs.length, burnAllData, showNotification]);
 
 
 
@@ -504,35 +473,33 @@ export default function Home() {
 
         {/* Controls */}
         <COAControls
-          strain={strain}
-          setStrain={setStrain}
-          dateReceived={dateReceived}
-          setDateReceived={setDateReceived}
-          dateCollected={dateCollected}
-          setDateCollected={setDateCollected}
-          dateTested={dateTested}
-          setDateTested={setDateTested}
-          dateTestedEnd={dateTestedEnd}
-          setDateTestedEnd={setDateTestedEnd}
-          productType={productType}
-          setProductType={setProductType}
-          selectedProfile={selectedProfile}
-          setSelectedProfile={setSelectedProfile}
-          selectedLabEmployee={selectedLabEmployee}
-          setSelectedLabEmployee={setSelectedLabEmployee}
-          sampleSize={sampleSize}
-          setSampleSize={setSampleSize}
-          isMultiStrain={isMultiStrain}
-          setIsMultiStrain={setIsMultiStrain}
-          strainList={strainList}
-          setStrainList={setStrainList}
-          // Edible props
-          edibleDosage={edibleDosage}
-          setEdibleDosage={setEdibleDosage}
+          strain={formState.strain}
+          setStrain={(value) => setFormState(prev => ({ ...prev, strain: value }))}
+          dateReceived={formState.dateReceived}
+          setDateReceived={(value) => setFormState(prev => ({ ...prev, dateReceived: value }))}
+          dateCollected={formState.dateCollected}
+          setDateCollected={(value) => setFormState(prev => ({ ...prev, dateCollected: value }))}
+          dateTested={formState.dateTested}
+          setDateTested={(value) => setFormState(prev => ({ ...prev, dateTested: value }))}
+          dateTestedEnd={formState.dateTestedEnd}
+          setDateTestedEnd={(value) => setFormState(prev => ({ ...prev, dateTestedEnd: value }))}
+          productType={formState.productType}
+          setProductType={(value) => setFormState(prev => ({ ...prev, productType: value }))}
+          selectedProfile={formState.selectedProfile}
+          setSelectedProfile={(value) => setFormState(prev => ({ ...prev, selectedProfile: value }))}
+          selectedLabEmployee={formState.selectedLabEmployee}
+          setSelectedLabEmployee={(value) => setFormState(prev => ({ ...prev, selectedLabEmployee: value }))}
+          sampleSize={formState.sampleSize}
+          setSampleSize={(value) => setFormState(prev => ({ ...prev, sampleSize: value }))}
+          isMultiStrain={formState.isMultiStrain}
+          setIsMultiStrain={(value) => setFormState(prev => ({ ...prev, isMultiStrain: value }))}
+          strainList={formState.strainList}
+          setStrainList={(value) => setFormState(prev => ({ ...prev, strainList: value }))}
+          edibleDosage={formState.edibleDosage}
+          setEdibleDosage={(value) => setFormState(prev => ({ ...prev, edibleDosage: value }))}
           onGenerate={handleGenerateSingle}
           onGenerateBatch={handleGenerateBatch}
           isGeneratingBatch={isGeneratingBatch}
-          // Action props
           onUploadToSupabase={handleUploadToSupabase}
           onUploadAllToSupabase={generatedCOAs.length > 0 ? handleUploadAllToSupabase : undefined}
           generatedCOAs={generatedCOAs}
@@ -554,53 +521,21 @@ export default function Home() {
                     transformOrigin: 'top left',
                     transform: 'scale(var(--scale-factor, 1))'
                   }}>
-                    <COATemplate 
-                      data={coaData}
-                      isMultiStrain={isMultiStrain}
-                      generatedCOAs={generatedCOAs}
-                      currentCOAIndex={currentCOAIndex}
-                      onNavigateCOA={goToCOA}
-                      validationResult={validationResult || undefined}
-                      isPreviewMode={true}
-                    />
+                    <div style={{ backgroundColor: 'white', padding: '8px' }}>
+                      <COATemplate 
+                        ref={componentRef}
+                        data={coaData}
+                        isMultiStrain={formState.isMultiStrain}
+                        generatedCOAs={generatedCOAs}
+                        currentCOAIndex={currentCOAIndex}
+                        onNavigateCOA={goToCOA}
+                        validationResult={validationResult || undefined}
+                        isPreviewMode={true}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Hidden COA Template for Export - Always rendered but hidden */}
-      <div 
-        className="coa-export-wrapper"
-        style={{ 
-          position: 'fixed',
-          bottom: 0,
-          left: 0,
-          width: '100%',
-          height: '0',
-          overflow: 'hidden',
-          pointerEvents: 'none',
-          zIndex: -1
-        }}
-      >
-        <div 
-          className="coa-export-container"
-          data-export-container="true"
-          style={{ 
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            width: '794px',
-            minHeight: '1123px',
-            backgroundColor: 'white',
-            transform: 'translateY(0)'
-          }}
-        >
-          {coaData && coaData.cannabinoids && coaData.cannabinoids.length > 0 && (
-            <div style={{ backgroundColor: 'white', padding: '8px' }}>
-              <COATemplate ref={componentRef} data={coaData} />
             </div>
           )}
         </div>
