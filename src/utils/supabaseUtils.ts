@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabaseClient';
+import { supabaseData as supabase } from '@/lib/supabaseClient';
 
 export async function checkSupabaseBucket(): Promise<{ exists: boolean; error?: string }> {
   try {

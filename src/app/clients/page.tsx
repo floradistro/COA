@@ -1,12 +1,13 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabaseClient';
+import { supabaseData as supabase } from '@/lib/supabaseClient';
 import { Client } from '@/types';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import Link from 'next/link';
+import { ProtectedRoute } from '@/components/ProtectedRoute';
 
-export default function ClientsPage() {
+function ClientsPageContent() {
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
@@ -644,4 +645,10 @@ export default function ClientsPage() {
   );
 }
 
-
+export default function ClientsPage() {
+  return (
+    <ProtectedRoute>
+      <ClientsPageContent />
+    </ProtectedRoute>
+  )
+}

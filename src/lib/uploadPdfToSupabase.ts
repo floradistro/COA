@@ -1,4 +1,4 @@
-import { supabase } from './supabaseClient'
+import { supabaseData as supabase } from './supabaseClient'
 import { COAData } from '@/types'
 
 export async function uploadPdfToSupabase(filename: string, fileBuffer: Buffer, useProvidedFilename: boolean = false, coaData?: COAData): Promise<string> {

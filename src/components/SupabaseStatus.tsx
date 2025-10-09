@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { checkSupabaseBucket } from '@/utils/supabaseUtils'
+import { supabaseData } from '@/lib/supabaseClient'
 
 export default function SupabaseStatus() {
   const [status, setStatus] = useState<'checking' | 'connected' | 'error'>('checking')
@@ -13,37 +13,41 @@ export default function SupabaseStatus() {
   const checkConnection = async () => {
     setStatus('checking')
     try {
-      const { exists, error } = await checkSupabaseBucket()
+      // Simple check - try to fetch from database
+      const { data, error } = await supabaseData
+        .from('clients')
+        .select('id')
+        .limit(1)
       
-      if (exists) {
-        setStatus('connected')
-      } else {
+      if (error) {
+        console.error('Database check failed:', error.message)
         setStatus('error')
-        console.error('Supabase bucket check failed:', error || 'Unknown error')
+      } else {
+        setStatus('connected')
       }
     } catch (err) {
       setStatus('error')
-      console.error('Supabase connection failed:', err instanceof Error ? err.message : 'Connection failed')
+      console.error('Connection failed:', err instanceof Error ? err.message : 'Connection failed')
     }
   }
 
   if (status === 'checking') {
     return (
-      <div className="flex items-center gap-2 text-sm text-gray-500">
-        <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse" />
-        <span>Checking cloud storage...</span>
+      <div className="flex items-center gap-2 text-xs text-neutral-400">
+        <div className="w-1.5 h-1.5 bg-neutral-500 rounded-full animate-pulse" />
+        <span className="uppercase tracking-wider">Checking...</span>
       </div>
     )
   }
 
   if (status === 'error') {
     return (
-      <div className="flex items-center gap-2 text-sm text-red-600">
-        <div className="w-2 h-2 bg-red-500 rounded-full" />
-        <span>Cloud storage offline</span>
+      <div className="flex items-center gap-2 text-xs text-neutral-400">
+        <div className="w-1.5 h-1.5 bg-neutral-600 rounded-full" />
+        <span className="uppercase tracking-wider">Offline</span>
         <button
           onClick={checkConnection}
-          className="text-xs underline hover:no-underline"
+          className="text-xs text-neutral-300 hover:text-white transition-colors uppercase tracking-wider"
         >
           Retry
         </button>
@@ -52,9 +56,9 @@ export default function SupabaseStatus() {
   }
 
   return (
-    <div className="flex items-center gap-2 text-sm text-green-600">
-      <div className="w-2 h-2 bg-green-500 rounded-full" />
-      <span>Cloud storage ready</span>
+    <div className="flex items-center gap-2 text-xs text-neutral-400">
+      <div className="w-1.5 h-1.5 bg-neutral-300 rounded-full" />
+      <span className="uppercase tracking-wider">Ready</span>
     </div>
   )
 } 

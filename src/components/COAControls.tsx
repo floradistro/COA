@@ -91,73 +91,88 @@ export const COAControls: React.FC<COAControlsProps> = ({
   const isCurrentCOALaunched = currentCOA?.publicUrl ? true : false;
 
   return (
-    <div className="mb-6 space-y-4">
-      {/* Export Progress */}
+    <>
+      {/* Export Progress - Fixed at bottom */}
       {isExporting && (
-        <div className="bg-neutral-800/50 backdrop-blur-sm rounded-lg shadow-md p-4 border border-neutral-700/50">
-          <ProgressBar
-            progress={exportProgress || 0}
-            label="Exporting COAs..."
-            color="blue"
-            height="md"
-          />
+        <div className="fixed bottom-6 left-1/2 z-50 w-full max-w-md px-4 animate-slide-up">
+          <div className="bg-neutral-900/95 backdrop-blur-xl rounded-2xl overflow-hidden shadow-[0_8px_32px_0_rgba(0,0,0,0.6)] border border-blue-500/20">
+            <div className="p-4">
+              <ProgressBar
+                progress={exportProgress || 0}
+                label="Exporting COAs..."
+                color="blue"
+                height="md"
+              />
+            </div>
+          </div>
         </div>
       )}
       
-      {/* Upload Progress */}
+      {/* Upload Progress - Fixed at bottom */}
       {isUploading && (
-        <div className="bg-neutral-800/50 backdrop-blur-sm rounded-lg shadow-md p-4 border border-neutral-700/50">
-          <ProgressBar
-            progress={uploadProgress}
-            label="Launching COAs to cloud..."
-            color="indigo"
-            height="md"
-          />
+        <div className="fixed bottom-6 left-1/2 z-50 w-full max-w-md px-4 animate-slide-up">
+          <div className="bg-neutral-900/95 backdrop-blur-xl rounded-2xl overflow-hidden shadow-[0_8px_32px_0_rgba(0,0,0,0.6)] border border-indigo-500/20">
+            <div className="p-4">
+              <ProgressBar
+                progress={uploadProgress}
+                label="Launching COAs to cloud..."
+                color="indigo"
+                height="md"
+              />
+            </div>
+          </div>
         </div>
       )}
 
-      {/* Single/Multi Toggle */}
-      <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3 mb-4">
-        <button
-          onClick={() => setIsMultiStrain(false)}
-          className={`smooth-hover w-full sm:w-auto px-4 py-2.5 rounded-lg font-medium transition-all text-sm ${
-            !isMultiStrain 
-              ? 'bg-neutral-600/30 border border-neutral-500/50 text-neutral-100 shadow-md' 
-              : 'bg-transparent border border-neutral-500/30 text-neutral-300 hover:bg-neutral-600/10 hover:border-neutral-400/50'
-          }`}
-        >
-          Single Strain
-        </button>
-        <button
-          onClick={() => setIsMultiStrain(true)}
-          className={`smooth-hover w-full sm:w-auto px-4 py-2.5 rounded-lg font-medium transition-all text-sm ${
-            isMultiStrain 
-              ? 'bg-neutral-600/30 border border-neutral-500/50 text-neutral-100 shadow-md' 
-              : 'bg-transparent border border-neutral-500/30 text-neutral-300 hover:bg-neutral-600/10 hover:border-neutral-400/50'
-          }`}
-        >
-          Multi-Strain Batch
-        </button>
-      </div>
-
+    <div className="mb-4 sm:mb-6 space-y-3 sm:space-y-4">
       {/* Controls Container */}
-      <div className="bg-neutral-800/50 backdrop-blur-sm rounded-xl shadow-lg border border-neutral-700/50">
+      <div className="bg-neutral-900/40 backdrop-blur-2xl rounded-2xl sm:rounded-3xl shadow-[0_8px_32px_0_rgba(0,0,0,0.4),0_0_0_1px_rgba(255,255,255,0.03)]">
         {/* Main Controls */}
-        <div className="p-5">
-          <div className="space-y-4">
+        <div className="relative">
+          {/* Subtle gradient line accent */}
+          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-neutral-500/30 to-transparent" />
+          
+          <div className="px-3 py-4 sm:px-6 sm:py-8 space-y-4 sm:space-y-6">
             {/* Strain Input */}
             <div>
-              <label className="block text-xs font-medium text-neutral-300 mb-1">
-                {productType === 'edible' ? 
-                  (isMultiStrain ? 'Product Names (one per line)' : 'Product Name') : 
-                  (isMultiStrain ? 'Strain Names (one per line)' : 'Strain Name')
-                }
-              </label>
+              <div className="flex items-center justify-between mb-3">
+                <label className="text-xs font-medium text-neutral-400 uppercase tracking-wider">
+                  {productType === 'edible' ? 
+                    (isMultiStrain ? 'Product Names (one per line)' : 'Product Name') : 
+                    (isMultiStrain ? 'Strain Names (one per line)' : 'Strain Name')
+                  }
+                </label>
+                
+                {/* Compact Single/Bulk Toggle */}
+                <div className="flex items-center gap-1 bg-white/5 rounded-lg p-1 border border-white/5">
+                  <button
+                    onClick={() => setIsMultiStrain(false)}
+                    className={`px-3 py-1 rounded-md text-xs font-medium transition-all duration-200 ${
+                      !isMultiStrain 
+                        ? 'bg-white/15 text-white shadow-sm' 
+                        : 'text-neutral-400 hover:text-neutral-200'
+                    }`}
+                  >
+                    Single
+                  </button>
+                  <button
+                    onClick={() => setIsMultiStrain(true)}
+                    className={`px-3 py-1 rounded-md text-xs font-medium transition-all duration-200 ${
+                      isMultiStrain 
+                        ? 'bg-white/15 text-white shadow-sm' 
+                        : 'text-neutral-400 hover:text-neutral-200'
+                    }`}
+                  >
+                    Bulk
+                  </button>
+                </div>
+              </div>
+              
               {isMultiStrain ? (
                 <textarea
                   value={strainList}
                   onChange={(e) => setStrainList(e.target.value)}
-                  className="w-full px-3 py-2 bg-neutral-900/50 border border-neutral-600/50 text-neutral-100 placeholder-white/60 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-500/50 focus:border-transparent transition-all h-20 text-sm"
+                  className="w-full px-4 py-3 bg-white/5 backdrop-blur-xl text-white placeholder-neutral-500 rounded-2xl focus:outline-none focus:bg-white/10 transition-all duration-300 shadow-[0_4px_12px_0_rgba(0,0,0,0.3),inset_0_1px_0_0_rgba(255,255,255,0.05)] border border-white/5 hover:border-white/10 h-24 text-sm resize-none"
                   placeholder={productType === 'edible' ? 'Enter product names, one per line...' : 'Enter strain names, one per line...'}
                 />
               ) : (
@@ -165,58 +180,53 @@ export const COAControls: React.FC<COAControlsProps> = ({
                   type="text"
                   value={strain}
                   onChange={(e) => setStrain(e.target.value)}
-                  className="w-full px-3 py-2 bg-neutral-900/50 border border-neutral-600/50 text-neutral-100 placeholder-white/60 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-500/50 focus:border-transparent transition-all text-sm"
+                  className="w-full px-4 py-3 bg-white/5 backdrop-blur-xl text-white placeholder-neutral-500 rounded-2xl focus:outline-none focus:bg-white/10 transition-all duration-300 shadow-[0_4px_12px_0_rgba(0,0,0,0.3),inset_0_1px_0_0_rgba(255,255,255,0.05)] border border-white/5 hover:border-white/10 text-sm"
                   placeholder={productType === 'edible' ? 'Enter product name...' : 'Enter strain name...'}
                 />
               )}
             </div>
 
             {/* Date Fields */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
               {/* Date Collected */}
               <div>
-                <label className="block text-xs font-medium text-neutral-300 mb-1">Date Collected</label>
+                <label className="block text-[10px] font-medium text-neutral-400 mb-1.5 uppercase tracking-wider">Date Collected</label>
                 <input
                   type="date"
                   value={dateCollected}
                   onChange={(e) => setDateCollected(e.target.value)}
-                  className="w-full px-3 py-2 bg-neutral-900/50 border border-neutral-600/50 text-neutral-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-500/50 focus:border-transparent transition-all text-sm"
+                  className="w-full px-3 py-2 bg-white/5 backdrop-blur-xl text-white rounded-xl focus:outline-none focus:bg-white/10 transition-all duration-300 shadow-[0_4px_12px_0_rgba(0,0,0,0.3),inset_0_1px_0_0_rgba(255,255,255,0.05)] border border-white/5 hover:border-white/10 text-xs"
                 />
               </div>
 
               {/* Date Received */}
               <div>
-                <label className="block text-xs font-medium text-neutral-300 mb-1">Date Received</label>
+                <label className="block text-[10px] font-medium text-neutral-400 mb-1.5 uppercase tracking-wider">Date Received</label>
                 <input
                   type="date"
                   value={dateReceived}
                   onChange={(e) => setDateReceived(e.target.value)}
-                  className="w-full px-3 py-2 bg-neutral-900/50 border border-neutral-600/50 text-neutral-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-500/50 focus:border-transparent transition-all text-sm"
+                  className="w-full px-3 py-2 bg-white/5 backdrop-blur-xl text-white rounded-xl focus:outline-none focus:bg-white/10 transition-all duration-300 shadow-[0_4px_12px_0_rgba(0,0,0,0.3),inset_0_1px_0_0_rgba(255,255,255,0.05)] border border-white/5 hover:border-white/10 text-xs"
                 />
               </div>
 
               {/* Date Completed Range */}
               <div className="md:col-span-2">
-                <label className="block text-xs font-medium text-neutral-300 mb-1">Date Completed Range</label>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className="block text-[10px] text-neutral-400 mb-1">From</label>
-                    <input
-                      type="date"
-                      value={dateTested}
-                      onChange={(e) => setDateTested(e.target.value)}
-                      className="w-full px-2 py-1.5 bg-neutral-900/50 border border-neutral-600/50 text-neutral-100 rounded focus:outline-none focus:ring-1 focus:ring-neutral-500/50 focus:border-transparent transition-all text-xs"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] text-neutral-400 mb-1">To</label>
-                    <input
-                      type="date"
-                      value={dateTestedEnd}
-                      onChange={(e) => setDateTestedEnd(e.target.value)}
-                      className="w-full px-2 py-1.5 bg-neutral-900/50 border border-neutral-600/50 text-neutral-100 rounded focus:outline-none focus:ring-1 focus:ring-neutral-500/50 focus:border-transparent transition-all text-xs"
-                    />
-                  </div>
+                <label className="block text-[10px] font-medium text-neutral-400 mb-1.5 uppercase tracking-wider">Date Completed Range</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="date"
+                    value={dateTested}
+                    onChange={(e) => setDateTested(e.target.value)}
+                    className="flex-1 px-3 py-2 bg-white/5 backdrop-blur-xl text-white rounded-xl focus:outline-none focus:bg-white/10 transition-all duration-300 shadow-[0_4px_12px_0_rgba(0,0,0,0.3),inset_0_1px_0_0_rgba(255,255,255,0.05)] border border-white/5 hover:border-white/10 text-xs"
+                  />
+                  <span className="text-neutral-400 text-xs font-medium">to</span>
+                  <input
+                    type="date"
+                    value={dateTestedEnd}
+                    onChange={(e) => setDateTestedEnd(e.target.value)}
+                    className="flex-1 px-3 py-2 bg-white/5 backdrop-blur-xl text-white rounded-xl focus:outline-none focus:bg-white/10 transition-all duration-300 shadow-[0_4px_12px_0_rgba(0,0,0,0.3),inset_0_1px_0_0_rgba(255,255,255,0.05)] border border-white/5 hover:border-white/10 text-xs"
+                  />
                 </div>
               </div>
             </div>
@@ -225,13 +235,13 @@ export const COAControls: React.FC<COAControlsProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {/* Product Type */}
               <div>
-                <label className="block text-xs font-medium text-neutral-300 mb-1">
+                <label className="block text-xs font-medium text-neutral-400 mb-3 uppercase tracking-wider">
                   Product Type
                 </label>
                 <select
                   value={productType}
                   onChange={(e) => setProductType(e.target.value as ProductType)}
-                  className="w-full px-3 py-2 bg-neutral-900/50 border border-neutral-600/50 text-neutral-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-500/50 focus:border-transparent transition-all text-sm"
+                  className="w-full px-4 py-3 bg-white/5 backdrop-blur-xl text-white rounded-2xl focus:outline-none focus:bg-white/10 transition-all duration-300 shadow-[0_4px_12px_0_rgba(0,0,0,0.3),inset_0_1px_0_0_rgba(255,255,255,0.05)] border border-white/5 hover:border-white/10 text-sm"
                 >
                   {Object.entries(PRODUCT_CONFIGS).map(([key, config]) => (
                     <option key={key} value={key}>
@@ -243,13 +253,13 @@ export const COAControls: React.FC<COAControlsProps> = ({
 
               {/* Cannabinoid Profile */}
               <div>
-                <label className="block text-xs font-medium text-neutral-300 mb-1">
+                <label className="block text-xs font-medium text-neutral-400 mb-3 uppercase tracking-wider">
                   Cannabinoid Profile
                 </label>
                 <select
                   value={selectedProfile}
                   onChange={(e) => setSelectedProfile(e.target.value as CannabinoidProfile)}
-                  className="w-full px-3 py-2 bg-neutral-900/50 border border-neutral-600/50 text-neutral-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-500/50 focus:border-transparent transition-all text-sm"
+                  className="w-full px-4 py-3 bg-white/5 backdrop-blur-xl text-white rounded-2xl focus:outline-none focus:bg-white/10 transition-all duration-300 shadow-[0_4px_12px_0_rgba(0,0,0,0.3),inset_0_1px_0_0_rgba(255,255,255,0.05)] border border-white/5 hover:border-white/10 text-sm"
                 >
                   <option value="high-thc">High THCA (22-30%)</option>
                   <option value="medium-thc">Medium THCA (15-20%)</option>
@@ -261,10 +271,10 @@ export const COAControls: React.FC<COAControlsProps> = ({
 
               {/* Sample Size */}
               <div>
-                <label className="block text-xs font-medium text-neutral-300 mb-1">
+                <label className="block text-xs font-medium text-neutral-400 mb-3 uppercase tracking-wider">
                   Sample Size
                 </label>
-                <div className="flex gap-1">
+                <div className="flex gap-2">
                   <select
                     value={SAMPLE_SIZE_OPTIONS.find(option => option.value === sampleSize)?.value || 'custom'}
                     onChange={(e) => {
@@ -278,7 +288,7 @@ export const COAControls: React.FC<COAControlsProps> = ({
                         setSampleSize(e.target.value);
                       }
                     }}
-                    className="flex-1 px-2 py-2 bg-neutral-900/50 border border-neutral-600/50 text-neutral-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-500/50 focus:border-transparent transition-all text-sm"
+                    className="flex-1 px-4 py-3 bg-white/5 backdrop-blur-xl text-white rounded-2xl focus:outline-none focus:bg-white/10 transition-all duration-300 shadow-[0_4px_12px_0_rgba(0,0,0,0.3),inset_0_1px_0_0_rgba(255,255,255,0.05)] border border-white/5 hover:border-white/10 text-sm"
                   >
                     {SAMPLE_SIZE_OPTIONS.map((option) => (
                       <option key={option.value} value={option.value}>
@@ -293,7 +303,7 @@ export const COAControls: React.FC<COAControlsProps> = ({
                       value={sampleSize}
                       onChange={(e) => setSampleSize(e.target.value)}
                       placeholder="Custom"
-                      className="w-16 px-2 py-2 bg-neutral-900/50 border border-neutral-600/50 text-neutral-100 placeholder-white/60 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-500/50 focus:border-transparent transition-all text-xs"
+                      className="w-24 px-4 py-3 bg-white/5 backdrop-blur-xl text-white placeholder-neutral-500 rounded-2xl focus:outline-none focus:bg-white/10 transition-all duration-300 shadow-[0_4px_12px_0_rgba(0,0,0,0.3),inset_0_1px_0_0_rgba(255,255,255,0.05)] border border-white/5 hover:border-white/10 text-sm"
                     />
                   )}
                 </div>
@@ -301,13 +311,13 @@ export const COAControls: React.FC<COAControlsProps> = ({
 
               {/* Lab Employee */}
               <div>
-                <label className="block text-xs font-medium text-neutral-300 mb-1">
+                <label className="block text-xs font-medium text-neutral-400 mb-3 uppercase tracking-wider">
                   Approved By
                 </label>
                 <select
                   value={selectedLabEmployee}
                   onChange={(e) => setSelectedLabEmployee(e.target.value)}
-                  className="w-full px-3 py-2 bg-neutral-900/50 border border-neutral-600/50 text-neutral-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-500/50 focus:border-transparent transition-all text-sm"
+                  className="w-full px-4 py-3 bg-white/5 backdrop-blur-xl text-white rounded-2xl focus:outline-none focus:bg-white/10 transition-all duration-300 shadow-[0_4px_12px_0_rgba(0,0,0,0.3),inset_0_1px_0_0_rgba(255,255,255,0.05)] border border-white/5 hover:border-white/10 text-sm"
                 >
                   <option value="">Random Employee</option>
                   {LAB_EMPLOYEES.map((employee) => (
@@ -322,10 +332,10 @@ export const COAControls: React.FC<COAControlsProps> = ({
               {productType === 'edible' && (
                 <>
                   <div>
-                    <label className="block text-xs font-medium text-neutral-300 mb-1">
+                    <label className="block text-xs font-medium text-neutral-400 mb-3 uppercase tracking-wider">
                       THC Content (mg)
                     </label>
-                    <div className="flex gap-1">
+                    <div className="flex gap-2">
                       <select
                         value={[2.5, 5, 10, 25, 50, 100].includes(edibleDosage) ? edibleDosage : 'custom'}
                         onChange={(e) => {
@@ -341,7 +351,7 @@ export const COAControls: React.FC<COAControlsProps> = ({
                             setEdibleDosage(Number(e.target.value));
                           }
                         }}
-                        className="flex-1 px-2 py-2 bg-neutral-900/50 border border-neutral-600/50 text-neutral-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-500/50 focus:border-transparent transition-all text-sm"
+                        className="flex-1 px-4 py-3 bg-white/5 backdrop-blur-xl text-white rounded-2xl focus:outline-none focus:bg-white/10 transition-all duration-300 shadow-[0_4px_12px_0_rgba(0,0,0,0.3),inset_0_1px_0_0_rgba(255,255,255,0.05)] border border-white/5 hover:border-white/10 text-sm"
                       >
                         <option value={2.5}>2.5mg</option>
                         <option value={5}>5mg</option>
@@ -359,7 +369,7 @@ export const COAControls: React.FC<COAControlsProps> = ({
                           value={edibleDosage}
                           onChange={(e) => setEdibleDosage(Number(e.target.value))}
                           placeholder="mg"
-                          className="w-16 px-2 py-2 bg-neutral-900/50 border border-neutral-600/50 text-neutral-100 placeholder-white/60 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-500/50 focus:border-transparent transition-all text-xs"
+                          className="w-24 px-4 py-3 bg-white/5 backdrop-blur-xl text-white placeholder-neutral-500 rounded-2xl focus:outline-none focus:bg-white/10 transition-all duration-300 shadow-[0_4px_12px_0_rgba(0,0,0,0.3),inset_0_1px_0_0_rgba(255,255,255,0.05)] border border-white/5 hover:border-white/10 text-sm"
                         />
                       )}
                     </div>
@@ -368,128 +378,126 @@ export const COAControls: React.FC<COAControlsProps> = ({
               )}
             </div>
           </div>
-
-          {/* Generate Button and Action Buttons Row */}
-          <div className="mt-4">
-            {/* Action Buttons - All in one row */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
-              {/* Generate Button */}
-              {isMultiStrain ? (
-                <button
-                  onClick={onGenerateBatch}
-                  disabled={isGeneratingBatch || !strainList.trim()}
-                  className="smooth-hover w-full px-4 py-2.5 bg-neutral-600/30 border border-neutral-500/50 text-neutral-100 rounded-md hover:bg-neutral-600/40 hover:border-neutral-400/60 focus:outline-none focus:ring-2 focus:ring-neutral-500/50 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm flex items-center justify-center gap-1"
-                >
-                  {isGeneratingBatch ? (
-                    <>
-                      <svg className="animate-spin h-4 w-4 text-neutral-100" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Generating...
-                    </>
-                  ) : (
-                    <>
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                      </svg>
-                      Generate Batch
-                    </>
-                  )}
-                </button>
-              ) : (
-                <button
-                  onClick={onGenerate}
-                  className="smooth-hover w-full px-4 py-2.5 bg-neutral-600/30 border border-neutral-500/50 text-neutral-100 rounded-md hover:bg-neutral-600/40 hover:border-neutral-400/60 focus:outline-none focus:ring-2 focus:ring-neutral-500/50 transition-all shadow-md font-medium text-sm flex items-center justify-center gap-1"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
-                  Generate COA
-                </button>
-              )}
-
-              <button
-                onClick={() => router.push('/live-coas')}
-                className="smooth-hover w-full px-4 py-2.5 bg-transparent border border-neutral-500/30 text-neutral-200 rounded-md hover:bg-neutral-600/10 hover:border-neutral-400/50 transition-all font-medium text-sm flex items-center justify-center gap-1"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-                </svg>
-                View Live COAs
-              </button>
-
-              {/* Launch COA/Launch All Button */}
-              {isMultiStrain && generatedCOAs.length > 1 && onUploadAllToSupabase ? (
-                <button
-                  onClick={onUploadAllToSupabase}
-                  disabled={isExporting || isUploading}
-                  className="smooth-hover w-full px-4 py-2.5 bg-transparent border border-neutral-500/30 text-neutral-200 rounded-md hover:bg-neutral-600/10 hover:border-neutral-400/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-medium text-sm flex items-center justify-center gap-1"
-                >
-                  {isUploading ? (
-                    <>
-                      <LoadingSpinner size="sm" color="white" />
-                      Launching All...
-                    </>
-                  ) : (
-                    <>
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 12l2 2 4-4" />
-                      </svg>
-                      Launch All COAs
-                    </>
-                  )}
-                </button>
-              ) : onUploadToSupabase && !isCurrentCOALaunched && (
-                <button
-                  onClick={onUploadToSupabase}
-                  disabled={isExporting || isUploading}
-                  className="smooth-hover w-full px-4 py-2.5 bg-transparent border border-neutral-500/30 text-neutral-200 rounded-md hover:bg-neutral-600/10 hover:border-neutral-400/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-medium text-sm flex items-center justify-center gap-1"
-                >
-                  {isUploading ? (
-                    <>
-                      <LoadingSpinner size="sm" color="white" />
-                      Launching...
-                    </>
-                  ) : (
-                    <>
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                      </svg>
-                      Launch COA
-                    </>
-                  )}
-                </button>
-              )}
-
-              {isCurrentCOALaunched && currentCOA?.publicUrl && (
-                <button
-                  onClick={() => window.open(currentCOA.publicUrl, '_blank')}
-                  className="smooth-hover w-full px-4 py-2.5 bg-transparent border border-green-500/30 text-green-300 rounded-md hover:bg-green-600/10 hover:border-green-400/50 transition-all font-medium text-sm flex items-center justify-center gap-1"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                  </svg>
-                  View Live COA
-                </button>
-              )}
-
-              {onBurnBatch && (
-                <button
-                  onClick={onBurnBatch}
-                  disabled={isExporting}
-                  className="smooth-hover w-full px-4 py-2.5 bg-transparent border border-red-500/30 text-red-300 rounded-md hover:bg-red-600/10 hover:border-red-400/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-medium text-sm flex items-center justify-center gap-1"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                  BURN SESSION
-                </button>
-              )}
-            </div>
-          </div>
         </div>
       </div>
+
+      {/* Generate Button and Action Buttons Row - Floating Below */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
+        {/* Generate Button */}
+        {isMultiStrain ? (
+          <button
+            onClick={onGenerateBatch}
+            disabled={isGeneratingBatch || !strainList.trim()}
+            className="w-full px-4 py-4 bg-gradient-to-r from-white/15 to-white/10 hover:from-white/20 hover:to-white/15 text-white font-semibold rounded-2xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_8px_24px_0_rgba(255,255,255,0.1)] hover:shadow-[0_12px_32px_0_rgba(255,255,255,0.15)] hover:scale-[1.01] active:scale-[0.99] text-xs uppercase tracking-wider flex items-center justify-center gap-2 border border-white/10"
+          >
+            {isGeneratingBatch ? (
+              <>
+                <svg className="animate-spin h-4 w-4 text-neutral-100" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Generating...
+              </>
+            ) : (
+              <>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Generate
+              </>
+            )}
+          </button>
+        ) : (
+          <button
+            onClick={onGenerate}
+            className="w-full px-4 py-4 bg-gradient-to-r from-white/15 to-white/10 hover:from-white/20 hover:to-white/15 text-white font-semibold rounded-2xl transition-all duration-300 shadow-[0_8px_24px_0_rgba(255,255,255,0.1)] hover:shadow-[0_12px_32px_0_rgba(255,255,255,0.15)] hover:scale-[1.01] active:scale-[0.99] text-xs uppercase tracking-wider flex items-center justify-center gap-2 border border-white/10"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Generate
+          </button>
+        )}
+
+        <button
+          onClick={() => router.push('/live-coas')}
+          className="w-full px-4 py-3 bg-transparent text-neutral-400 hover:text-white rounded-2xl hover:bg-white/5 transition-all duration-300 font-medium text-xs uppercase tracking-wider flex items-center justify-center gap-2 border border-white/5 hover:border-white/10"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+          </svg>
+          Library
+        </button>
+
+        {/* Launch COA/Launch All Button */}
+        {isMultiStrain && generatedCOAs.length > 1 && onUploadAllToSupabase ? (
+          <button
+            onClick={onUploadAllToSupabase}
+            disabled={isExporting || isUploading}
+            className="w-full px-4 py-3 bg-transparent text-neutral-400 hover:text-white rounded-2xl hover:bg-white/5 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 font-medium text-xs uppercase tracking-wider flex items-center justify-center gap-2 border border-white/5 hover:border-white/10"
+          >
+            {isUploading ? (
+              <>
+                <LoadingSpinner size="sm" color="white" />
+                Launching...
+              </>
+            ) : (
+              <>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 12l2 2 4-4" />
+                </svg>
+                Launch
+              </>
+            )}
+          </button>
+        ) : onUploadToSupabase && !isCurrentCOALaunched && (
+          <button
+            onClick={onUploadToSupabase}
+            disabled={isExporting || isUploading}
+            className="w-full px-4 py-3 bg-transparent text-neutral-400 hover:text-white rounded-2xl hover:bg-white/5 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 font-medium text-xs uppercase tracking-wider flex items-center justify-center gap-2 border border-white/5 hover:border-white/10"
+          >
+            {isUploading ? (
+              <>
+                <LoadingSpinner size="sm" color="white" />
+                Launching...
+              </>
+            ) : (
+              <>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                </svg>
+                Launch
+              </>
+            )}
+          </button>
+        )}
+
+        {isCurrentCOALaunched && currentCOA?.publicUrl && (
+          <button
+            onClick={() => window.open(currentCOA.publicUrl, '_blank')}
+            className="w-full px-4 py-3 bg-transparent text-neutral-300 hover:text-white rounded-2xl hover:bg-white/5 transition-all duration-300 font-medium text-xs uppercase tracking-wider flex items-center justify-center gap-2 border border-white/5 hover:border-white/10"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+            </svg>
+            View Live COA
+          </button>
+        )}
+
+        {onBurnBatch && (
+          <button
+            onClick={onBurnBatch}
+            disabled={isExporting}
+            className="w-full px-4 py-3 bg-transparent text-neutral-400 hover:text-neutral-200 rounded-2xl hover:bg-white/5 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 font-medium text-xs uppercase tracking-wider flex items-center justify-center gap-2 border border-white/5 hover:border-white/10"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            Burn
+          </button>
+        )}
+      </div>
     </div>
+    </>
   );
 }; 

@@ -1,9 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabaseClient';
+import { supabaseData as supabase } from '@/lib/supabaseClient';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import JSZip from 'jszip';
+import { ProtectedRoute } from '@/components/ProtectedRoute';
+import GeometricBackground from '@/components/OceanBackground';
+import Link from 'next/link';
 
 interface COAFile {
   id: string;
@@ -19,7 +22,7 @@ interface COAFile {
   strainName?: string;
 }
 
-export default function LiveCOAsPage() {
+function LiveCOAsPageContent() {
   const [coaFiles, setCOAFiles] = useState<COAFile[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
@@ -470,15 +473,18 @@ export default function LiveCOAsPage() {
   // Render loading state on server and initial client render
   if (!mounted) {
     return (
-      <div className="min-h-screen bg-neutral-900">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="min-h-screen bg-neutral-800 relative">
+        <GeometricBackground />
+        <div className="absolute inset-0 bg-gradient-to-br from-neutral-900/30 via-neutral-800/50 to-neutral-900/30 z-[1]" />
+        
+        <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 py-3 sm:py-8 relative z-[2]">
           <div className="animate-pulse">
-            <div className="h-10 bg-neutral-700 rounded w-1/4 mb-4"></div>
-            <div className="h-6 bg-neutral-700 rounded w-3/4 mb-8"></div>
+            <div className="h-10 bg-neutral-700/50 rounded-2xl w-1/4 mb-4"></div>
+            <div className="h-6 bg-neutral-700/50 rounded-xl w-3/4 mb-8"></div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {[1, 2, 3].map(i => (
-                <div key={i} className="bg-neutral-800 rounded-xl shadow-lg p-6">
-                  <div className="h-40 bg-neutral-700 rounded"></div>
+                <div key={i} className="bg-neutral-900/40 backdrop-blur-2xl rounded-3xl shadow-lg p-6">
+                  <div className="h-40 bg-neutral-700/50 rounded-2xl"></div>
                 </div>
               ))}
             </div>
@@ -489,18 +495,46 @@ export default function LiveCOAsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-900">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div className="min-h-screen bg-neutral-800 relative">
+      <GeometricBackground />
+      <div className="absolute inset-0 bg-gradient-to-br from-neutral-900/30 via-neutral-800/50 to-neutral-900/30 z-[1]" />
+      
+      <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 py-3 sm:py-8 relative z-[2]">
+        {/* Header */}
+        <div className="mb-6 sm:mb-8 bg-neutral-900/30 backdrop-blur-3xl rounded-2xl sm:rounded-[2rem] overflow-hidden shadow-[0_8px_32px_0_rgba(0,0,0,0.4)]">
+          <div className="relative px-3 pt-6 pb-4 sm:px-8 sm:pt-10 sm:pb-8">
+            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-neutral-500/30 to-transparent" />
+            
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2 tracking-tight" style={{ fontFamily: 'Lobster, cursive' }}>
+                  Live COAs
+                </h1>
+                <p className="text-sm text-neutral-400 font-light">
+                  Manage and view all published Certificate of Analysis documents
+                </p>
+              </div>
+              
+              <Link 
+                href="/"
+                className="px-4 py-2 bg-white/5 hover:bg-white/10 text-neutral-300 hover:text-white rounded-xl transition-all duration-300 text-sm font-medium border border-white/5 hover:border-white/10"
+              >
+                ← Generator
+              </Link>
+            </div>
+          </div>
+        </div>
+        
         {/* Error Display */}
         {error && (
-          <div className="mb-8 p-4 bg-red-900/50 text-red-200 rounded-lg whitespace-pre-line border border-red-700/50">
+          <div className="mb-8 p-4 bg-red-900/30 backdrop-blur-xl text-red-200 rounded-2xl whitespace-pre-line border border-red-500/20 shadow-lg">
             {error}
           </div>
         )}
 
-        {/* VSCode-Style Toolbar */}
-        <div className="mb-8 bg-neutral-800/90 backdrop-blur-sm border border-neutral-700 rounded-lg shadow-lg">
-          <div className="flex flex-wrap items-center gap-2 p-2">
+        {/* Modern Toolbar */}
+        <div className="mb-6 sm:mb-8 bg-neutral-900/40 backdrop-blur-2xl rounded-2xl sm:rounded-3xl shadow-[0_8px_32px_0_rgba(0,0,0,0.4),0_0_0_1px_rgba(255,255,255,0.03)]">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3 px-3 py-3 sm:px-5 sm:py-4">
             {/* Search Input */}
             <div className="relative flex-1 min-w-[200px] max-w-xs">
               <input
@@ -508,11 +542,11 @@ export default function LiveCOAsPage() {
                 id="search"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search..."
-                className="w-full px-3 py-1.5 pl-8 bg-neutral-900 border border-neutral-700 text-neutral-100 placeholder-neutral-500 rounded text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+                placeholder="Search COAs..."
+                className="w-full px-4 py-2.5 pl-10 bg-white/5 backdrop-blur-xl text-white placeholder-neutral-500 rounded-xl focus:outline-none focus:bg-white/10 transition-all duration-300 shadow-[0_4px_12px_0_rgba(0,0,0,0.3),inset_0_1px_0_0_rgba(255,255,255,0.05)] border border-white/5 hover:border-white/10 text-sm"
               />
               <svg
-                className="absolute left-2.5 top-2 h-4 w-4 text-neutral-500"
+                className="absolute left-3 top-3 h-4 w-4 text-neutral-400"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -526,15 +560,12 @@ export default function LiveCOAsPage() {
               </svg>
             </div>
 
-            {/* Divider */}
-            <div className="h-6 w-px bg-neutral-700"></div>
-
             {/* Client Filter */}
             <select
               id="clientFilter"
               value={selectedClient}
               onChange={(e) => setSelectedClient(e.target.value)}
-              className="px-3 py-1.5 bg-neutral-900 border border-neutral-700 text-neutral-100 rounded text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500 focus:outline-none cursor-pointer"
+              className="px-4 py-2.5 bg-white/5 backdrop-blur-xl text-white rounded-xl focus:outline-none focus:bg-white/10 transition-all duration-300 shadow-[0_4px_12px_0_rgba(0,0,0,0.3),inset_0_1px_0_0_rgba(255,255,255,0.05)] border border-white/5 hover:border-white/10 text-sm cursor-pointer"
             >
               <option value="all">All Clients ({coaFiles.length})</option>
               {clientFolders.map(folder => {
@@ -548,14 +579,14 @@ export default function LiveCOAsPage() {
             </select>
 
             {/* Divider */}
-            {filteredCOAs.length > 0 && <div className="h-6 w-px bg-neutral-700"></div>}
+            {filteredCOAs.length > 0 && <div className="h-8 w-px bg-white/10"></div>}
 
             {/* Action Buttons */}
             {filteredCOAs.length > 0 && (
               <>
                 <button
                   onClick={handleSelectAll}
-                  className="px-3 py-1.5 bg-neutral-700 text-neutral-200 rounded hover:bg-neutral-600 transition-colors text-sm font-medium flex items-center gap-1.5"
+                  className="px-4 py-2.5 bg-white/5 hover:bg-white/10 text-neutral-300 hover:text-white rounded-xl transition-all duration-300 text-xs font-medium flex items-center gap-2 border border-white/5 hover:border-white/10 uppercase tracking-wider"
                   title={selectedCOAs.size === filteredCOAs.length ? 'Deselect All' : 'Select All'}
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -569,11 +600,11 @@ export default function LiveCOAsPage() {
                     <button
                       onClick={handleExportSelected}
                       disabled={exporting}
-                      className="px-3 py-1.5 bg-neutral-700 text-neutral-200 rounded hover:bg-neutral-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium flex items-center gap-1.5"
+                      className="px-4 py-2.5 bg-white/5 hover:bg-white/10 text-neutral-300 hover:text-white rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 text-xs font-medium flex items-center gap-2 border border-white/5 hover:border-white/10 uppercase tracking-wider"
                       title={`Export ${selectedCOAs.size} COA${selectedCOAs.size !== 1 ? 's' : ''}`}
                     >
                       {exporting ? (
-                        <div className="w-4 h-4 border-2 border-neutral-200 border-t-transparent rounded-full animate-spin" />
+                        <div className="w-4 h-4 border-2 border-white/50 border-t-transparent rounded-full animate-spin" />
                       ) : (
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -583,7 +614,7 @@ export default function LiveCOAsPage() {
                     </button>
                     <button
                       onClick={handleClearSelection}
-                      className="px-3 py-1.5 bg-neutral-700 text-neutral-200 rounded hover:bg-neutral-600 transition-colors text-sm font-medium flex items-center gap-1.5"
+                      className="px-4 py-2.5 bg-white/5 hover:bg-white/10 text-neutral-300 hover:text-white rounded-xl transition-all duration-300 text-xs font-medium flex items-center gap-2 border border-white/5 hover:border-white/10 uppercase tracking-wider"
                       title="Clear Selection"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -595,12 +626,12 @@ export default function LiveCOAsPage() {
                 )}
 
                 {/* Divider */}
-                <div className="h-6 w-px bg-neutral-700"></div>
+                <div className="h-8 w-px bg-white/10"></div>
 
                 <button
                   onClick={handleDeleteAll}
                   disabled={loading}
-                  className="px-3 py-1.5 bg-red-600/90 text-white rounded hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium flex items-center gap-1.5"
+                  className="px-4 py-2.5 bg-red-600/20 hover:bg-red-600/30 text-red-300 hover:text-red-200 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 text-xs font-medium flex items-center gap-2 border border-red-500/20 hover:border-red-500/30 uppercase tracking-wider"
                   title={`Delete All${searchTerm ? ` (${filteredCOAs.length})` : ''}`}
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -615,19 +646,19 @@ export default function LiveCOAsPage() {
 
         {/* Selection Summary */}
         {selectedCOAs.size > 0 && (
-          <div className="mb-6 bg-neutral-800/50 border border-neutral-700 rounded-lg p-4">
+          <div className="mb-6 bg-neutral-900/40 backdrop-blur-xl border border-white/10 rounded-2xl p-4 shadow-lg">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <svg className="w-5 h-5 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-neutral-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <span className="text-neutral-300 font-medium">
+                <span className="text-neutral-200 font-medium">
                   {selectedCOAs.size} COA{selectedCOAs.size !== 1 ? 's' : ''} selected
                 </span>
               </div>
               <button
                 onClick={handleClearSelection}
-                className="text-neutral-400 hover:text-neutral-200 text-sm font-medium"
+                className="text-neutral-400 hover:text-neutral-200 text-sm font-medium transition-colors duration-200"
               >
                 Clear selection
               </button>
@@ -644,9 +675,9 @@ export default function LiveCOAsPage() {
 
         {/* No COAs State */}
         {!loading && !error && filteredCOAs.length === 0 && (
-          <div className="bg-neutral-800/50 backdrop-blur-sm border border-neutral-700/50 rounded-2xl shadow-xl p-12 text-center">
+          <div className="bg-neutral-900/40 backdrop-blur-2xl border border-white/5 rounded-3xl shadow-[0_8px_32px_0_rgba(0,0,0,0.4)] p-16 text-center">
             <svg
-              className="mx-auto h-12 w-12 text-neutral-500 mb-4"
+              className="mx-auto h-16 w-16 text-neutral-500 mb-6"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -654,14 +685,14 @@ export default function LiveCOAsPage() {
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                strokeWidth={2}
+                strokeWidth={1.5}
                 d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
               />
             </svg>
-            <h3 className="text-lg font-medium text-neutral-100 mb-2">
+            <h3 className="text-xl font-semibold text-white mb-3">
               {searchTerm ? 'No COAs found matching your search' : 'No COAs uploaded yet'}
             </h3>
-            <p className="text-neutral-400">
+            <p className="text-neutral-400 text-sm">
               {searchTerm ? 'Try a different search term' : 'Upload COAs from the main page to see them here'}
             </p>
           </div>
@@ -674,10 +705,10 @@ export default function LiveCOAsPage() {
               <div
                 key={coa.id}
                 onClick={() => handleSelectCOA(coa.id)}
-                className={`group cursor-pointer rounded-lg shadow-2xl transition-all duration-500 overflow-hidden border-2 ${
+                className={`group cursor-pointer rounded-2xl shadow-xl transition-all duration-300 overflow-hidden ${
                   selectedCOAs.has(coa.id) 
-                    ? 'bg-neutral-700/50 border-neutral-400 shadow-neutral-700/50 backdrop-blur-sm' 
-                    : 'bg-neutral-900/90 border-neutral-800 backdrop-blur-sm hover:border-neutral-700'
+                    ? 'bg-white/10 border-2 border-white/30 backdrop-blur-xl shadow-white/10' 
+                    : 'bg-neutral-900/50 border border-white/5 backdrop-blur-xl hover:bg-neutral-900/60 hover:border-white/10'
                 }`}
               >
                 <div className="flex flex-col p-5 relative min-h-full">
@@ -743,7 +774,7 @@ export default function LiveCOAsPage() {
                         e.stopPropagation();
                         handleViewCOA(coa);
                       }}
-                      className="w-full px-3 py-2 bg-neutral-800 text-neutral-300 rounded border border-neutral-700 hover:bg-neutral-700 hover:text-neutral-100 transition-all duration-300 font-medium text-xs"
+                      className="w-full px-3 py-2 bg-white/10 text-white rounded-xl border border-white/20 hover:bg-white/15 hover:border-white/30 transition-all duration-300 font-medium text-xs"
                     >
                       View Document
                     </button>
@@ -753,7 +784,7 @@ export default function LiveCOAsPage() {
                           e.stopPropagation();
                           handleCopyLink(coa.viewerUrl);
                         }}
-                        className="flex-1 px-3 py-2 bg-neutral-900 text-neutral-400 rounded border border-neutral-800 hover:border-neutral-700 hover:text-neutral-300 transition-all duration-300 font-medium text-xs"
+                        className="flex-1 px-3 py-2 bg-white/5 text-neutral-300 rounded-xl border border-white/10 hover:bg-white/10 hover:text-white hover:border-white/20 transition-all duration-300 font-medium text-xs"
                       >
                         Copy
                       </button>
@@ -763,7 +794,7 @@ export default function LiveCOAsPage() {
                           handleDeleteCOA(coa);
                         }}
                         disabled={deletingFiles.has(coa.id)}
-                        className="flex-1 px-3 py-2 bg-neutral-900 text-neutral-400 rounded border border-neutral-800 hover:border-red-900 hover:text-red-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 font-medium text-xs flex items-center justify-center"
+                        className="flex-1 px-3 py-2 bg-white/5 text-neutral-400 rounded-xl border border-white/10 hover:border-red-500/30 hover:bg-red-500/10 hover:text-red-300 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 font-medium text-xs flex items-center justify-center"
                       >
                         {deletingFiles.has(coa.id) ? (
                           <div className="w-3 h-3 border-2 border-neutral-400 border-t-transparent rounded-full animate-spin" />
@@ -781,8 +812,8 @@ export default function LiveCOAsPage() {
 
         {/* Summary */}
         {!loading && !error && filteredCOAs.length > 0 && (
-          <div className="mt-8 bg-neutral-800/50 backdrop-blur-sm border border-neutral-700/50 rounded-lg shadow-xl p-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-sm text-neutral-400">
+          <div className="mt-8 bg-neutral-900/40 backdrop-blur-2xl border border-white/5 rounded-2xl shadow-lg p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-sm text-neutral-300">
               <div className="space-y-1">
                 <div>
                   Showing {filteredCOAs.length} of {coaFiles.length} COAs
@@ -790,15 +821,15 @@ export default function LiveCOAsPage() {
                   {selectedCOAs.size > 0 && ` • ${selectedCOAs.size} selected`}
                 </div>
                 {selectedClient !== 'all' && (
-                  <div className="text-xs text-neutral-500">
+                  <div className="text-xs text-neutral-400">
                     Filtered by: {selectedClient.replace(/_/g, ' ')}
                   </div>
                 )}
-                <div className="text-xs text-neutral-500">
+                <div className="text-xs text-neutral-400">
                   {clientFolders.length} client folder{clientFolders.length !== 1 ? 's' : ''} total
                 </div>
               </div>
-              <span className="text-xs bg-neutral-900/80 text-neutral-400 px-3 py-1 rounded border border-neutral-700 whitespace-nowrap">
+              <span className="text-xs bg-white/5 text-neutral-300 px-4 py-2 rounded-xl border border-white/10 whitespace-nowrap backdrop-blur-xl">
                 Private Storage • Served via www.quantixanalytics.com
               </span>
             </div>
@@ -807,4 +838,12 @@ export default function LiveCOAsPage() {
       </div>
     </div>
   );
+}
+
+export default function LiveCOAsPage() {
+  return (
+    <ProtectedRoute>
+      <LiveCOAsPageContent />
+    </ProtectedRoute>
+  )
 } 

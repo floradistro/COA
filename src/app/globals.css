@@ -184,10 +184,65 @@ textarea:-moz-placeholder {
   animation: slide-in 0.3s ease-out;
 }
 
+@keyframes slide-up {
+  from {
+    transform: translate(-50%, 100%);
+    opacity: 0;
+  }
+  to {
+    transform: translate(-50%, 0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
 /* COA Preview Scaling */
 .transform-gpu {
   transition: transform 0.2s ease-out;
   will-change: transform;
+}
+
+/* COA Preview Dimming - Industry Best Practice */
+.coa-preview-wrapper {
+  position: relative;
+  transition: filter 0.3s ease-in-out, transform 0.2s ease-out;
+  transform-origin: top center;
+  width: 100%;
+  display: block;
+}
+
+/* Mobile scaling for COA preview */
+@media (max-width: 639px) {
+  .coa-preview-wrapper {
+    margin: 0 auto;
+  }
+  
+  .coa-preview-wrapper > * {
+    margin: 0 !important;
+  }
+}
+
+/* Dimmed state - reduces eye strain while maintaining readability */
+.coa-preview-dimmed {
+  filter: brightness(0.65) contrast(0.9) saturate(0.85);
+}
+
+/* Hover state - slightly brighter to indicate interactivity */
+.coa-preview-dimmed:hover {
+  filter: brightness(0.75) contrast(0.95) saturate(0.9);
+}
+
+/* Focused state - full brightness */
+.coa-preview-focused {
+  filter: brightness(1) contrast(1) saturate(1);
+}
+
+/* Ensure PDF exports are never affected by filters */
+.coa-template.pdf-export {
+  filter: none !important;
 }
 
 /* Ensure mobile preview container doesn't overflow */
@@ -273,4 +328,127 @@ body::after {
               color 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94),
               border-color 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94),
               transform 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Float animation for logo */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Fade in animation */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.6s ease-out;
+}
+
+/* Complex sun surface glow animation */
+@keyframes solar-glow {
+  0% {
+    box-shadow: 
+      0 0 30px 8px var(--glow-color-1),
+      0 0 50px 15px var(--glow-color-2),
+      0 0 70px 20px var(--glow-color-3),
+      0 0 0 1px rgba(255,255,255,0.05);
+  }
+  12.5% {
+    box-shadow: 
+      5px -5px 35px 10px var(--glow-color-1),
+      -8px 8px 55px 18px var(--glow-color-2),
+      3px 12px 75px 22px var(--glow-color-3),
+      0 0 0 1px rgba(255,255,255,0.06);
+  }
+  25% {
+    box-shadow: 
+      -10px 5px 40px 12px var(--glow-color-1),
+      10px -6px 60px 20px var(--glow-color-2),
+      -5px -8px 80px 25px var(--glow-color-3),
+      0 0 0 1px rgba(255,255,255,0.05);
+  }
+  37.5% {
+    box-shadow: 
+      8px 10px 32px 9px var(--glow-color-1),
+      -12px -10px 52px 16px var(--glow-color-2),
+      15px -5px 72px 21px var(--glow-color-3),
+      0 0 0 1px rgba(255,255,255,0.07);
+  }
+  50% {
+    box-shadow: 
+      -6px -12px 38px 11px var(--glow-color-1),
+      14px 8px 58px 19px var(--glow-color-2),
+      -10px 10px 78px 24px var(--glow-color-3),
+      0 0 0 1px rgba(255,255,255,0.06);
+  }
+  62.5% {
+    box-shadow: 
+      12px 6px 34px 10px var(--glow-color-1),
+      -8px 14px 54px 17px var(--glow-color-2),
+      8px -12px 74px 23px var(--glow-color-3),
+      0 0 0 1px rgba(255,255,255,0.05);
+  }
+  75% {
+    box-shadow: 
+      -14px 8px 36px 11px var(--glow-color-1),
+      6px -16px 56px 18px var(--glow-color-2),
+      -12px 6px 76px 22px var(--glow-color-3),
+      0 0 0 1px rgba(255,255,255,0.07);
+  }
+  87.5% {
+    box-shadow: 
+      10px -8px 33px 9px var(--glow-color-1),
+      -15px 5px 53px 16px var(--glow-color-2),
+      7px 14px 73px 21px var(--glow-color-3),
+      0 0 0 1px rgba(255,255,255,0.06);
+  }
+  100% {
+    box-shadow: 
+      0 0 30px 8px var(--glow-color-1),
+      0 0 50px 15px var(--glow-color-2),
+      0 0 70px 20px var(--glow-color-3),
+      0 0 0 1px rgba(255,255,255,0.05);
+  }
+}
+
+.animate-solar-glow-blue {
+  --glow-color-1: rgba(59, 130, 246, 0.6);
+  --glow-color-2: rgba(59, 130, 246, 0.4);
+  --glow-color-3: rgba(59, 130, 246, 0.2);
+  animation: solar-glow 8s ease-in-out infinite;
+}
+
+.animate-solar-glow-blue:hover {
+  --glow-color-1: rgba(59, 130, 246, 0.8);
+  --glow-color-2: rgba(59, 130, 246, 0.6);
+  --glow-color-3: rgba(59, 130, 246, 0.3);
+}
+
+.animate-solar-glow-purple {
+  --glow-color-1: rgba(168, 85, 247, 0.6);
+  --glow-color-2: rgba(168, 85, 247, 0.4);
+  --glow-color-3: rgba(168, 85, 247, 0.2);
+  animation: solar-glow 8s ease-in-out infinite;
+}
+
+.animate-solar-glow-purple:hover {
+  --glow-color-1: rgba(168, 85, 247, 0.8);
+  --glow-color-2: rgba(168, 85, 247, 0.6);
+  --glow-color-3: rgba(168, 85, 247, 0.3);
 }
