@@ -70,8 +70,8 @@ export const metadata: Metadata = {
   },
   manifest: '/site.webmanifest',
   other: {
-    'msapplication-TileColor': '#1a1a1a',
-    'theme-color': '#1a1a1a',
+    'msapplication-TileColor': '#262626',
+    'theme-color': '#262626',
   },
 };
 
@@ -83,7 +83,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <meta name="theme-color" content="#1a1a1a" />
+        <meta name="theme-color" content="#262626" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
