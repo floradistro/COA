@@ -573,7 +573,7 @@ function HomeContent() {
               
               {/* Subtitle */}
               <p className="text-sm sm:text-base text-neutral-400 max-w-2xl mx-auto font-light leading-relaxed">
-                Professional cannabis testing and analysis tools for Certificate of Analysis generation
+                Tools for Whales
               </p>
             </div>
           </div>

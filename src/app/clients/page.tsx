@@ -373,7 +373,7 @@ function ClientsPageContent() {
                 </h2>
               </div>
               <p className="text-sm sm:text-base text-neutral-400 max-w-2xl">
-                Manage client information for COA generation. Add or remove clients as needed.
+                Manage client information and settings
               </p>
             </div>
             

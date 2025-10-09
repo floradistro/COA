@@ -511,7 +511,7 @@ function LiveCOAsPageContent() {
                   Live COAs
                 </h1>
                 <p className="text-sm text-neutral-400 font-light">
-                  Manage and view all published Certificate of Analysis documents
+                  View and manage published documents
                 </p>
               </div>
               

@@ -15,7 +15,7 @@ export default function Navigation() {
   }
 
   return (
-    <nav className="bg-neutral-900/40 backdrop-blur-2xl shadow-[0_8px_32px_0_rgba(0,0,0,0.4),0_0_0_1px_rgba(255,255,255,0.03)]">
+    <nav className="backdrop-blur-sm border-b border-white/5">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Spacer for balance */}
