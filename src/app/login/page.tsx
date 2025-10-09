@@ -55,25 +55,26 @@ export default function LoginPage() {
       
       <div className="max-w-md w-full relative z-[2]">
         {/* Glass morphic container */}
-        <div className="bg-neutral-900/40 backdrop-blur-2xl rounded-3xl p-8 shadow-[0_8px_32px_0_rgba(0,0,0,0.6),0_0_0_1px_rgba(255,255,255,0.05)]">
+        <div className="bg-neutral-900/40 backdrop-blur-2xl rounded-3xl p-6 sm:p-8 shadow-[0_8px_32px_0_rgba(0,0,0,0.6),0_0_0_1px_rgba(255,255,255,0.05)]">
           
           {/* Logo */}
-          <div className="text-center mb-8">
-            <div className="flex flex-col items-center gap-5 mb-3">
+          <div className="text-center mb-6 sm:mb-8">
+            <div className="flex flex-col items-center gap-3 sm:gap-5 mb-2 sm:mb-3">
               <div className="animate-float">
                 <Image 
                   src="/logowhaletools.png" 
                   alt="WhaleTools Logo" 
-                  width={180} 
-                  height={180}
+                  width={120} 
+                  height={120}
+                  className="sm:w-[180px] sm:h-[180px]"
                   priority
                 />
               </div>
-              <h1 className="text-6xl font-bold text-white tracking-tight animate-fade-in" style={{ fontFamily: 'Lobster, cursive' }}>
+              <h1 className="text-4xl sm:text-6xl font-bold text-white tracking-tight animate-fade-in" style={{ fontFamily: 'Lobster, cursive' }}>
                 WhaleTools
               </h1>
             </div>
-            <p className="text-red-600 text-lg font-bold tracking-[0.3em] uppercase" style={{ fontFamily: 'Courier New, monospace' }}>
+            <p className="text-red-600 text-base sm:text-lg font-bold tracking-[0.2em] sm:tracking-[0.3em] uppercase" style={{ fontFamily: 'Courier New, monospace' }}>
               [CLASSIFIED]
             </p>
           </div>
@@ -86,9 +87,9 @@ export default function LoginPage() {
           )}
 
           {/* Login Form */}
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-neutral-300 mb-3 tracking-wide">
+              <label htmlFor="email" className="block text-sm font-medium text-neutral-300 mb-2 sm:mb-3 tracking-wide">
                 Email Address
               </label>
               <input
@@ -103,7 +104,7 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-neutral-300 mb-3 tracking-wide">
+              <label htmlFor="password" className="block text-sm font-medium text-neutral-300 mb-2 sm:mb-3 tracking-wide">
                 Password
               </label>
               <input
@@ -120,7 +121,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-4 px-6 mt-8 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-semibold rounded-2xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_8px_24px_0_rgba(37,99,235,0.4)] hover:shadow-[0_12px_32px_0_rgba(37,99,235,0.5)] hover:scale-[1.02] active:scale-[0.98]"
+              className="w-full py-4 px-6 mt-6 sm:mt-8 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-semibold rounded-2xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_8px_24px_0_rgba(37,99,235,0.4)] hover:shadow-[0_12px_32px_0_rgba(37,99,235,0.5)] hover:scale-[1.02] active:scale-[0.98]"
             >
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
@@ -137,7 +138,7 @@ export default function LoginPage() {
           </form>
 
           {/* Sign Up Link */}
-          <div className="mt-8 text-center">
+          <div className="mt-6 sm:mt-8 text-center">
             <p className="text-sm text-neutral-400 font-light">
               Don&apos;t have an account?{' '}
               <Link href="/signup" className="text-blue-400 hover:text-blue-300 font-medium transition-colors">
