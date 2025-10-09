@@ -639,7 +639,7 @@ function ClientsPageContent() {
 
         {/* Summary */}
         {!loading && !error && clients.length > 0 && (
-          <div className="mt-8 bg-neutral-800/50 backdrop-blur-sm border border-neutral-700/50 rounded-lg shadow-xl p-6">
+          <div className="mt-8 backdrop-blur-[2px] border border-white/10 rounded-lg shadow-[0_8px_32px_0_rgba(0,0,0,0.15)] p-6">
             <div className="text-sm text-neutral-400">
               Total Clients: <span className="text-neutral-200 font-medium">{clients.length}</span>
             </div>
