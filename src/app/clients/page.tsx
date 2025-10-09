@@ -376,9 +376,23 @@ function ClientsPageContent() {
                   setShowAddForm(true);
                 }
               }}
-              className="px-6 py-3 bg-neutral-200 text-neutral-900 rounded-lg hover:bg-white transition-colors font-medium"
+              className="px-6 py-3 bg-gradient-to-r from-white/15 to-white/10 hover:from-white/20 hover:to-white/15 text-white font-semibold rounded-2xl transition-all duration-300 shadow-[0_8px_24px_0_rgba(255,255,255,0.1)] hover:shadow-[0_12px_32px_0_rgba(255,255,255,0.15)] hover:scale-[1.01] active:scale-[0.99] text-xs uppercase tracking-wider flex items-center justify-center gap-2 border border-white/10"
             >
-              {showAddForm ? 'Cancel' : '+ Add Client'}
+              {showAddForm ? (
+                <>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                  Cancel
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  Add Client
+                </>
+              )}
             </button>
           </div>
           
@@ -397,7 +411,7 @@ function ClientsPageContent() {
             </h3>
             <form onSubmit={handleAddClient} className="space-y-4">
               <div>
-                <label htmlFor="name" className="block text-sm font-medium text-neutral-300 mb-2">
+                <label htmlFor="name" className="block text-xs font-medium text-neutral-400 mb-3 uppercase tracking-wider">
                   Client Name *
                 </label>
                 <input
@@ -406,13 +420,13 @@ function ClientsPageContent() {
                   value={formData.name}
                   onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                   placeholder="e.g., Flora Distribution Group LLC"
-                  className="w-full px-4 py-2 bg-neutral-900 border border-neutral-700 text-neutral-100 placeholder-neutral-500 rounded-lg focus:ring-1 focus:ring-neutral-500 focus:border-neutral-500"
+                  className="w-full px-4 py-3 bg-white/5 backdrop-blur-xl text-white placeholder-neutral-500 rounded-2xl focus:outline-none focus:bg-white/10 transition-all duration-300 shadow-[0_4px_12px_0_rgba(0,0,0,0.3),inset_0_1px_0_0_rgba(255,255,255,0.05)] border border-white/5 hover:border-white/10 text-sm"
                   required
                 />
               </div>
               
               <div>
-                <label htmlFor="address" className="block text-sm font-medium text-neutral-300 mb-2">
+                <label htmlFor="address" className="block text-xs font-medium text-neutral-400 mb-3 uppercase tracking-wider">
                   Address
                 </label>
                 <textarea
@@ -421,7 +435,7 @@ function ClientsPageContent() {
                   onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
                   placeholder="e.g., 4111 E Rose Lake Dr&#10;Charlotte, NC 28217"
                   rows={3}
-                  className="w-full px-4 py-2 bg-neutral-900 border border-neutral-700 text-neutral-100 placeholder-neutral-500 rounded-lg focus:ring-1 focus:ring-neutral-500 focus:border-neutral-500"
+                  className="w-full px-4 py-3 bg-white/5 backdrop-blur-xl text-white placeholder-neutral-500 rounded-2xl focus:outline-none focus:bg-white/10 transition-all duration-300 shadow-[0_4px_12px_0_rgba(0,0,0,0.3),inset_0_1px_0_0_rgba(255,255,255,0.05)] border border-white/5 hover:border-white/10 text-sm resize-none"
                 />
               </div>
               
