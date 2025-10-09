@@ -440,7 +440,7 @@ function ClientsPageContent() {
               </div>
               
               <div>
-                <label htmlFor="license_number" className="block text-sm font-medium text-neutral-300 mb-2">
+                <label htmlFor="license_number" className="block text-xs font-medium text-neutral-400 mb-3 uppercase tracking-wider">
                   License Number
                 </label>
                 <input
@@ -449,14 +449,14 @@ function ClientsPageContent() {
                   value={formData.license_number}
                   onChange={(e) => setFormData(prev => ({ ...prev, license_number: e.target.value }))}
                   placeholder="e.g., USDA_37_0979"
-                  className="w-full px-4 py-2 bg-neutral-900 border border-neutral-700 text-neutral-100 placeholder-neutral-500 rounded-lg focus:ring-1 focus:ring-neutral-500 focus:border-neutral-500"
+                  className="w-full px-4 py-3 bg-white/5 backdrop-blur-xl text-white placeholder-neutral-500 rounded-2xl focus:outline-none focus:bg-white/10 transition-all duration-300 shadow-[0_4px_12px_0_rgba(0,0,0,0.3),inset_0_1px_0_0_rgba(255,255,255,0.05)] border border-white/5 hover:border-white/10 text-sm"
                 />
               </div>
 
               {/* Quantix Portal Access Section */}
-              <div className="border-t border-neutral-700 pt-6 mt-6">
+              <div className="border-t border-white/10 pt-6 mt-6">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2 bg-neutral-700 rounded-lg">
+                  <div className="p-2 bg-white/10 rounded-xl">
                     <svg className="w-5 h-5 text-neutral-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                     </svg>
@@ -467,9 +467,9 @@ function ClientsPageContent() {
                   </div>
                 </div>
                 
-                <div className="space-y-4 bg-neutral-800/30 p-4 rounded-lg border border-neutral-700">
+                <div className="space-y-4 bg-white/5 p-4 rounded-xl border border-white/10">
                   <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-neutral-300 mb-2">
+                    <label htmlFor="email" className="block text-xs font-medium text-neutral-400 mb-3 uppercase tracking-wider">
                       Email Address
                     </label>
                     <input
@@ -478,13 +478,13 @@ function ClientsPageContent() {
                       value={formData.email}
                       onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
                       placeholder="client@company.com"
-                      className="w-full px-4 py-2 bg-neutral-900 border border-neutral-700 text-neutral-100 placeholder-neutral-500 rounded-lg focus:ring-1 focus:ring-neutral-500 focus:border-neutral-500"
+                      className="w-full px-4 py-3 bg-white/5 backdrop-blur-xl text-white placeholder-neutral-500 rounded-2xl focus:outline-none focus:bg-white/10 transition-all duration-300 shadow-[0_4px_12px_0_rgba(0,0,0,0.3),inset_0_1px_0_0_rgba(255,255,255,0.05)] border border-white/5 hover:border-white/10 text-sm"
                     />
-                    <p className="text-xs text-neutral-500 mt-1">Client will use this to login at quantixanalytics.com</p>
+                    <p className="text-xs text-neutral-400 mt-2">Client will use this to login at quantixanalytics.com</p>
                   </div>
                   
                   <div>
-                    <label htmlFor="password" className="block text-sm font-medium text-neutral-300 mb-2">
+                    <label htmlFor="password" className="block text-xs font-medium text-neutral-400 mb-3 uppercase tracking-wider">
                       Password {editingClient && '(leave blank to keep current)'}
                     </label>
                     <input
@@ -493,14 +493,14 @@ function ClientsPageContent() {
                       value={formData.password}
                       onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
                       placeholder={editingClient ? "Leave blank to keep current password" : "Minimum 6 characters"}
-                      className="w-full px-4 py-2 bg-neutral-900 border border-neutral-700 text-neutral-100 placeholder-neutral-500 rounded-lg focus:ring-1 focus:ring-neutral-500 focus:border-neutral-500"
+                      className="w-full px-4 py-3 bg-white/5 backdrop-blur-xl text-white placeholder-neutral-500 rounded-2xl focus:outline-none focus:bg-white/10 transition-all duration-300 shadow-[0_4px_12px_0_rgba(0,0,0,0.3),inset_0_1px_0_0_rgba(255,255,255,0.05)] border border-white/5 hover:border-white/10 text-sm"
                     />
-                    <p className="text-xs text-neutral-500 mt-1">
+                    <p className="text-xs text-neutral-400 mt-2">
                       {editingClient ? 'Only enter if changing password' : 'Create a secure password for the client'}
                     </p>
                   </div>
 
-                  <div className="bg-neutral-900/50 border border-neutral-700 rounded-lg p-3">
+                  <div className="bg-white/5 border border-white/10 rounded-xl p-3">
                     <div className="flex gap-2">
                       <svg className="w-5 h-5 text-neutral-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -519,15 +519,30 @@ function ClientsPageContent() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-6 py-2 bg-neutral-200 text-neutral-900 rounded-lg hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+                  className="px-6 py-3 bg-gradient-to-r from-white/15 to-white/10 hover:from-white/20 hover:to-white/15 text-white font-semibold rounded-2xl transition-all duration-300 shadow-[0_8px_24px_0_rgba(255,255,255,0.1)] hover:shadow-[0_12px_32px_0_rgba(255,255,255,0.15)] hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed text-xs uppercase tracking-wider flex items-center justify-center gap-2 border border-white/10"
                 >
-                  {submitting ? (editingClient ? 'Saving...' : 'Adding...') : (editingClient ? 'Save Changes' : 'Add Client')}
+                  {submitting ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      {editingClient ? 'Saving...' : 'Adding...'}
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      {editingClient ? 'Save Changes' : 'Add Client'}
+                    </>
+                  )}
                 </button>
                 <button
                   type="button"
                   onClick={handleCancelEdit}
-                  className="px-6 py-2 bg-neutral-700 text-neutral-100 rounded-lg hover:bg-neutral-600 transition-colors font-medium"
+                  className="px-6 py-3 bg-transparent text-neutral-400 hover:text-white rounded-2xl hover:bg-white/5 transition-all duration-300 font-medium text-xs uppercase tracking-wider flex items-center justify-center gap-2 border border-white/5 hover:border-white/10"
                 >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
                   Cancel
                 </button>
               </div>
@@ -568,7 +583,7 @@ function ClientsPageContent() {
                       {client.name}
                     </h3>
                     {client.email && (
-                      <span className="text-xs bg-neutral-700 text-neutral-300 px-2 py-1 rounded border border-neutral-600 flex items-center gap-1">
+                      <span className="text-xs bg-white/10 text-neutral-300 px-2 py-1 rounded-lg border border-white/20 flex items-center gap-1">
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                         </svg>
@@ -593,22 +608,22 @@ function ClientsPageContent() {
                   )}
                 </div>
                 
-                <div className="pt-4 border-t border-neutral-700 space-y-2">
+                <div className="pt-4 border-t border-white/10 space-y-2">
                   <button
                     onClick={() => handleEditClient(client)}
-                    className="w-full px-4 py-2 bg-neutral-700 text-neutral-100 rounded-lg hover:bg-neutral-600 transition-colors font-medium text-sm flex items-center justify-center gap-2"
+                    className="w-full px-4 py-3 bg-transparent text-neutral-300 hover:text-white rounded-2xl hover:bg-white/5 transition-all duration-300 font-medium text-xs uppercase tracking-wider flex items-center justify-center gap-2 border border-white/5 hover:border-white/10"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                     </svg>
-                    Edit Client
+                    Edit
                   </button>
                   
                   {client.email && (
                     <button
                       onClick={() => handleResendVerification(client)}
                       disabled={resendingEmail.has(client.id)}
-                      className="w-full px-4 py-2 bg-blue-900/30 text-blue-300 rounded-lg hover:bg-blue-900/50 hover:border-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium text-sm flex items-center justify-center gap-2 border border-blue-800"
+                      className="w-full px-4 py-3 bg-transparent text-blue-300 hover:text-blue-200 rounded-2xl hover:bg-blue-500/10 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 font-medium text-xs uppercase tracking-wider flex items-center justify-center gap-2 border border-blue-500/20 hover:border-blue-500/40"
                     >
                       {resendingEmail.has(client.id) ? (
                         <>
@@ -620,7 +635,7 @@ function ClientsPageContent() {
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                           </svg>
-                          Resend Verification Email
+                          Resend Email
                         </>
                       )}
                     </button>
@@ -629,11 +644,11 @@ function ClientsPageContent() {
                   <button
                     onClick={() => handleDeleteClient(client)}
                     disabled={deletingClients.has(client.id)}
-                    className="w-full px-4 py-2 bg-neutral-800 text-neutral-400 rounded-lg hover:bg-neutral-900 hover:text-red-400 hover:border-red-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium text-sm flex items-center justify-center gap-2 border border-neutral-700"
+                    className="w-full px-4 py-3 bg-transparent text-red-300/70 hover:text-red-300 rounded-2xl hover:bg-red-500/10 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 font-medium text-xs uppercase tracking-wider flex items-center justify-center gap-2 border border-red-500/20 hover:border-red-500/40"
                   >
                     {deletingClients.has(client.id) ? (
                       <>
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        <div className="w-4 h-4 border-2 border-red-300 border-t-transparent rounded-full animate-spin" />
                         Deleting...
                       </>
                     ) : (
@@ -641,7 +656,7 @@ function ClientsPageContent() {
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                         </svg>
-                        Delete Client
+                        Delete
                       </>
                     )}
                   </button>
