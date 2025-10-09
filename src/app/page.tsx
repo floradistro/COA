@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { ProductType, CannabinoidProfile, Client, COAData } from '@/types';
 import { useCOAGeneration } from '@/hooks';
 import { useSupabaseUpload } from '@/hooks/useSupabaseUpload';
-import { supabase } from '@/lib/supabaseClient';
+import { supabaseData as supabase } from '@/lib/supabaseClient';
 import { 
   getTodayString,
   getUserFriendlyMessage,
@@ -18,8 +18,11 @@ import { COAControls } from '@/components/COAControls';
 import { useNotifications } from '@/components/NotificationSystem';
 import SupabaseStatus from '@/components/SupabaseStatus';
 import Link from 'next/link';
+import Image from 'next/image';
+import { ProtectedRoute } from '@/components/ProtectedRoute';
+import GeometricBackground from '@/components/OceanBackground';
 
-export default function Home() {
+function HomeContent() {
   // Client-side only rendering to prevent hydration issues
   const [isClient, setIsClient] = useState(false);
   
@@ -31,6 +34,9 @@ export default function Home() {
   
   // Preview scaling ref
   const previewRef = useRef<HTMLDivElement>(null);
+  
+  // Preview focus state (to toggle brightness)
+  const [isPreviewFocused, setIsPreviewFocused] = useState(false);
   
   // Consolidated form state
   const [formState, setFormState] = useState({
@@ -136,14 +142,34 @@ export default function Home() {
     const handleResize = () => {
       if (previewRef.current) {
         const container = previewRef.current;
-        const containerWidth = container.offsetWidth;
-        const coaWidth = 794; // Fixed COA width
-        const scaleFactor = Math.min(1, containerWidth / coaWidth);
+        const parent = container.parentElement;
+        const parentWidth = parent?.offsetWidth || container.offsetWidth;
+        const coaWidth = 802; // COA document width
         
-        container.style.transform = `scale(${scaleFactor})`;
-        container.style.transformOrigin = 'top center';
-        container.style.width = '794px';
-        container.style.height = 'auto';
+        // On mobile, scale down to fit perfectly
+        if (window.innerWidth < 640) { // sm breakpoint
+          const scaleFactor = (parentWidth - 16) / coaWidth; // Subtract padding
+          container.style.transform = `scale(${scaleFactor})`;
+          container.style.width = `${coaWidth}px`;
+          
+          // Get the actual height of the content and scale it
+          const actualHeight = container.scrollHeight;
+          const scaledHeight = actualHeight * scaleFactor;
+          
+          // Set the parent height to match scaled content
+          if (parent) {
+            parent.style.height = `${scaledHeight}px`;
+          }
+        } else {
+          // On desktop, no scaling needed
+          container.style.transform = 'scale(1)';
+          container.style.width = '100%';
+          
+          // Reset parent height
+          if (parent) {
+            parent.style.height = 'auto';
+          }
+        }
       }
     };
 
@@ -509,62 +535,103 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen">
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8">
+    <div className="min-h-screen bg-neutral-800 relative">
+      {/* Geometric Background */}
+      <GeometricBackground />
+      
+      {/* Ambient gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-br from-neutral-900/10 via-transparent to-neutral-900/10 z-[1]" />
+      
+      <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 py-3 sm:py-8 relative z-[2]">
         {/* Header */}
-        <div className="text-center mb-8 sm:mb-12 bg-neutral-800/50 backdrop-blur-sm rounded-2xl p-6 sm:p-8 border border-neutral-700/50 shadow-xl">
-          <h1 className="text-3xl sm:text-5xl font-bold text-neutral-100 mb-3 sm:mb-4" style={{ fontFamily: 'Lobster, cursive' }}>
-            WhaleTools
-          </h1>
-          <p className="text-base sm:text-xl text-neutral-300 max-w-2xl mx-auto px-2">
-            Professional cannabis testing and analysis tools for Certificate of Analysis generation
-          </p>
-          
-          {/* Client Selector */}
-          <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
-            <div className="flex items-center gap-3">
-              <label htmlFor="client-select" className="text-sm font-medium text-neutral-300">
-                Client:
-              </label>
-              <select
-                id="client-select"
-                value={selectedClientId}
-                onChange={(e) => handleClientChange(e.target.value)}
-                disabled={loadingClients || clients.length === 0}
-                className="px-4 py-2 bg-neutral-800 border border-neutral-700 text-neutral-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50"
-              >
-                {loadingClients ? (
-                  <option>Loading clients...</option>
-                ) : clients.length === 0 ? (
-                  <option>No clients available</option>
-                ) : (
-                  clients.map(client => (
-                    <option key={client.id} value={client.id}>
-                      {client.name}
-                    </option>
-                  ))
-                )}
-              </select>
+        <div className="mb-6 sm:mb-12 backdrop-blur-[2px] rounded-2xl sm:rounded-[2rem] overflow-hidden shadow-[0_8px_32px_0_rgba(0,0,0,0.15)] border border-white/10">
+          {/* Top Section - Title Area */}
+          <div className="relative px-3 pt-8 pb-6 sm:px-8 sm:pt-16 sm:pb-10">
+            {/* Subtle gradient line accent */}
+            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-neutral-500/20 to-transparent" />
+            
+            <div className="max-w-4xl mx-auto text-center">
+              {/* Logo with subtle glow */}
+              <div className="inline-block mb-6 relative group">
+                <div className="absolute inset-0 bg-white/3 rounded-2xl blur-2xl group-hover:blur-3xl transition-all duration-700" />
+                <Image 
+                  src="/logowhaletools.png" 
+                  alt="WhaleTools Logo" 
+                  width={80} 
+                  height={80}
+                  className="relative opacity-95 hover:opacity-100 transition-opacity duration-300"
+                  priority
+                />
+              </div>
+              
+              {/* Main Title */}
+              <h1 className="text-4xl sm:text-6xl font-bold text-white mb-4 tracking-tight" style={{ fontFamily: 'Lobster, cursive', letterSpacing: '-0.02em' }}>
+                <span className="bg-gradient-to-b from-white to-neutral-400 bg-clip-text text-transparent">
+                  WhaleTools
+                </span>
+              </h1>
+              
+              {/* Subtitle */}
+              <p className="text-sm sm:text-base text-neutral-400 max-w-2xl mx-auto font-light leading-relaxed">
+                Professional cannabis testing and analysis tools for Certificate of Analysis generation
+              </p>
             </div>
-            <Link 
-              href="/clients"
-              className="text-sm text-blue-400 hover:text-blue-300 underline"
-            >
-              Manage Clients
-            </Link>
           </div>
           
-          <div className="mt-3 sm:mt-4 flex justify-center">
-            <SupabaseStatus />
+          {/* Bottom Section - Controls */}
+          <div className="relative backdrop-blur-[2px] border-t border-white/10">
+            <div className="px-3 py-4 sm:px-8 sm:py-6">
+              <div className="max-w-4xl mx-auto">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                  {/* Client Selector */}
+                  <div className="flex items-center gap-3 w-full sm:w-auto">
+                    <label htmlFor="client-select" className="text-xs font-medium text-neutral-400 uppercase tracking-wider">
+                      Client
+                    </label>
+                    <select
+                      id="client-select"
+                      value={selectedClientId}
+                      onChange={(e) => handleClientChange(e.target.value)}
+                      disabled={loadingClients || clients.length === 0}
+                      className="flex-1 sm:flex-initial px-4 py-2.5 bg-white/5 backdrop-blur-xl text-white rounded-xl focus:outline-none focus:bg-white/10 disabled:opacity-50 transition-all duration-300 shadow-[0_4px_12px_0_rgba(0,0,0,0.3),inset_0_1px_0_0_rgba(255,255,255,0.05)] border border-white/5 hover:border-white/10 text-sm"
+                    >
+                      {loadingClients ? (
+                        <option>Loading clients...</option>
+                      ) : clients.length === 0 ? (
+                        <option>No clients available</option>
+                      ) : (
+                        clients.map(client => (
+                          <option key={client.id} value={client.id}>
+                            {client.name}
+                          </option>
+                        ))
+                      )}
+                    </select>
+                  </div>
+                  
+                  {/* Actions */}
+                  <div className="flex items-center gap-3">
+                    <Link 
+                      href="/clients"
+                      className="text-xs text-neutral-400 hover:text-white transition-colors font-medium uppercase tracking-wider"
+                    >
+                      Manage Clients
+                    </Link>
+                    <div className="h-4 w-px bg-neutral-700" />
+                    <SupabaseStatus />
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
         {/* Batch Progress Indicator */}
         {isGeneratingBatch && (
-          <div className="mb-4 bg-blue-900/30 border border-blue-700/50 rounded-lg p-4">
+          <div className="mb-4 bg-neutral-700/30 backdrop-blur-xl rounded-2xl p-4 shadow-[0_8px_16px_0_rgba(0,0,0,0.3)]">
             <div className="flex items-center gap-3">
-              <div className="w-5 h-5 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
-              <span className="text-blue-200 font-medium">
+              <div className="w-5 h-5 border-2 border-neutral-400 border-t-transparent rounded-full animate-spin"></div>
+              <span className="text-neutral-200 font-medium">
                 Generating batch COAs... Please wait
               </span>
             </div>
@@ -610,12 +677,12 @@ export default function Home() {
         />
 
         {/* Main Content */}
-        <div className="grid grid-cols-1 gap-8">
+        <div className="grid grid-cols-1 gap-6 sm:gap-8">
           {/* Preview Display */}
           {coaData && (
-            <div className="bg-neutral-800/50 backdrop-blur-sm rounded-2xl shadow-xl p-4 sm:p-8 border border-neutral-700/50">
+            <div className="bg-neutral-900/40 backdrop-blur-2xl rounded-2xl sm:rounded-3xl shadow-[0_8px_32px_0_rgba(0,0,0,0.4),0_0_0_1px_rgba(255,255,255,0.03)] p-3 sm:p-8">
               <div className="flex items-center justify-between mb-4 sm:mb-6">
-                <h2 className="text-xl sm:text-2xl font-bold text-neutral-100">COA Preview</h2>
+                <h2 className="text-xl sm:text-2xl font-bold text-white">COA Preview</h2>
                 
                 {/* Image Mode Toggle and Upload */}
                 <div className="flex items-center gap-3">
@@ -657,12 +724,14 @@ export default function Home() {
                 </div>
               </div>
               
-              <div className="border-2 border-neutral-700/50 rounded-xl overflow-auto bg-neutral-900/50 p-4 flex justify-center">
+              <div className="rounded-2xl overflow-hidden bg-black/30 backdrop-blur-sm p-2 sm:p-4 flex justify-center items-start shadow-[inset_0_2px_8px_0_rgba(0,0,0,0.3)] relative group transition-all duration-200">
                 <div 
                   ref={previewRef}
+                  onClick={() => setIsPreviewFocused(!isPreviewFocused)}
+                  className={`coa-preview-wrapper cursor-pointer transition-all duration-300 w-full max-w-[802px] ${
+                    isPreviewFocused ? 'coa-preview-focused' : 'coa-preview-dimmed'
+                  }`}
                   style={{ 
-                    width: '802px',
-                    minWidth: '802px',
                     transformOrigin: 'top center'
                   }}
                 >
@@ -677,6 +746,15 @@ export default function Home() {
                     isPreviewMode={true}
                   />
                 </div>
+                
+                {/* Focus hint overlay - shows on hover when dimmed */}
+                {!isPreviewFocused && (
+                  <div className="absolute inset-0 pointer-events-none flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10">
+                    <div className="bg-neutral-900/90 backdrop-blur-sm px-6 py-3 rounded-xl border border-neutral-500/40 shadow-xl">
+                      <p className="text-neutral-200 text-sm font-medium">Click to view full brightness</p>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -684,6 +762,14 @@ export default function Home() {
       </div>
     </div>
   );
+}
+
+export default function Home() {
+  return (
+    <ProtectedRoute>
+      <HomeContent />
+    </ProtectedRoute>
+  )
 }
 
 // Force dynamic rendering to avoid hydration issues with ID generation
