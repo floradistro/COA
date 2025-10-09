@@ -534,19 +534,19 @@ function LiveCOAsPageContent() {
 
         {/* Modern Toolbar */}
         <div className="mb-6 sm:mb-8 bg-neutral-900/40 backdrop-blur-2xl rounded-2xl sm:rounded-3xl shadow-[0_8px_32px_0_rgba(0,0,0,0.4),0_0_0_1px_rgba(255,255,255,0.03)]">
-          <div className="flex flex-wrap items-center gap-2 sm:gap-3 px-3 py-3 sm:px-5 sm:py-4">
+          <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-3 px-3 py-3 sm:px-5 sm:py-4">
             {/* Search Input */}
-            <div className="relative flex-1 min-w-[200px] max-w-xs">
+            <div className="relative flex-1 min-w-full sm:min-w-[200px] sm:max-w-xs">
               <input
                 type="text"
                 id="search"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search COAs..."
-                className="w-full px-4 py-2.5 pl-10 bg-white/5 backdrop-blur-xl text-white placeholder-neutral-500 rounded-xl focus:outline-none focus:bg-white/10 transition-all duration-300 shadow-[0_4px_12px_0_rgba(0,0,0,0.3),inset_0_1px_0_0_rgba(255,255,255,0.05)] border border-white/5 hover:border-white/10 text-sm"
+                className="w-full px-5 py-4 pl-12 bg-white/5 backdrop-blur-xl text-white placeholder-neutral-500 rounded-xl focus:outline-none focus:bg-white/10 transition-all duration-300 shadow-[0_4px_12px_0_rgba(0,0,0,0.3),inset_0_1px_0_0_rgba(255,255,255,0.05)] border border-white/5 hover:border-white/10 text-base"
               />
               <svg
-                className="absolute left-3 top-3 h-4 w-4 text-neutral-400"
+                className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-neutral-400"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -565,7 +565,7 @@ function LiveCOAsPageContent() {
               id="clientFilter"
               value={selectedClient}
               onChange={(e) => setSelectedClient(e.target.value)}
-              className="px-4 py-2.5 bg-white/5 backdrop-blur-xl text-white rounded-xl focus:outline-none focus:bg-white/10 transition-all duration-300 shadow-[0_4px_12px_0_rgba(0,0,0,0.3),inset_0_1px_0_0_rgba(255,255,255,0.05)] border border-white/5 hover:border-white/10 text-sm cursor-pointer"
+              className="w-full sm:w-auto px-5 py-4 bg-white/5 backdrop-blur-xl text-white rounded-xl focus:outline-none focus:bg-white/10 transition-all duration-300 shadow-[0_4px_12px_0_rgba(0,0,0,0.3),inset_0_1px_0_0_rgba(255,255,255,0.05)] border border-white/5 hover:border-white/10 text-base cursor-pointer"
             >
               <option value="all">All Clients ({coaFiles.length})</option>
               {clientFolders.map(folder => {
@@ -579,17 +579,17 @@ function LiveCOAsPageContent() {
             </select>
 
             {/* Divider */}
-            {filteredCOAs.length > 0 && <div className="h-8 w-px bg-white/10"></div>}
+            {filteredCOAs.length > 0 && <div className="hidden sm:block h-8 w-px bg-white/10"></div>}
 
             {/* Action Buttons */}
             {filteredCOAs.length > 0 && (
               <>
                 <button
                   onClick={handleSelectAll}
-                  className="px-4 py-2.5 bg-white/5 hover:bg-white/10 text-neutral-300 hover:text-white rounded-xl transition-all duration-300 text-xs font-medium flex items-center gap-2 border border-white/5 hover:border-white/10 uppercase tracking-wider"
+                  className="w-full sm:w-auto px-5 py-4 bg-white/5 hover:bg-white/10 text-neutral-300 hover:text-white rounded-xl transition-all duration-300 text-sm font-medium flex items-center justify-center gap-2 border border-white/5 hover:border-white/10 uppercase tracking-wider"
                   title={selectedCOAs.size === filteredCOAs.length ? 'Deselect All' : 'Select All'}
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   {selectedCOAs.size === filteredCOAs.length ? 'Deselect' : 'Select All'}
@@ -600,13 +600,13 @@ function LiveCOAsPageContent() {
                     <button
                       onClick={handleExportSelected}
                       disabled={exporting}
-                      className="px-4 py-2.5 bg-white/5 hover:bg-white/10 text-neutral-300 hover:text-white rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 text-xs font-medium flex items-center gap-2 border border-white/5 hover:border-white/10 uppercase tracking-wider"
+                      className="w-full sm:w-auto px-5 py-4 bg-white/5 hover:bg-white/10 text-neutral-300 hover:text-white rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 text-sm font-medium flex items-center justify-center gap-2 border border-white/5 hover:border-white/10 uppercase tracking-wider"
                       title={`Export ${selectedCOAs.size} COA${selectedCOAs.size !== 1 ? 's' : ''}`}
                     >
                       {exporting ? (
-                        <div className="w-4 h-4 border-2 border-white/50 border-t-transparent rounded-full animate-spin" />
+                        <div className="w-5 h-5 border-2 border-white/50 border-t-transparent rounded-full animate-spin" />
                       ) : (
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
                       )}
@@ -614,10 +614,10 @@ function LiveCOAsPageContent() {
                     </button>
                     <button
                       onClick={handleClearSelection}
-                      className="px-4 py-2.5 bg-white/5 hover:bg-white/10 text-neutral-300 hover:text-white rounded-xl transition-all duration-300 text-xs font-medium flex items-center gap-2 border border-white/5 hover:border-white/10 uppercase tracking-wider"
+                      className="w-full sm:w-auto px-5 py-4 bg-white/5 hover:bg-white/10 text-neutral-300 hover:text-white rounded-xl transition-all duration-300 text-sm font-medium flex items-center justify-center gap-2 border border-white/5 hover:border-white/10 uppercase tracking-wider"
                       title="Clear Selection"
                     >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                       </svg>
                       Clear
@@ -626,15 +626,15 @@ function LiveCOAsPageContent() {
                 )}
 
                 {/* Divider */}
-                <div className="h-8 w-px bg-white/10"></div>
+                <div className="hidden sm:block h-8 w-px bg-white/10"></div>
 
                 <button
                   onClick={handleDeleteAll}
                   disabled={loading}
-                  className="px-4 py-2.5 bg-red-600/20 hover:bg-red-600/30 text-red-300 hover:text-red-200 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 text-xs font-medium flex items-center gap-2 border border-red-500/20 hover:border-red-500/30 uppercase tracking-wider"
+                  className="w-full sm:w-auto px-5 py-4 bg-red-600/20 hover:bg-red-600/30 text-red-300 hover:text-red-200 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 text-sm font-medium flex items-center justify-center gap-2 border border-red-500/20 hover:border-red-500/30 uppercase tracking-wider"
                   title={`Delete All${searchTerm ? ` (${filteredCOAs.length})` : ''}`}
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                   </svg>
                   Delete All{searchTerm && ` (${filteredCOAs.length})`}

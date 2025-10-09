@@ -57,6 +57,11 @@
   --font-lobster: 'Lobster', cursive;
 }
 
+html {
+  background: #262626;
+  min-height: 100%;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
