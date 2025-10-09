@@ -172,7 +172,7 @@ export const COAControls: React.FC<COAControlsProps> = ({
                 <textarea
                   value={strainList}
                   onChange={(e) => setStrainList(e.target.value)}
-                  className="w-full px-4 py-3 bg-white/5 backdrop-blur-xl text-white placeholder-neutral-500 rounded-2xl focus:outline-none focus:bg-white/10 transition-all duration-300 shadow-[0_4px_12px_0_rgba(0,0,0,0.3),inset_0_1px_0_0_rgba(255,255,255,0.05)] border border-white/5 hover:border-white/10 h-24 text-sm resize-none"
+                  className="w-full px-5 py-4 bg-white/5 backdrop-blur-xl text-white placeholder-neutral-500 rounded-2xl focus:outline-none focus:bg-white/10 transition-all duration-300 shadow-[0_4px_12px_0_rgba(0,0,0,0.3),inset_0_1px_0_0_rgba(255,255,255,0.05)] border border-white/5 hover:border-white/10 h-28 text-base resize-none"
                   placeholder={productType === 'edible' ? 'Enter product names, one per line...' : 'Enter strain names, one per line...'}
                 />
               ) : (
@@ -180,7 +180,7 @@ export const COAControls: React.FC<COAControlsProps> = ({
                   type="text"
                   value={strain}
                   onChange={(e) => setStrain(e.target.value)}
-                  className="w-full px-4 py-3 bg-white/5 backdrop-blur-xl text-white placeholder-neutral-500 rounded-2xl focus:outline-none focus:bg-white/10 transition-all duration-300 shadow-[0_4px_12px_0_rgba(0,0,0,0.3),inset_0_1px_0_0_rgba(255,255,255,0.05)] border border-white/5 hover:border-white/10 text-sm"
+                  className="w-full px-5 py-4 bg-white/5 backdrop-blur-xl text-white placeholder-neutral-500 rounded-2xl focus:outline-none focus:bg-white/10 transition-all duration-300 shadow-[0_4px_12px_0_rgba(0,0,0,0.3),inset_0_1px_0_0_rgba(255,255,255,0.05)] border border-white/5 hover:border-white/10 text-base"
                   placeholder={productType === 'edible' ? 'Enter product name...' : 'Enter strain name...'}
                 />
               )}
@@ -195,7 +195,7 @@ export const COAControls: React.FC<COAControlsProps> = ({
                   type="date"
                   value={dateCollected}
                   onChange={(e) => setDateCollected(e.target.value)}
-                  className="w-full px-3 py-2 bg-white/5 backdrop-blur-xl text-white rounded-xl focus:outline-none focus:bg-white/10 transition-all duration-300 shadow-[0_4px_12px_0_rgba(0,0,0,0.3),inset_0_1px_0_0_rgba(255,255,255,0.05)] border border-white/5 hover:border-white/10 text-xs"
+                  className="w-full px-4 py-3 bg-white/5 backdrop-blur-xl text-white rounded-xl focus:outline-none focus:bg-white/10 transition-all duration-300 shadow-[0_4px_12px_0_rgba(0,0,0,0.3),inset_0_1px_0_0_rgba(255,255,255,0.05)] border border-white/5 hover:border-white/10 text-sm"
                 />
               </div>
 
@@ -206,7 +206,7 @@ export const COAControls: React.FC<COAControlsProps> = ({
                   type="date"
                   value={dateReceived}
                   onChange={(e) => setDateReceived(e.target.value)}
-                  className="w-full px-3 py-2 bg-white/5 backdrop-blur-xl text-white rounded-xl focus:outline-none focus:bg-white/10 transition-all duration-300 shadow-[0_4px_12px_0_rgba(0,0,0,0.3),inset_0_1px_0_0_rgba(255,255,255,0.05)] border border-white/5 hover:border-white/10 text-xs"
+                  className="w-full px-4 py-3 bg-white/5 backdrop-blur-xl text-white rounded-xl focus:outline-none focus:bg-white/10 transition-all duration-300 shadow-[0_4px_12px_0_rgba(0,0,0,0.3),inset_0_1px_0_0_rgba(255,255,255,0.05)] border border-white/5 hover:border-white/10 text-sm"
                 />
               </div>
 
@@ -218,14 +218,14 @@ export const COAControls: React.FC<COAControlsProps> = ({
                     type="date"
                     value={dateTested}
                     onChange={(e) => setDateTested(e.target.value)}
-                    className="flex-1 px-3 py-2 bg-white/5 backdrop-blur-xl text-white rounded-xl focus:outline-none focus:bg-white/10 transition-all duration-300 shadow-[0_4px_12px_0_rgba(0,0,0,0.3),inset_0_1px_0_0_rgba(255,255,255,0.05)] border border-white/5 hover:border-white/10 text-xs"
+                    className="flex-1 px-4 py-3 bg-white/5 backdrop-blur-xl text-white rounded-xl focus:outline-none focus:bg-white/10 transition-all duration-300 shadow-[0_4px_12px_0_rgba(0,0,0,0.3),inset_0_1px_0_0_rgba(255,255,255,0.05)] border border-white/5 hover:border-white/10 text-sm"
                   />
                   <span className="text-neutral-400 text-xs font-medium">to</span>
                   <input
                     type="date"
                     value={dateTestedEnd}
                     onChange={(e) => setDateTestedEnd(e.target.value)}
-                    className="flex-1 px-3 py-2 bg-white/5 backdrop-blur-xl text-white rounded-xl focus:outline-none focus:bg-white/10 transition-all duration-300 shadow-[0_4px_12px_0_rgba(0,0,0,0.3),inset_0_1px_0_0_rgba(255,255,255,0.05)] border border-white/5 hover:border-white/10 text-xs"
+                    className="flex-1 px-4 py-3 bg-white/5 backdrop-blur-xl text-white rounded-xl focus:outline-none focus:bg-white/10 transition-all duration-300 shadow-[0_4px_12px_0_rgba(0,0,0,0.3),inset_0_1px_0_0_rgba(255,255,255,0.05)] border border-white/5 hover:border-white/10 text-sm"
                   />
                 </div>
               </div>
@@ -241,7 +241,7 @@ export const COAControls: React.FC<COAControlsProps> = ({
                 <select
                   value={productType}
                   onChange={(e) => setProductType(e.target.value as ProductType)}
-                  className="w-full px-4 py-3 bg-white/5 backdrop-blur-xl text-white rounded-2xl focus:outline-none focus:bg-white/10 transition-all duration-300 shadow-[0_4px_12px_0_rgba(0,0,0,0.3),inset_0_1px_0_0_rgba(255,255,255,0.05)] border border-white/5 hover:border-white/10 text-sm"
+                  className="w-full px-5 py-4 bg-white/5 backdrop-blur-xl text-white rounded-2xl focus:outline-none focus:bg-white/10 transition-all duration-300 shadow-[0_4px_12px_0_rgba(0,0,0,0.3),inset_0_1px_0_0_rgba(255,255,255,0.05)] border border-white/5 hover:border-white/10 text-base"
                 >
                   {Object.entries(PRODUCT_CONFIGS).map(([key, config]) => (
                     <option key={key} value={key}>
@@ -259,7 +259,7 @@ export const COAControls: React.FC<COAControlsProps> = ({
                 <select
                   value={selectedProfile}
                   onChange={(e) => setSelectedProfile(e.target.value as CannabinoidProfile)}
-                  className="w-full px-4 py-3 bg-white/5 backdrop-blur-xl text-white rounded-2xl focus:outline-none focus:bg-white/10 transition-all duration-300 shadow-[0_4px_12px_0_rgba(0,0,0,0.3),inset_0_1px_0_0_rgba(255,255,255,0.05)] border border-white/5 hover:border-white/10 text-sm"
+                  className="w-full px-5 py-4 bg-white/5 backdrop-blur-xl text-white rounded-2xl focus:outline-none focus:bg-white/10 transition-all duration-300 shadow-[0_4px_12px_0_rgba(0,0,0,0.3),inset_0_1px_0_0_rgba(255,255,255,0.05)] border border-white/5 hover:border-white/10 text-base"
                 >
                   <option value="high-thc">High THCA (22-30%)</option>
                   <option value="medium-thc">Medium THCA (15-20%)</option>
@@ -288,7 +288,7 @@ export const COAControls: React.FC<COAControlsProps> = ({
                         setSampleSize(e.target.value);
                       }
                     }}
-                    className="flex-1 px-4 py-3 bg-white/5 backdrop-blur-xl text-white rounded-2xl focus:outline-none focus:bg-white/10 transition-all duration-300 shadow-[0_4px_12px_0_rgba(0,0,0,0.3),inset_0_1px_0_0_rgba(255,255,255,0.05)] border border-white/5 hover:border-white/10 text-sm"
+                    className="flex-1 px-5 py-4 bg-white/5 backdrop-blur-xl text-white rounded-2xl focus:outline-none focus:bg-white/10 transition-all duration-300 shadow-[0_4px_12px_0_rgba(0,0,0,0.3),inset_0_1px_0_0_rgba(255,255,255,0.05)] border border-white/5 hover:border-white/10 text-base"
                   >
                     {SAMPLE_SIZE_OPTIONS.map((option) => (
                       <option key={option.value} value={option.value}>
@@ -303,7 +303,7 @@ export const COAControls: React.FC<COAControlsProps> = ({
                       value={sampleSize}
                       onChange={(e) => setSampleSize(e.target.value)}
                       placeholder="Custom"
-                      className="w-24 px-4 py-3 bg-white/5 backdrop-blur-xl text-white placeholder-neutral-500 rounded-2xl focus:outline-none focus:bg-white/10 transition-all duration-300 shadow-[0_4px_12px_0_rgba(0,0,0,0.3),inset_0_1px_0_0_rgba(255,255,255,0.05)] border border-white/5 hover:border-white/10 text-sm"
+                      className="w-28 px-5 py-4 bg-white/5 backdrop-blur-xl text-white placeholder-neutral-500 rounded-2xl focus:outline-none focus:bg-white/10 transition-all duration-300 shadow-[0_4px_12px_0_rgba(0,0,0,0.3),inset_0_1px_0_0_rgba(255,255,255,0.05)] border border-white/5 hover:border-white/10 text-base"
                     />
                   )}
                 </div>
@@ -317,7 +317,7 @@ export const COAControls: React.FC<COAControlsProps> = ({
                 <select
                   value={selectedLabEmployee}
                   onChange={(e) => setSelectedLabEmployee(e.target.value)}
-                  className="w-full px-4 py-3 bg-white/5 backdrop-blur-xl text-white rounded-2xl focus:outline-none focus:bg-white/10 transition-all duration-300 shadow-[0_4px_12px_0_rgba(0,0,0,0.3),inset_0_1px_0_0_rgba(255,255,255,0.05)] border border-white/5 hover:border-white/10 text-sm"
+                  className="w-full px-5 py-4 bg-white/5 backdrop-blur-xl text-white rounded-2xl focus:outline-none focus:bg-white/10 transition-all duration-300 shadow-[0_4px_12px_0_rgba(0,0,0,0.3),inset_0_1px_0_0_rgba(255,255,255,0.05)] border border-white/5 hover:border-white/10 text-base"
                 >
                   <option value="">Random Employee</option>
                   {LAB_EMPLOYEES.map((employee) => (
@@ -351,7 +351,7 @@ export const COAControls: React.FC<COAControlsProps> = ({
                             setEdibleDosage(Number(e.target.value));
                           }
                         }}
-                        className="flex-1 px-4 py-3 bg-white/5 backdrop-blur-xl text-white rounded-2xl focus:outline-none focus:bg-white/10 transition-all duration-300 shadow-[0_4px_12px_0_rgba(0,0,0,0.3),inset_0_1px_0_0_rgba(255,255,255,0.05)] border border-white/5 hover:border-white/10 text-sm"
+                        className="flex-1 px-5 py-4 bg-white/5 backdrop-blur-xl text-white rounded-2xl focus:outline-none focus:bg-white/10 transition-all duration-300 shadow-[0_4px_12px_0_rgba(0,0,0,0.3),inset_0_1px_0_0_rgba(255,255,255,0.05)] border border-white/5 hover:border-white/10 text-base"
                       >
                         <option value={2.5}>2.5mg</option>
                         <option value={5}>5mg</option>
@@ -369,7 +369,7 @@ export const COAControls: React.FC<COAControlsProps> = ({
                           value={edibleDosage}
                           onChange={(e) => setEdibleDosage(Number(e.target.value))}
                           placeholder="mg"
-                          className="w-24 px-4 py-3 bg-white/5 backdrop-blur-xl text-white placeholder-neutral-500 rounded-2xl focus:outline-none focus:bg-white/10 transition-all duration-300 shadow-[0_4px_12px_0_rgba(0,0,0,0.3),inset_0_1px_0_0_rgba(255,255,255,0.05)] border border-white/5 hover:border-white/10 text-sm"
+                          className="w-28 px-5 py-4 bg-white/5 backdrop-blur-xl text-white placeholder-neutral-500 rounded-2xl focus:outline-none focus:bg-white/10 transition-all duration-300 shadow-[0_4px_12px_0_rgba(0,0,0,0.3),inset_0_1px_0_0_rgba(255,255,255,0.05)] border border-white/5 hover:border-white/10 text-base"
                         />
                       )}
                     </div>

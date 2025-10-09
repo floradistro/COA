@@ -593,7 +593,7 @@ function HomeContent() {
                       value={selectedClientId}
                       onChange={(e) => handleClientChange(e.target.value)}
                       disabled={loadingClients || clients.length === 0}
-                      className="flex-1 sm:flex-initial px-4 py-2.5 bg-white/5 backdrop-blur-xl text-white rounded-xl focus:outline-none focus:bg-white/10 disabled:opacity-50 transition-all duration-300 shadow-[0_4px_12px_0_rgba(0,0,0,0.3),inset_0_1px_0_0_rgba(255,255,255,0.05)] border border-white/5 hover:border-white/10 text-sm"
+                      className="flex-1 sm:flex-initial px-5 py-3.5 bg-white/5 backdrop-blur-xl text-white rounded-xl focus:outline-none focus:bg-white/10 disabled:opacity-50 transition-all duration-300 shadow-[0_4px_12px_0_rgba(0,0,0,0.3),inset_0_1px_0_0_rgba(255,255,255,0.05)] border border-white/5 hover:border-white/10 text-base"
                     >
                       {loadingClients ? (
                         <option>Loading clients...</option>

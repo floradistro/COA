@@ -349,25 +349,35 @@ function ClientsPageContent() {
       <div className="absolute inset-0 bg-gradient-to-br from-neutral-900/10 via-transparent to-neutral-900/10 z-[1]" />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 relative z-[2]">
         {/* Header */}
-        <div className="mb-8 backdrop-blur-[2px] rounded-2xl p-6 sm:p-8 border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.15)]">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <div className="flex items-center gap-4 mb-4">
-                <Link href="/" className="text-neutral-400 hover:text-neutral-200 transition-colors">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                  </svg>
-                </Link>
-                <h1 className="text-4xl font-bold text-neutral-100" style={{ fontFamily: 'Lobster, cursive' }}>
+        <div className="mb-8 backdrop-blur-[2px] rounded-2xl p-4 sm:p-6 lg:p-8 border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.15)]">
+          {/* Back Button - Mobile Optimized */}
+          <div className="mb-4">
+            <Link href="/" className="inline-flex items-center gap-2 text-neutral-400 hover:text-neutral-200 transition-colors group">
+              <svg className="w-5 h-5 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              <span className="text-sm font-medium">Back</span>
+            </Link>
+          </div>
+
+          {/* Title Section - Responsive */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+            <div className="flex-1">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-3">
+                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-neutral-100 leading-tight" style={{ fontFamily: 'Lobster, cursive' }}>
                   WhaleTools
                 </h1>
-                <span className="text-2xl text-neutral-500">•</span>
-                <h2 className="text-3xl font-bold text-neutral-100">Client Management</h2>
+                <span className="hidden sm:inline text-2xl text-neutral-500">•</span>
+                <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-neutral-100 bg-gradient-to-r from-white to-neutral-300 bg-clip-text text-transparent">
+                  Client Manager
+                </h2>
               </div>
-              <p className="text-lg text-neutral-300">
+              <p className="text-sm sm:text-base text-neutral-400 max-w-2xl">
                 Manage client information for COA generation. Add or remove clients as needed.
               </p>
             </div>
+            
+            {/* Add Client Button - Mobile Optimized */}
             <button
               onClick={() => {
                 if (showAddForm) {
@@ -376,7 +386,7 @@ function ClientsPageContent() {
                   setShowAddForm(true);
                 }
               }}
-              className="px-6 py-3 bg-gradient-to-r from-white/15 to-white/10 hover:from-white/20 hover:to-white/15 text-white font-semibold rounded-2xl transition-all duration-300 shadow-[0_8px_24px_0_rgba(255,255,255,0.1)] hover:shadow-[0_12px_32px_0_rgba(255,255,255,0.15)] hover:scale-[1.01] active:scale-[0.99] text-xs uppercase tracking-wider flex items-center justify-center gap-2 border border-white/10"
+              className="w-full sm:w-auto px-5 py-3 bg-gradient-to-r from-white/15 to-white/10 hover:from-white/20 hover:to-white/15 text-white font-semibold rounded-2xl transition-all duration-300 shadow-[0_8px_24px_0_rgba(255,255,255,0.1)] hover:shadow-[0_12px_32px_0_rgba(255,255,255,0.15)] hover:scale-[1.02] active:scale-[0.98] text-xs uppercase tracking-wider flex items-center justify-center gap-2 border border-white/10 whitespace-nowrap"
             >
               {showAddForm ? (
                 <>
@@ -397,7 +407,7 @@ function ClientsPageContent() {
           </div>
           
           {error && (
-            <div className="mt-4 p-4 bg-red-900/50 text-red-200 rounded-lg whitespace-pre-line border border-red-700/50">
+            <div className="mt-4 p-4 bg-red-900/50 text-red-200 rounded-lg whitespace-pre-line border border-red-700/50 text-sm">
               {error}
             </div>
           )}
