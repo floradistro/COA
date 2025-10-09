@@ -575,9 +575,9 @@ function ClientsPageContent() {
             {clients.map((client) => (
               <div
                 key={client.id}
-                className="backdrop-blur-[2px] rounded-xl shadow-[0_8px_32px_0_rgba(0,0,0,0.15)] border border-white/10 p-6"
+                className="backdrop-blur-[2px] rounded-xl shadow-[0_8px_32px_0_rgba(0,0,0,0.15)] border border-white/10 p-6 flex flex-col"
               >
-                <div className="mb-4">
+                <div className="mb-4 flex-grow">
                   <div className="flex items-start justify-between mb-2">
                     <h3 className="text-xl font-semibold text-neutral-100">
                       {client.name}
@@ -608,7 +608,7 @@ function ClientsPageContent() {
                   )}
                 </div>
                 
-                <div className="pt-4 border-t border-white/10 space-y-2">
+                <div className="pt-4 border-t border-white/10 space-y-2 mt-auto">
                   <button
                     onClick={() => handleEditClient(client)}
                     className="w-full px-4 py-3 bg-transparent text-neutral-300 hover:text-white rounded-2xl hover:bg-white/5 transition-all duration-300 font-medium text-xs uppercase tracking-wider flex items-center justify-center gap-2 border border-white/5 hover:border-white/10"
@@ -623,11 +623,11 @@ function ClientsPageContent() {
                     <button
                       onClick={() => handleResendVerification(client)}
                       disabled={resendingEmail.has(client.id)}
-                      className="w-full px-4 py-3 bg-transparent text-blue-300 hover:text-blue-200 rounded-2xl hover:bg-blue-500/10 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 font-medium text-xs uppercase tracking-wider flex items-center justify-center gap-2 border border-blue-500/20 hover:border-blue-500/40"
+                      className="w-full px-4 py-3 bg-transparent text-neutral-300 hover:text-white rounded-2xl hover:bg-white/5 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 font-medium text-xs uppercase tracking-wider flex items-center justify-center gap-2 border border-white/5 hover:border-white/10"
                     >
                       {resendingEmail.has(client.id) ? (
                         <>
-                          <div className="w-4 h-4 border-2 border-blue-300 border-t-transparent rounded-full animate-spin" />
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                           Sending...
                         </>
                       ) : (
@@ -644,11 +644,11 @@ function ClientsPageContent() {
                   <button
                     onClick={() => handleDeleteClient(client)}
                     disabled={deletingClients.has(client.id)}
-                    className="w-full px-4 py-3 bg-transparent text-red-300/70 hover:text-red-300 rounded-2xl hover:bg-red-500/10 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 font-medium text-xs uppercase tracking-wider flex items-center justify-center gap-2 border border-red-500/20 hover:border-red-500/40"
+                    className="w-full px-4 py-3 bg-transparent text-neutral-400 hover:text-neutral-200 rounded-2xl hover:bg-white/5 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 font-medium text-xs uppercase tracking-wider flex items-center justify-center gap-2 border border-white/5 hover:border-white/10"
                   >
                     {deletingClients.has(client.id) ? (
                       <>
-                        <div className="w-4 h-4 border-2 border-red-300 border-t-transparent rounded-full animate-spin" />
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                         Deleting...
                       </>
                     ) : (
