@@ -6,6 +6,7 @@ import { Client } from '@/types';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import Link from 'next/link';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
+import GeometricBackground from '@/components/OceanBackground';
 
 function ClientsPageContent() {
   const [clients, setClients] = useState<Client[]>([]);
@@ -329,8 +330,10 @@ function ClientsPageContent() {
   // Render loading state on server and initial client render
   if (!mounted) {
     return (
-      <div className="min-h-screen bg-neutral-900">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="min-h-screen bg-neutral-800 relative">
+        <GeometricBackground />
+        <div className="absolute inset-0 bg-gradient-to-br from-neutral-900/10 via-transparent to-neutral-900/10 z-[1]" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 relative z-[2]">
           <div className="animate-pulse">
             <div className="h-10 bg-neutral-700 rounded w-1/4 mb-4"></div>
             <div className="h-6 bg-neutral-700 rounded w-3/4 mb-8"></div>
@@ -341,10 +344,12 @@ function ClientsPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-900">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div className="min-h-screen bg-neutral-800 relative">
+      <GeometricBackground />
+      <div className="absolute inset-0 bg-gradient-to-br from-neutral-900/10 via-transparent to-neutral-900/10 z-[1]" />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 relative z-[2]">
         {/* Header */}
-        <div className="mb-8 bg-neutral-800/50 backdrop-blur-sm rounded-2xl p-6 sm:p-8 border border-neutral-700/50 shadow-xl">
+        <div className="mb-8 backdrop-blur-[2px] rounded-2xl p-6 sm:p-8 border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.15)]">
           <div className="flex items-center justify-between mb-4">
             <div>
               <div className="flex items-center gap-4 mb-4">
@@ -386,7 +391,7 @@ function ClientsPageContent() {
 
         {/* Add/Edit Client Form */}
         {showAddForm && (
-          <div className="mb-8 bg-neutral-800/50 backdrop-blur-sm rounded-2xl p-6 sm:p-8 border border-neutral-700/50 shadow-xl">
+          <div className="mb-8 backdrop-blur-[2px] rounded-2xl p-6 sm:p-8 border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.15)]">
             <h3 className="text-2xl font-bold text-neutral-100 mb-6">
               {editingClient ? 'Edit Client' : 'Add New Client'}
             </h3>
@@ -525,7 +530,7 @@ function ClientsPageContent() {
 
         {/* No Clients State */}
         {!loading && !error && clients.length === 0 && (
-          <div className="bg-neutral-800/50 backdrop-blur-sm border border-neutral-700/50 rounded-2xl shadow-xl p-12 text-center">
+          <div className="backdrop-blur-[2px] border border-white/10 rounded-2xl shadow-[0_8px_32px_0_rgba(0,0,0,0.15)] p-12 text-center">
             <h3 className="text-lg font-medium text-neutral-100 mb-2">
               No clients added yet
             </h3>
@@ -541,7 +546,7 @@ function ClientsPageContent() {
             {clients.map((client) => (
               <div
                 key={client.id}
-                className="bg-neutral-800/50 backdrop-blur-sm rounded-xl shadow-lg border border-neutral-700/50 p-6"
+                className="backdrop-blur-[2px] rounded-xl shadow-[0_8px_32px_0_rgba(0,0,0,0.15)] border border-white/10 p-6"
               >
                 <div className="mb-4">
                   <div className="flex items-start justify-between mb-2">

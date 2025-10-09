@@ -14,7 +14,7 @@ export default function SupabaseStatus() {
     setStatus('checking')
     try {
       // Simple check - try to fetch from database
-      const { data, error } = await supabaseData
+      const { error } = await supabaseData
         .from('clients')
         .select('id')
         .limit(1)

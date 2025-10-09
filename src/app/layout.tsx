@@ -3,7 +3,6 @@ import "./globals.css";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { NotificationProvider } from "@/components/NotificationSystem";
 import { AuthProvider } from "@/contexts/AuthContext";
-import Link from "next/link";
 import Navigation from "@/components/Navigation";
 
 export const metadata: Metadata = {
