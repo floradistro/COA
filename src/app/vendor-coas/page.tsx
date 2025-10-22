@@ -536,10 +536,10 @@ export default function VendorCOAsPage() {
                           </div>
                           
                           <div className="flex items-center gap-2">
-                            {coa.isUploaded ? (
+                            {coa.isUploaded && coa.uploadedData ? (
                               <>
                                 <a
-                                  href={coa.uploadedData?.file_url}
+                                  href={coa.uploadedData.file_url}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="px-4 py-2 bg-neutral-700/50 hover:bg-neutral-700 text-neutral-300 hover:text-white text-sm font-medium rounded-lg transition-all"
