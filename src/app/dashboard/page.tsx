@@ -7,6 +7,8 @@ import { ProtectedRoute } from '@/components/ProtectedRoute'
 import GeometricBackground from '@/components/OceanBackground'
 import { supabaseData } from '@/lib/supabaseClient'
 
+export const dynamic = 'force-dynamic'
+
 interface DashboardStats {
   total_coas?: number
   coas_this_month?: number
