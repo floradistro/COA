@@ -88,7 +88,7 @@ export function subscribeToNotifications(
         filter: `user_id=eq.${userId}`
       },
       (payload) => {
-        onNotification(payload.new)
+        onNotification(payload.new as Notification)
       }
     )
     .subscribe()
