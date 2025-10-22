@@ -8,12 +8,47 @@ import { ProtectedRoute } from '@/components/ProtectedRoute'
 import GeometricBackground from '@/components/OceanBackground'
 import { supabaseData } from '@/lib/supabaseClient'
 
+interface DashboardStats {
+  total_coas?: number
+  coas_this_month?: number
+  coas_this_year?: number
+  coas_active?: number
+  most_common_strain?: string
+}
+
+interface SystemHealth {
+  total_coas: number
+  coas_this_month: number
+  coas_this_week: number
+  coas_this_year: number
+  total_views_today: number
+  active_notifications: number
+  last_updated: string
+}
+
+interface PopularStrain {
+  strain: string
+  count: number
+  avg_thc: string
+  avg_cbd: string
+}
+
+interface RecentCOA {
+  id: string
+  strain_name: string
+  sample_id: string
+  client_name: string
+  total_thc: number
+  view_count: number
+  created_at: string
+  batch_id: string
+}
+
 function DashboardContent() {
-  const { user } = useAuth()
-  const [stats, setStats] = useState<any>(null)
-  const [popularStrains, setPopularStrains] = useState<any[]>([])
-  const [systemHealth, setSystemHealth] = useState<any>(null)
-  const [recentCOAs, setRecentCOAs] = useState<any[]>([])
+  const [stats, setStats] = useState<DashboardStats | null>(null)
+  const [popularStrains, setPopularStrains] = useState<PopularStrain[]>([])
+  const [systemHealth, setSystemHealth] = useState<SystemHealth | null>(null)
+  const [recentCOAs, setRecentCOAs] = useState<RecentCOA[]>([])
   const [loading, setLoading] = useState(true)
   const [mounted, setMounted] = useState(false)
 
@@ -126,18 +161,18 @@ function DashboardContent() {
             </div>
             {popularStrains.length > 0 ? (
               <div className="space-y-2">
-                {popularStrains.map((strain, idx) => (
+                {popularStrains.map((strain, index) => (
                   <div 
-                    key={idx} 
+                    key={index} 
                     className="group flex items-center gap-4 p-4 bg-white/5 hover:bg-white/10 rounded-xl transition-all duration-300 border border-transparent hover:border-white/10"
                   >
                     <div className={`flex items-center justify-center w-12 h-12 rounded-xl font-bold text-lg transition-all duration-300 ${
-                      idx === 0 ? 'bg-gradient-to-br from-yellow-500/30 to-yellow-600/20 text-yellow-300 shadow-lg' :
-                      idx === 1 ? 'bg-gradient-to-br from-gray-400/30 to-gray-500/20 text-gray-300 shadow-lg' :
-                      idx === 2 ? 'bg-gradient-to-br from-orange-500/30 to-orange-600/20 text-orange-300 shadow-lg' :
+                      index === 0 ? 'bg-gradient-to-br from-yellow-500/30 to-yellow-600/20 text-yellow-300 shadow-lg' :
+                      index === 1 ? 'bg-gradient-to-br from-gray-400/30 to-gray-500/20 text-gray-300 shadow-lg' :
+                      index === 2 ? 'bg-gradient-to-br from-orange-500/30 to-orange-600/20 text-orange-300 shadow-lg' :
                       'bg-white/5 text-neutral-400'
                     }`}>
-                      #{idx + 1}
+                      #{index + 1}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="font-semibold text-white truncate group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:from-white group-hover:to-neutral-300 group-hover:bg-clip-text transition-all">

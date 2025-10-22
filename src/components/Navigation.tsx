@@ -6,12 +6,21 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { searchCOAs } from '@/lib/coaStats'
 
+interface SearchResult {
+  coa_id: string
+  strain_name: string
+  sample_id: string
+  client_name: string
+  total_thc: number
+  rank: number
+}
+
 export default function Navigation() {
   const { user, signOut } = useAuth()
   const pathname = usePathname()
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState('')
-  const [searchResults, setSearchResults] = useState<any[]>([])
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([])
   const [showResults, setShowResults] = useState(false)
 
   const isAuthPage = pathname === '/login' || pathname === '/signup'
@@ -33,7 +42,7 @@ export default function Navigation() {
     setShowResults(true)
   }
 
-  const handleSelectResult = (result: any) => {
+  const handleSelectResult = (result: SearchResult) => {
     setShowResults(false)
     setSearchQuery('')
     router.push(`/live-coas?search=${result.sample_id}`)

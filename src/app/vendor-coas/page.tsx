@@ -6,6 +6,29 @@ import { Vendor, VendorCOA } from '@/types'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import LoadingSpinner from '@/components/LoadingSpinner'
 
+interface COAMetadata {
+  id: string
+  sample_id: string
+  batch_id: string
+  strain_name: string
+  client_name: string
+  date_tested: string
+  date_collected: string
+  date_received: string
+  total_thc: number
+  total_cbd: number
+  total_cannabinoids: number
+  lab_name: string
+  file_path: string
+  sample_type: string
+  created_at: string
+}
+
+interface COAWithUploadStatus extends COAMetadata {
+  isUploaded: boolean
+  uploadedData?: VendorCOA
+}
+
 export default function VendorCOAsPage() {
   const [vendors, setVendors] = useState<Vendor[]>([])
   const [vendorCOAs, setVendorCOAs] = useState<VendorCOA[]>([])
@@ -16,7 +39,7 @@ export default function VendorCOAsPage() {
   const [syncing, setSyncing] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
-  const [availableCOAs, setAvailableCOAs] = useState<any[]>([])
+  const [availableCOAs, setAvailableCOAs] = useState<COAMetadata[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [filterStatus, setFilterStatus] = useState<'all' | 'available' | 'uploaded'>('all')
 
@@ -132,7 +155,7 @@ export default function VendorCOAsPage() {
     }
   }
 
-  const handleUploadSpecificCOA = async (coaMetadata: any) => {
+  const handleUploadSpecificCOA = async (coaMetadata: COAMetadata) => {
     if (!selectedVendor) return
 
     try {
@@ -241,20 +264,20 @@ export default function VendorCOAsPage() {
   }
 
   // Check if COA is already uploaded to this vendor
-  const isUploaded = (coaMetadata: any) => {
+  const isUploaded = (coaMetadata: COAMetadata) => {
     return vendorCOAs.some(vc => 
       vc.batch_number === coaMetadata.batch_id &&
-      (vc.metadata as any)?.sample_id === coaMetadata.sample_id
+      (vc.metadata as Record<string, string | number>)?.sample_id === coaMetadata.sample_id
     )
   }
 
   // Combined list with status
-  const allCOAs = availableCOAs.map(coa => ({
+  const allCOAs: COAWithUploadStatus[] = availableCOAs.map(coa => ({
     ...coa,
     isUploaded: isUploaded(coa),
     uploadedData: vendorCOAs.find(vc => 
       vc.batch_number === coa.batch_id &&
-      (vc.metadata as any)?.sample_id === coa.sample_id
+      (vc.metadata as Record<string, string | number>)?.sample_id === coa.sample_id
     )
   }))
 

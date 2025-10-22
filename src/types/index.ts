@@ -225,7 +225,7 @@ export interface Vendor {
   brand_colors: Record<string, string> | null;
   social_links: Record<string, string> | null;
   custom_css: string | null;
-  business_hours: Record<string, any> | null;
+  business_hours: Record<string, string | number | boolean> | null;
   return_policy: string | null;
   shipping_policy: string | null;
   total_locations: number;
@@ -246,10 +246,10 @@ export interface VendorCOA {
   test_date: string | null;
   expiry_date: string | null;
   batch_number: string | null;
-  test_results: Record<string, any> | null;
+  test_results: Record<string, string | number | boolean> | null;
   is_active: boolean;
   is_verified: boolean;
-  metadata: Record<string, any> | null;
+  metadata: Record<string, string | number | boolean> | null;
   upload_date: string;
   created_at: string;
   updated_at: string;

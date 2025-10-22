@@ -18,7 +18,7 @@ export async function uploadCOAToVendor({
     // 1. Upload PDF to vendor storage
     const storagePath = `${vendorId}/${Date.now()}_${fileName}`
     
-    const { data: uploadData, error: uploadError } = await supabaseVendor.storage
+    const { error: uploadError } = await supabaseVendor.storage
       .from('vendor-coas')
       .upload(storagePath, pdfBlob, {
         contentType: 'application/pdf',
