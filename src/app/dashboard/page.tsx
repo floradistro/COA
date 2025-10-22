@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { getCOAStats, getPopularStrains } from '@/lib/coaStats'
 import { getSystemHealth } from '@/lib/analytics'
-import { useAuth } from '@/contexts/AuthContext'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import GeometricBackground from '@/components/OceanBackground'
 import { supabaseData } from '@/lib/supabaseClient'
@@ -210,7 +209,7 @@ function DashboardContent() {
             </div>
             {recentCOAs.length > 0 ? (
               <div className="space-y-2 max-h-[400px] overflow-y-auto custom-scrollbar">
-                {recentCOAs.map((coa, idx) => (
+                {recentCOAs.map((coa) => (
                   <div 
                     key={coa.id} 
                     className="group p-3 bg-white/5 hover:bg-white/10 rounded-xl transition-all duration-300 border border-transparent hover:border-white/10 cursor-pointer"
