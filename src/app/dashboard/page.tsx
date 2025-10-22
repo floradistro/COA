@@ -124,7 +124,7 @@ function DashboardContent() {
             icon="📊"
             label="Total COAs"
             value={systemHealth?.total_coas?.toString() || '0'}
-            trend={systemHealth?.coas_this_month > 0 ? 'up' : null}
+            trend={(systemHealth?.coas_this_month || 0) > 0 ? 'up' : null}
             delay="100"
           />
           <MetricCard 
