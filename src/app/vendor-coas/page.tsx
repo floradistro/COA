@@ -547,7 +547,7 @@ export default function VendorCOAsPage() {
                                   View
                                 </a>
                                 <button
-                                  onClick={() => handleDeleteCOA(coa.uploadedData.id)}
+                                  onClick={() => handleDeleteCOA(coa.uploadedData!.id)}
                                   className="px-4 py-2 bg-neutral-700/50 hover:bg-neutral-700 text-neutral-400 hover:text-white text-sm font-medium rounded-lg transition-all"
                                 >
                                   Remove
