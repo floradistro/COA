@@ -201,4 +201,56 @@ export interface Client {
   email?: string | null;
   created_at: string;
   updated_at: string;
+}
+
+// Vendor marketplace types
+export interface Vendor {
+  id: string;
+  email: string;
+  store_name: string;
+  slug: string;
+  wordpress_user_id: number | null;
+  status: 'active' | 'inactive' | 'pending';
+  phone: string | null;
+  address: string | null;
+  city: string | null;
+  state: string | null;
+  zip: string | null;
+  created_at: string;
+  updated_at: string;
+  logo_url: string | null;
+  banner_url: string | null;
+  store_description: string | null;
+  store_tagline: string | null;
+  brand_colors: Record<string, string> | null;
+  social_links: Record<string, string> | null;
+  custom_css: string | null;
+  business_hours: Record<string, any> | null;
+  return_policy: string | null;
+  shipping_policy: string | null;
+  total_locations: number;
+  contact_name: string | null;
+  tax_id: string | null;
+  custom_font: string | null;
+}
+
+export interface VendorCOA {
+  id: string;
+  vendor_id: string;
+  product_id: string | null;
+  file_name: string;
+  file_url: string;
+  file_size: number | null;
+  file_type: string;
+  lab_name: string | null;
+  test_date: string | null;
+  expiry_date: string | null;
+  batch_number: string | null;
+  test_results: Record<string, any> | null;
+  is_active: boolean;
+  is_verified: boolean;
+  metadata: Record<string, any> | null;
+  upload_date: string;
+  created_at: string;
+  updated_at: string;
 } 

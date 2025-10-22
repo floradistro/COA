@@ -1,16 +1,21 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
 
 // AUTH: WhaleTools classified project (admin login only)
-const authUrl = 'https://tkicdgegwqmiybpnrazs.supabase.co'
-const authKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRraWNkZ2Vnd3FtaXlicG5yYXpzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk5Njg3MzYsImV4cCI6MjA3NTU0NDczNn0.6nWlflu_9EIsEvuBxBMKdu8tiFdSVArE4DnXb8bLMKQ'
+const authUrl = process.env.NEXT_PUBLIC_SUPABASE_AUTH_URL!
+const authKey = process.env.NEXT_PUBLIC_SUPABASE_AUTH_ANON_KEY!
 
 // DATA: Shared backend (database, storage, clients)
-const dataUrl = 'https://elhsobjvwmjfminxxcwy.supabase.co'
-const dataKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVsaHNvYmp2d21qZm1pbnh4Y3d5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA3MDQzMzAsImV4cCI6MjA2NjI4MDMzMH0.sK5ggW0XxE_Y9x5dXQvq2IPbxo0WoQs3OcfXNhEbTyQ'
+const dataUrl = process.env.NEXT_PUBLIC_SUPABASE_DATA_URL!
+const dataKey = process.env.NEXT_PUBLIC_SUPABASE_DATA_ANON_KEY!
+
+// VENDOR: Marketplace backend (vendors, products, COAs for vendors)
+const vendorUrl = process.env.NEXT_PUBLIC_SUPABASE_VENDOR_URL!
+const vendorKey = process.env.NEXT_PUBLIC_SUPABASE_VENDOR_ANON_KEY!
 
 // Singleton instances
 let authClientInstance: SupabaseClient | null = null
 let dataClientInstance: SupabaseClient | null = null
+let vendorClientInstance: SupabaseClient | null = null
 
 // Auth client - for login/signup only (singleton)
 export const supabaseAuth = (() => {
@@ -20,7 +25,7 @@ export const supabaseAuth = (() => {
         persistSession: true,
         autoRefreshToken: true,
         storage: typeof window !== 'undefined' ? window.localStorage : undefined,
-        storageKey: 'whaletools-auth',
+        storageKey: 'whaletools-auth-tkicdgegwqmiybpnrazs',
         detectSessionInUrl: true,
       },
     })
@@ -34,6 +39,7 @@ export const supabaseData = (() => {
     dataClientInstance = createClient(dataUrl, dataKey, {
       auth: {
         persistSession: false, // Don't persist - we're using the auth client for that
+        storageKey: 'whaletools-data-elhsobjvwmjfminxxcwy',
       },
       global: {
         headers: { 
@@ -44,6 +50,25 @@ export const supabaseData = (() => {
     })
   }
   return dataClientInstance
+})()
+
+// Vendor client - for marketplace vendors, products, and COAs (singleton)
+export const supabaseVendor = (() => {
+  if (!vendorClientInstance) {
+    vendorClientInstance = createClient(vendorUrl, vendorKey, {
+      auth: {
+        persistSession: false,
+        storageKey: 'whaletools-vendor-uaednwpxursknmwdeejn',
+      },
+      global: {
+        headers: { 
+          'x-my-custom-header': 'whaletools-vendor-integration',
+          'x-client-info': 'whaletools/1.0.0'
+        },
+      },
+    })
+  }
+  return vendorClientInstance
 })()
 
 // Default export for backward compatibility (use data client)

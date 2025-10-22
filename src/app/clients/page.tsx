@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { supabaseData as supabase } from '@/lib/supabaseClient';
-import { Client } from '@/types';
+import { supabaseData as supabase, supabaseVendor } from '@/lib/supabaseClient';
+import { Client, Vendor } from '@/types';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import Link from 'next/link';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
@@ -16,6 +16,9 @@ function ClientsPageContent() {
   const [deletingClients, setDeletingClients] = useState<Set<string>>(new Set());
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
+  const [vendors, setVendors] = useState<Vendor[]>([]);
+  const [showVendorImport, setShowVendorImport] = useState(false);
+  const [importingVendors, setImportingVendors] = useState<Set<string>>(new Set());
   
   // Form state
   const [formData, setFormData] = useState({
@@ -60,8 +63,70 @@ function ClientsPageContent() {
   useEffect(() => {
     if (mounted) {
       fetchClients();
+      fetchVendors();
     }
   }, [mounted]);
+
+  // Fetch vendors
+  const fetchVendors = async () => {
+    try {
+      const { data, error } = await supabaseVendor
+        .from('vendors')
+        .select('*')
+        .eq('status', 'active')
+        .order('store_name');
+
+      if (error) throw error;
+      setVendors(data || []);
+    } catch (err) {
+      console.error('Error fetching vendors:', err);
+    }
+  };
+
+  // Import vendor as client
+  const handleImportVendor = async (vendor: Vendor) => {
+    try {
+      setImportingVendors(prev => new Set(prev).add(vendor.id));
+
+      // Check if already exists
+      const { data: existingClient } = await supabase
+        .from('clients')
+        .select('*')
+        .eq('email', vendor.email)
+        .maybeSingle();
+
+      if (existingClient) {
+        alert(`${vendor.store_name} is already a client`);
+        return;
+      }
+
+      // Import vendor as client
+      const { error: insertError } = await supabase
+        .from('clients')
+        .insert({
+          name: vendor.store_name,
+          address: vendor.address 
+            ? `${vendor.address}, ${vendor.city || ''}, ${vendor.state || ''} ${vendor.zip || ''}`.trim()
+            : null,
+          license_number: vendor.tax_id,
+          email: vendor.email
+        });
+
+      if (insertError) throw insertError;
+
+      alert(`${vendor.store_name} imported as client successfully!`);
+      fetchClients();
+    } catch (err) {
+      console.error('Error importing vendor:', err);
+      alert('Failed to import vendor as client');
+    } finally {
+      setImportingVendors(prev => {
+        const updated = new Set(prev);
+        updated.delete(vendor.id);
+        return updated;
+      });
+    }
+  };
 
   // Handle add client
   const handleAddClient = async (e: React.FormEvent) => {
@@ -377,33 +442,44 @@ function ClientsPageContent() {
               </p>
             </div>
             
-            {/* Add Client Button - Mobile Optimized */}
-            <button
-              onClick={() => {
-                if (showAddForm) {
-                  handleCancelEdit();
-                } else {
-                  setShowAddForm(true);
-                }
-              }}
-              className="w-full sm:w-auto px-5 py-3 bg-gradient-to-r from-white/15 to-white/10 hover:from-white/20 hover:to-white/15 text-white font-semibold rounded-2xl transition-all duration-300 shadow-[0_8px_24px_0_rgba(255,255,255,0.1)] hover:shadow-[0_12px_32px_0_rgba(255,255,255,0.15)] hover:scale-[1.02] active:scale-[0.98] text-xs uppercase tracking-wider flex items-center justify-center gap-2 border border-white/10 whitespace-nowrap"
-            >
-              {showAddForm ? (
-                <>
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                  Cancel
-                </>
-              ) : (
-                <>
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
-                  Add Client
-                </>
-              )}
-            </button>
+            {/* Action Buttons - Mobile Optimized */}
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button
+                onClick={() => setShowVendorImport(!showVendorImport)}
+                className="w-full sm:w-auto px-5 py-3 bg-gradient-to-r from-blue-600/80 to-blue-500/80 hover:from-blue-600 hover:to-blue-500 text-white font-semibold rounded-2xl transition-all duration-300 shadow-[0_8px_24px_0_rgba(37,99,235,0.3)] hover:shadow-[0_12px_32px_0_rgba(37,99,235,0.4)] hover:scale-[1.02] active:scale-[0.98] text-xs uppercase tracking-wider flex items-center justify-center gap-2 border border-blue-400/20 whitespace-nowrap"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                </svg>
+                Import Vendors
+              </button>
+              <button
+                onClick={() => {
+                  if (showAddForm) {
+                    handleCancelEdit();
+                  } else {
+                    setShowAddForm(true);
+                  }
+                }}
+                className="w-full sm:w-auto px-5 py-3 bg-gradient-to-r from-white/15 to-white/10 hover:from-white/20 hover:to-white/15 text-white font-semibold rounded-2xl transition-all duration-300 shadow-[0_8px_24px_0_rgba(255,255,255,0.1)] hover:shadow-[0_12px_32px_0_rgba(255,255,255,0.15)] hover:scale-[1.02] active:scale-[0.98] text-xs uppercase tracking-wider flex items-center justify-center gap-2 border border-white/10 whitespace-nowrap"
+              >
+                {showAddForm ? (
+                  <>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                    Cancel
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                    Add Client
+                  </>
+                )}
+              </button>
+            </div>
           </div>
           
           {error && (
@@ -412,6 +488,81 @@ function ClientsPageContent() {
             </div>
           )}
         </div>
+
+        {/* Import Vendors Section */}
+        {showVendorImport && vendors.length > 0 && (
+          <div className="mb-8 backdrop-blur-[2px] rounded-2xl p-6 sm:p-8 border border-blue-500/20 shadow-[0_8px_32px_0_rgba(37,99,235,0.15)]">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="text-2xl font-bold text-neutral-100 mb-2">Import Vendors as Clients</h3>
+                <p className="text-sm text-neutral-400">Select vendors from the marketplace to import as lab clients</p>
+              </div>
+              <button
+                onClick={() => setShowVendorImport(false)}
+                className="text-neutral-400 hover:text-white transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {vendors.map((vendor) => {
+                const isImporting = importingVendors.has(vendor.id);
+                const alreadyClient = clients.some(c => c.email === vendor.email);
+                
+                return (
+                  <div 
+                    key={vendor.id}
+                    className={`bg-white/5 rounded-xl p-4 border transition-all ${
+                      alreadyClient ? 'border-green-500/30 bg-green-500/5' : 'border-white/10 hover:border-blue-500/50'
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      {vendor.logo_url && (
+                        <img 
+                          src={vendor.logo_url} 
+                          alt={vendor.store_name}
+                          className="w-12 h-12 rounded object-cover"
+                        />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-white font-semibold truncate">{vendor.store_name}</h4>
+                        <p className="text-neutral-400 text-sm truncate">{vendor.email}</p>
+                        <div className="flex items-center gap-2 mt-2">
+                          <span className={`text-xs px-2 py-0.5 rounded-full ${
+                            vendor.status === 'active' 
+                              ? 'bg-green-500/20 text-green-300' 
+                              : 'bg-red-500/20 text-red-300'
+                          }`}>
+                            {vendor.status}
+                          </span>
+                          <span className="text-neutral-500 text-xs">
+                            {vendor.total_locations} {vendor.total_locations === 1 ? 'location' : 'locations'}
+                          </span>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => handleImportVendor(vendor)}
+                        disabled={isImporting || alreadyClient}
+                        className={`px-3 py-1.5 text-xs rounded-lg transition-all ${
+                          alreadyClient
+                            ? 'bg-green-500/20 text-green-300 cursor-not-allowed'
+                            : isImporting
+                            ? 'bg-blue-600/50 text-white cursor-wait'
+                            : 'bg-blue-600 hover:bg-blue-500 text-white'
+                        }`}
+                      >
+                        {alreadyClient ? 'Already Client' : isImporting ? 'Importing...' : 'Import'}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Add/Edit Client Form */}
         {showAddForm && (
