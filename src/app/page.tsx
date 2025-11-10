@@ -682,8 +682,41 @@ function HomeContent() {
           {coaData && (
             <div className="bg-neutral-900/40 backdrop-blur-2xl rounded-2xl sm:rounded-3xl shadow-[0_8px_32px_0_rgba(0,0,0,0.4),0_0_0_1px_rgba(255,255,255,0.03)] p-3 sm:p-8">
               <div className="flex items-center justify-between mb-4 sm:mb-6">
-                <h2 className="text-xl sm:text-2xl font-bold text-white">COA Preview</h2>
-                
+                <div className="flex items-center gap-4">
+                  <h2 className="text-xl sm:text-2xl font-bold text-white">COA Preview</h2>
+
+                  {/* Batch Navigation */}
+                  {formState.isMultiStrain && generatedCOAs.length > 1 && (
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => goToCOA(currentCOAIndex - 1)}
+                        disabled={currentCOAIndex === 0}
+                        className="p-2 bg-white/10 hover:bg-white/20 disabled:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed text-white rounded-lg transition-all duration-200 border border-white/10"
+                        title="Previous COA"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                        </svg>
+                      </button>
+
+                      <span className="text-sm font-medium text-neutral-300 min-w-[60px] text-center">
+                        {currentCOAIndex + 1} / {generatedCOAs.length}
+                      </span>
+
+                      <button
+                        onClick={() => goToCOA(currentCOAIndex + 1)}
+                        disabled={currentCOAIndex === generatedCOAs.length - 1}
+                        className="p-2 bg-white/10 hover:bg-white/20 disabled:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed text-white rounded-lg transition-all duration-200 border border-white/10"
+                        title="Next COA"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </button>
+                    </div>
+                  )}
+                </div>
+
                 {/* Image Mode Toggle and Upload */}
                 <div className="flex items-center gap-3">
                   <label className="flex items-center gap-2 cursor-pointer">
