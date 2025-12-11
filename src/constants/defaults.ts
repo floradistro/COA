@@ -53,12 +53,17 @@ export const PRODUCT_CONFIGS: Record<ProductType, ProductConfig> = {
   concentrate: {
     sampleType: 'Cannabis Concentrate',
     profileMultiplier: 2.5,
-    defaultProfile: 'decarbed'
+    defaultProfile: 'concentrate'
   },
   vaporizer: {
     sampleType: 'Vaporizer Cartridge',
     profileMultiplier: 3.0,
     defaultProfile: 'decarbed'
+  },
+  disposable: {
+    sampleType: 'Disposable Vaporizer',
+    profileMultiplier: 3.0,
+    defaultProfile: 'disposable-vape'
   },
   edible: {
     sampleType: 'Cannabis Edible',
@@ -69,6 +74,11 @@ export const PRODUCT_CONFIGS: Record<ProductType, ProductConfig> = {
     sampleType: 'Cannabis Beverage',
     profileMultiplier: 0.05,
     defaultProfile: 'decarbed'
+  },
+  gummy: {
+    sampleType: 'Cannabis Gummy',
+    profileMultiplier: 0.1,
+    defaultProfile: 'gummy'
   }
 };
 
@@ -77,8 +87,10 @@ export const PRODUCT_NOTES: Record<ProductType, string> = {
   flower: 'Cannabinoid analysis performed using High Performance Liquid Chromatography with Diode Array Detection (HPLC-DAD) according to validated method SOP QA-001.',
   concentrate: 'Cannabis concentrate analyzed using HPLC-DAD. Values represent cannabinoid content in concentrate form. Store in cool, dry place away from light.',
   vaporizer: 'Vaporizer cartridge oil analyzed using HPLC-DAD. High concentration cannabinoid content typical for vaporizer products. Use as directed.',
+  disposable: 'Disposable vaporizer analyzed using HPLC-DAD. High concentration cannabinoid content typical for vaporizer products. Single-use device, dispose responsibly.',
   edible: 'Cannabis edible analyzed using HPLC-DAD. Cannabinoid content per gram of product. Effects may be delayed. Start low and go slow.',
-  beverage: 'Cannabis beverage analyzed using HPLC-DAD. Cannabinoid content per gram of liquid. Shake well before use. Effects may be delayed.'
+  beverage: 'Cannabis beverage analyzed using HPLC-DAD. Cannabinoid content per gram of liquid. Shake well before use. Effects may be delayed.',
+  gummy: 'Cannabis gummy analyzed using HPLC-DAD. Cannabinoid content per gram of product. Effects may be delayed up to 2 hours. Start low and go slow.'
 };
 
 // ID generation patterns

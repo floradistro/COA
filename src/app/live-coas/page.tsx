@@ -1,8 +1,11 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { supabaseData as supabase } from '@/lib/supabaseClient';
+import { supabaseVendor as supabase } from '@/lib/supabaseClient';
 import LoadingSpinner from '@/components/LoadingSpinner';
+
+// Flora Distro vendor ID
+const FLORA_DISTRO_VENDOR_ID = 'cd2e1122-d511-4edb-be5d-98ef274b4baf';
 import JSZip from 'jszip';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import GeometricBackground from '@/components/OceanBackground';
@@ -20,6 +23,11 @@ interface COAFile {
   viewerUrl: string;
   clientFolder?: string;
   strainName?: string;
+  testDate?: string;
+  batchNumber?: string;
+  labName?: string;
+  productId?: string;
+  productName?: string;
 }
 
 function LiveCOAsPageContent() {
@@ -45,10 +53,65 @@ function LiveCOAsPageContent() {
       setLoading(true);
       setError('');
 
-      // First, list all folders in pdfs/
+      // Fetch metadata from vendor_coas table
+      const { data: coaMetadata, error: metadataError } = await supabase
+        .from('vendor_coas')
+        .select('*')
+        .eq('vendor_id', FLORA_DISTRO_VENDOR_ID)
+        .eq('is_active', true);
+
+      if (metadataError) {
+        console.error('Error fetching COA metadata:', metadataError);
+      }
+
+      // Collect all product IDs to fetch product names
+      const productIds = new Set<string>();
+      if (coaMetadata) {
+        for (const meta of coaMetadata) {
+          if (meta.product_id) {
+            productIds.add(meta.product_id);
+          }
+        }
+      }
+
+      // Fetch product names
+      const productNameMap = new Map<string, string>();
+      if (productIds.size > 0) {
+        const { data: products, error: productsError } = await supabase
+          .from('products')
+          .select('id, name')
+          .in('id', Array.from(productIds));
+
+        if (productsError) {
+          console.error('Error fetching products:', productsError);
+        } else if (products) {
+          for (const product of products) {
+            productNameMap.set(product.id, product.name);
+          }
+        }
+      }
+
+      // Create a lookup map by file_name
+      const metadataMap = new Map<string, { test_date?: string; batch_number?: string; lab_name?: string; product_name_on_coa?: string; product_id?: string; product_name?: string }>();
+      if (coaMetadata) {
+        for (const meta of coaMetadata) {
+          if (meta.file_name) {
+            metadataMap.set(meta.file_name, {
+              test_date: meta.test_date,
+              batch_number: meta.batch_number,
+              lab_name: meta.lab_name,
+              product_name_on_coa: meta.product_name_on_coa,
+              product_id: meta.product_id,
+              product_name: meta.product_id ? productNameMap.get(meta.product_id) : undefined,
+            });
+          }
+        }
+      }
+
+      // First, list all folders in vendor's directory
       const { data: folders, error: folderError } = await supabase.storage
-        .from('coas')
-        .list('pdfs', {
+        .from('vendor-coas')
+        .list(FLORA_DISTRO_VENDOR_ID, {
           limit: 1000,
           offset: 0,
           sortBy: { column: 'name', order: 'asc' }
@@ -84,8 +147,8 @@ function LiveCOAsPageContent() {
         for (const folderName of folderNames) {
           try {
             const { data: files, error: fileError } = await supabase.storage
-              .from('coas')
-              .list(`pdfs/${folderName}`, {
+              .from('vendor-coas')
+              .list(`${FLORA_DISTRO_VENDOR_ID}/${folderName}`, {
                 limit: 1000,
                 offset: 0,
                 sortBy: { column: 'created_at', order: 'desc' }
@@ -103,6 +166,9 @@ function LiveCOAsPageContent() {
                 .map(file => {
                   const strainName = file.name.replace('.pdf', '');
                   const fullPath = `${folderName}/${file.name.replace('.pdf', '')}`;
+                  // Look up metadata by various filename formats
+                  const fileKey = `${folderName}/${file.name}`;
+                  const meta = metadataMap.get(fileKey) || metadataMap.get(file.name);
                   return {
                     id: file.id || `${folderName}/${file.name}`,
                     name: file.name,
@@ -111,7 +177,12 @@ function LiveCOAsPageContent() {
                     metadata: file.metadata,
                     viewerUrl: `https://www.quantixanalytics.com/coa/${fullPath}`,
                     clientFolder: folderName,
-                    strainName: strainName
+                    strainName: strainName,
+                    testDate: meta?.test_date,
+                    batchNumber: meta?.batch_number,
+                    labName: meta?.lab_name,
+                    productId: meta?.product_id,
+                    productName: meta?.product_name,
                   };
                 });
 
@@ -233,12 +304,11 @@ function LiveCOAsPageContent() {
       // Construct the correct file path based on how files are stored
       let filePath: string;
       if (coa.clientFolder && coa.clientFolder !== 'Uncategorized' && coa.clientFolder !== 'Legacy Files') {
-        // New files in client folders: pdfs/ClientName/StrainName.pdf
-        filePath = `pdfs/${coa.clientFolder}/${coa.name}`;
+        // Files in client folders: vendorId/ClientName/StrainName.pdf
+        filePath = `${FLORA_DISTRO_VENDOR_ID}/${coa.clientFolder}/${coa.name}`;
       } else {
-        // Legacy files in root OR uncategorized: pdfs/filename.pdf
-        // Use the full filename which includes timestamp for legacy files
-        filePath = `pdfs/${coa.name}`;
+        // Legacy files: vendorId/filename.pdf
+        filePath = `${FLORA_DISTRO_VENDOR_ID}/${coa.name}`;
       }
 
       console.log('=== DELETE ATTEMPT START ===');
@@ -251,7 +321,7 @@ function LiveCOAsPageContent() {
       });
 
       const { data: deleteData, error: deleteError } = await supabase.storage
-        .from('coas')
+        .from('vendor-coas')
         .remove([filePath]);
 
       console.log('Delete response data:', deleteData);
@@ -269,34 +339,42 @@ function LiveCOAsPageContent() {
         throw new Error(`Failed to delete file: ${deleteError.message}`);
       }
 
-      console.log('✅ Delete command executed without error');
+      console.log('✅ Storage delete executed without error');
       console.log('Delete result data:', JSON.stringify(deleteData));
 
-      // Verify deletion by checking if file still exists
-      await new Promise(resolve => setTimeout(resolve, 500)); // Wait for deletion to propagate
-      
-      const checkPath = coa.clientFolder && coa.clientFolder !== 'Uncategorized' && coa.clientFolder !== 'Legacy Files' 
-        ? `pdfs/${coa.clientFolder}` 
-        : 'pdfs';
-      
-      console.log('Verifying deletion by listing files in:', checkPath);
-      const { data: checkData, error: checkError } = await supabase.storage
-        .from('coas')
-        .list(checkPath, {
-          limit: 1000,
-          sortBy: { column: 'name', order: 'asc' }
-        });
-      
-      if (checkError) {
-        console.error('Error verifying deletion:', checkError);
+      // Also delete from vendor_coas database table
+      // file_name in DB could be: "Banana_Kush.pdf", "1234567890_Banana_Kush.pdf",
+      // or "Flora_Distribution_Group_LLC/Banana_Kush.pdf"
+      // Try multiple match strategies
+      const storageFileName = coa.name;
+      const fileNameNoTimestamp = storageFileName.replace(/^\d+_/, '');
+      const fileNameWithFolder = coa.clientFolder ? `${coa.clientFolder}/${storageFileName}` : null;
+      const fileNameWithFolderNoTimestamp = coa.clientFolder ? `${coa.clientFolder}/${fileNameNoTimestamp}` : null;
+
+      console.log('Attempting DB delete with file names:', {
+        storageFileName,
+        fileNameNoTimestamp,
+        fileNameWithFolder,
+        fileNameWithFolderNoTimestamp
+      });
+
+      // Try to delete by any matching file_name pattern
+      const possibleNames = [storageFileName, fileNameNoTimestamp];
+      if (fileNameWithFolder) possibleNames.push(fileNameWithFolder);
+      if (fileNameWithFolderNoTimestamp) possibleNames.push(fileNameWithFolderNoTimestamp);
+
+      const { error: dbDeleteError } = await supabase
+        .from('vendor_coas')
+        .delete()
+        .eq('vendor_id', FLORA_DISTRO_VENDOR_ID)
+        .in('file_name', possibleNames);
+
+      if (dbDeleteError) {
+        console.error('Error deleting from database:', dbDeleteError);
       } else {
-        console.log('Files remaining in folder:', checkData?.length);
-        const fileStillExists = checkData?.some(f => f.name === coa.name);
-        console.log('File still exists after delete?', fileStillExists);
-        if (fileStillExists) {
-          console.error('⚠️ WARNING: File was not actually deleted from storage!');
-        }
+        console.log('✅ Database record deleted');
       }
+
       console.log('=== DELETE ATTEMPT END ===');
 
       // Remove from local state
@@ -338,15 +416,15 @@ function LiveCOAsPageContent() {
 
       const filePaths = filteredCOAs.map(coa => {
         if (coa.clientFolder && coa.clientFolder !== 'Uncategorized' && coa.clientFolder !== 'Legacy Files') {
-          return `pdfs/${coa.clientFolder}/${coa.name}`;
+          return `${FLORA_DISTRO_VENDOR_ID}/${coa.clientFolder}/${coa.name}`;
         }
-        return `pdfs/${coa.name}`;
+        return `${FLORA_DISTRO_VENDOR_ID}/${coa.name}`;
       });
 
       console.log('Attempting to delete multiple files:', filePaths);
 
       const { error: deleteError } = await supabase.storage
-        .from('coas')
+        .from('vendor-coas')
         .remove(filePaths);
 
       if (deleteError) {
@@ -358,18 +436,118 @@ function LiveCOAsPageContent() {
         throw new Error(`Failed to delete files: ${deleteError.message}`);
       }
 
+      // Also delete from vendor_coas database table
+      // Build all possible filename variations for matching
+      const fileNames: string[] = [];
+      filteredCOAs.forEach(coa => {
+        fileNames.push(coa.name);
+        fileNames.push(coa.name.replace(/^\d+_/, ''));
+        if (coa.clientFolder) {
+          fileNames.push(`${coa.clientFolder}/${coa.name}`);
+          fileNames.push(`${coa.clientFolder}/${coa.name.replace(/^\d+_/, '')}`);
+        }
+      });
+      const { error: dbDeleteError } = await supabase
+        .from('vendor_coas')
+        .delete()
+        .eq('vendor_id', FLORA_DISTRO_VENDOR_ID)
+        .in('file_name', fileNames);
+
+      if (dbDeleteError) {
+        console.error('Error deleting from database:', dbDeleteError);
+      } else {
+        console.log('✅ Database records deleted');
+      }
+
       // Remove from local state
       const deletedIds = new Set(filteredCOAs.map(coa => coa.id));
       setCOAFiles(prev => prev.filter(file => !deletedIds.has(file.id)));
-      
+
       // Clear selected COAs
       setSelectedCOAs(new Set());
-      
+
       // Show success message
       alert(`Successfully deleted ${filteredCOAs.length} COA(s)`);
 
     } catch (err) {
       console.error('Error deleting COAs:', err);
+      alert(err instanceof Error ? err.message : 'Failed to delete COAs');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Delete selected COAs
+  const handleDeleteSelected = async () => {
+    if (typeof window === 'undefined' || selectedCOAs.size === 0) return;
+
+    const selectedCOAObjects = coaFiles.filter(coa => selectedCOAs.has(coa.id));
+
+    const confirmed = window.confirm(
+      `Are you sure you want to delete ${selectedCOAs.size} selected COA(s)?\n\nThis will permanently remove the files from cloud storage and make them inaccessible via www.quantixanalytics.com. This action cannot be undone.`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      setLoading(true);
+
+      const filePaths = selectedCOAObjects.map(coa => {
+        if (coa.clientFolder && coa.clientFolder !== 'Uncategorized' && coa.clientFolder !== 'Legacy Files') {
+          return `${FLORA_DISTRO_VENDOR_ID}/${coa.clientFolder}/${coa.name}`;
+        }
+        return `${FLORA_DISTRO_VENDOR_ID}/${coa.name}`;
+      });
+
+      console.log('Attempting to delete selected files:', filePaths);
+
+      const { error: deleteError } = await supabase.storage
+        .from('vendor-coas')
+        .remove(filePaths);
+
+      if (deleteError) {
+        if (deleteError.message?.includes('not authorized') || deleteError.message?.includes('Invalid JWT')) {
+          throw new Error(
+            'Access denied: You do not have permission to delete files from private storage.'
+          );
+        }
+        throw new Error(`Failed to delete files: ${deleteError.message}`);
+      }
+
+      // Also delete from vendor_coas database table
+      // Build all possible filename variations for matching
+      const fileNames: string[] = [];
+      selectedCOAObjects.forEach(coa => {
+        fileNames.push(coa.name);
+        fileNames.push(coa.name.replace(/^\d+_/, ''));
+        if (coa.clientFolder) {
+          fileNames.push(`${coa.clientFolder}/${coa.name}`);
+          fileNames.push(`${coa.clientFolder}/${coa.name.replace(/^\d+_/, '')}`);
+        }
+      });
+      const { error: dbDeleteError } = await supabase
+        .from('vendor_coas')
+        .delete()
+        .eq('vendor_id', FLORA_DISTRO_VENDOR_ID)
+        .in('file_name', fileNames);
+
+      if (dbDeleteError) {
+        console.error('Error deleting from database:', dbDeleteError);
+      } else {
+        console.log('✅ Database records deleted');
+      }
+
+      // Remove from local state
+      setCOAFiles(prev => prev.filter(file => !selectedCOAs.has(file.id)));
+
+      // Clear selected COAs
+      setSelectedCOAs(new Set());
+
+      // Show success message
+      alert(`Successfully deleted ${selectedCOAObjects.length} COA(s)`);
+
+    } catch (err) {
+      console.error('Error deleting selected COAs:', err);
       alert(err instanceof Error ? err.message : 'Failed to delete COAs');
     } finally {
       setLoading(false);
@@ -422,15 +600,15 @@ function LiveCOAsPageContent() {
           // Construct the correct file path based on how files are stored
           let filePath: string;
           if (coa.clientFolder && coa.clientFolder !== 'Uncategorized' && coa.clientFolder !== 'Legacy Files') {
-            filePath = `pdfs/${coa.clientFolder}/${coa.name}`;
+            filePath = `${FLORA_DISTRO_VENDOR_ID}/${coa.clientFolder}/${coa.name}`;
           } else {
-            filePath = `pdfs/${coa.name}`;
+            filePath = `${FLORA_DISTRO_VENDOR_ID}/${coa.name}`;
           }
 
           console.log('Downloading file from path:', filePath);
 
           const { data, error } = await supabase.storage
-            .from('coas')
+            .from('vendor-coas')
             .download(filePath);
 
           if (error) {
@@ -613,6 +791,17 @@ function LiveCOAsPageContent() {
                       Export ({selectedCOAs.size})
                     </button>
                     <button
+                      onClick={handleDeleteSelected}
+                      disabled={loading}
+                      className="w-full sm:w-auto px-5 py-4 bg-red-600/20 hover:bg-red-600/30 text-red-300 hover:text-red-200 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 text-sm font-medium flex items-center justify-center gap-2 border border-red-500/20 hover:border-red-500/30 uppercase tracking-wider"
+                      title={`Delete ${selectedCOAs.size} selected COA${selectedCOAs.size !== 1 ? 's' : ''}`}
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                      Delete ({selectedCOAs.size})
+                    </button>
+                    <button
                       onClick={handleClearSelection}
                       className="w-full sm:w-auto px-5 py-4 bg-white/5 hover:bg-white/10 text-neutral-300 hover:text-white rounded-xl transition-all duration-300 text-sm font-medium flex items-center justify-center gap-2 border border-white/5 hover:border-white/10 uppercase tracking-wider"
                       title="Clear Selection"
@@ -747,7 +936,7 @@ function LiveCOAsPageContent() {
                       {coa.strainName || coa.name.replace('.pdf', '')}
                     </h3>
                     <p className="text-xs text-neutral-500 leading-tight">
-                      {formatDate(coa.created_at)}
+                      Uploaded {formatDate(coa.created_at)}
                     </p>
                   </div>
 
@@ -755,15 +944,26 @@ function LiveCOAsPageContent() {
                   <div className={`space-y-1.5 mb-4 pb-4 border-t pt-3 transition-colors duration-300 ${
                     selectedCOAs.has(coa.id) ? 'border-neutral-600' : 'border-neutral-800'
                   }`}>
+                    {/* Product Assignment */}
+                    <div className="flex items-center justify-between text-xs text-neutral-500">
+                      <span>Product</span>
+                      {coa.productName ? (
+                        <span className="text-green-400 font-medium truncate ml-2 max-w-[150px]" title={coa.productName}>
+                          {coa.productName}
+                        </span>
+                      ) : (
+                        <span className="text-neutral-600 italic">Not assigned</span>
+                      )}
+                    </div>
+                    <div className="flex items-center justify-between text-xs text-neutral-500">
+                      <span>Collected</span>
+                      <span className="text-neutral-400">
+                        {coa.testDate ? new Date(coa.testDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}
+                      </span>
+                    </div>
                     <div className="flex items-center justify-between text-xs text-neutral-500">
                       <span>Size</span>
                       <span className="text-neutral-400">{formatFileSize(coa.metadata?.size)}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-xs text-neutral-500">
-                      <span>Path</span>
-                      <span className="text-neutral-400 font-mono truncate ml-2 text-[10px]">
-                        {coa.clientFolder === 'Legacy Files' ? coa.name : `${coa.clientFolder}/${coa.strainName}`}
-                      </span>
                     </div>
                   </div>
 

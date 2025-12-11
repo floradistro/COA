@@ -20,6 +20,7 @@ export interface UseCOAGenerationReturn {
     clientName: string;
     clientAddress: string | null;
     licenseNumber: string | null;
+    vendorId?: string | null;
   }) => void;
   updateProfile: (profileType: CannabinoidProfile) => void;
   
@@ -36,6 +37,7 @@ export interface UseCOAGenerationReturn {
     clientName: string;
     clientAddress: string | null;
     licenseNumber: string | null;
+    vendorId?: string | null;
   }) => Promise<void>;
   goToCOA: (index: number) => void;
   clearGeneratedCOAs: () => void;
@@ -75,6 +77,7 @@ export const useCOAGeneration = (
       clientName: string;
       clientAddress: string | null;
       licenseNumber: string | null;
+      vendorId?: string | null;
     }
   ) => {
     const newData = generateDefaultCOAData(
@@ -98,18 +101,18 @@ export const useCOAGeneration = (
       newData.sampleSize = sampleSize;
     }
     
-    // Update edible values if provided and product type is edible
-    if (productType === 'edible' && edibleDosage) {
+    // Update edible/gummy values if provided - both use the same potency test profile
+    if ((productType === 'edible' || productType === 'gummy') && edibleDosage) {
       newData.edibleDosage = edibleDosage;
-      
-      // Regenerate cannabinoid profile with edible-specific calculation
+
+      // Regenerate cannabinoid profile with edible-specific calculation (D9-THC only)
       const edibleProfile = generateEdibleCannabinoidProfile(edibleDosage, newData.sampleSize);
       newData.cannabinoids = edibleProfile.cannabinoids;
       newData.totalTHC = edibleProfile.totalTHC;
       newData.totalCBD = edibleProfile.totalCBD;
       newData.totalCannabinoids = edibleProfile.totalCannabinoids;
     }
-    
+
     setCOAData(newData);
   }, []);
   
@@ -136,6 +139,7 @@ export const useCOAGeneration = (
       clientName: string;
       clientAddress: string | null;
       licenseNumber: string | null;
+      vendorId?: string | null;
     }
   ): Promise<void> => {
     // Validate input
@@ -177,11 +181,11 @@ export const useCOAGeneration = (
             newCOA.sampleSize = sampleSize;
           }
           
-          // Update edible values if provided and product type is edible
-          if (productType === 'edible' && edibleDosage) {
+          // Update edible/gummy values if provided - both use the same potency test profile
+          if ((productType === 'edible' || productType === 'gummy') && edibleDosage) {
             newCOA.edibleDosage = edibleDosage;
-            
-            // Regenerate cannabinoid profile with edible-specific calculation
+
+            // Regenerate cannabinoid profile with edible-specific calculation (D9-THC only)
             const edibleProfile = generateEdibleCannabinoidProfile(edibleDosage, newCOA.sampleSize);
             newCOA.cannabinoids = edibleProfile.cannabinoids;
             newCOA.totalTHC = edibleProfile.totalTHC;

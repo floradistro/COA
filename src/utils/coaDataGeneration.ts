@@ -44,6 +44,7 @@ export const generateDefaultCOAData = (
     clientName: string;
     clientAddress: string | null;
     licenseNumber: string | null;
+    vendorId?: string | null;
   }
 ): COAData => {
   // Get product configuration
@@ -56,7 +57,8 @@ export const generateDefaultCOAData = (
     : generateDates(dateReceived);
   
   // Generate cannabinoid profile with sample index
-  const profile = productType === 'edible' && DEFAULT_EDIBLE_VALUES.dosage
+  // For edibles and gummies, use the potency test profile (D9-THC only)
+  const profile = (productType === 'edible' || productType === 'gummy') && DEFAULT_EDIBLE_VALUES.dosage
     ? generateEdibleCannabinoidProfile(DEFAULT_EDIBLE_VALUES.dosage, DEFAULT_SAMPLE_SIZE)
     : generateFullCannabinoidProfile(effectiveProfile, undefined, sampleIndex);
   
@@ -76,7 +78,8 @@ export const generateDefaultCOAData = (
   const processedClientData = clientData ? {
     clientName: clientData.clientName,
     clientAddress: clientData.clientAddress || CLIENT_DEFAULTS.clientAddress,
-    licenseNumber: clientData.licenseNumber || CLIENT_DEFAULTS.licenseNumber
+    licenseNumber: clientData.licenseNumber || CLIENT_DEFAULTS.licenseNumber,
+    vendorId: clientData.vendorId || undefined
   } : CLIENT_DEFAULTS;
   
   // Create COA data object
@@ -115,8 +118,8 @@ export const generateDefaultCOAData = (
     totalCBD: profile.totalCBD,
     totalCannabinoids: profile.totalCannabinoids,
     
-    // Edible specific fields
-    edibleDosage: productType === 'edible' ? DEFAULT_EDIBLE_VALUES.dosage : undefined,
+    // Edible/Gummy specific fields (THC dosage in mg)
+    edibleDosage: (productType === 'edible' || productType === 'gummy') ? DEFAULT_EDIBLE_VALUES.dosage : undefined,
     
     // Other Tests
     moisture: moisture,

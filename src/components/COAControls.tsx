@@ -31,6 +31,8 @@ interface COAControlsProps {
   // Edible specific props
   edibleDosage: number;
   setEdibleDosage: (dosage: number) => void;
+  edibleWeight: number;
+  setEdibleWeight: (weight: number) => void;
   onGenerate: () => void;
   onGenerateBatch: () => void;
   isGeneratingBatch: boolean;
@@ -72,6 +74,8 @@ export const COAControls: React.FC<COAControlsProps> = ({
   // Edible props
   edibleDosage,
   setEdibleDosage,
+  edibleWeight,
+  setEdibleWeight,
   onGenerate,
   onGenerateBatch,
   isGeneratingBatch,
@@ -137,8 +141,8 @@ export const COAControls: React.FC<COAControlsProps> = ({
             <div>
               <div className="flex items-center justify-between mb-3">
                 <label className="text-xs font-medium text-neutral-400 uppercase tracking-wider">
-                  {productType === 'edible' ? 
-                    (isMultiStrain ? 'Product Names (one per line)' : 'Product Name') : 
+                  {(productType === 'edible' || productType === 'gummy') ?
+                    (isMultiStrain ? 'Product Names (one per line)' : 'Product Name') :
                     (isMultiStrain ? 'Strain Names (one per line)' : 'Strain Name')
                   }
                 </label>
@@ -173,7 +177,7 @@ export const COAControls: React.FC<COAControlsProps> = ({
                   value={strainList}
                   onChange={(e) => setStrainList(e.target.value)}
                   className="w-full px-5 py-4 bg-white/5 backdrop-blur-xl text-white placeholder-neutral-500 rounded-2xl focus:outline-none focus:bg-white/10 transition-all duration-300 shadow-[0_4px_12px_0_rgba(0,0,0,0.3),inset_0_1px_0_0_rgba(255,255,255,0.05)] border border-white/5 hover:border-white/10 h-28 text-base resize-none"
-                  placeholder={productType === 'edible' ? 'Enter product names, one per line...' : 'Enter strain names, one per line...'}
+                  placeholder={(productType === 'edible' || productType === 'gummy') ? 'Enter product names, one per line...' : 'Enter strain names, one per line...'}
                 />
               ) : (
                 <input
@@ -181,7 +185,7 @@ export const COAControls: React.FC<COAControlsProps> = ({
                   value={strain}
                   onChange={(e) => setStrain(e.target.value)}
                   className="w-full px-5 py-4 bg-white/5 backdrop-blur-xl text-white placeholder-neutral-500 rounded-2xl focus:outline-none focus:bg-white/10 transition-all duration-300 shadow-[0_4px_12px_0_rgba(0,0,0,0.3),inset_0_1px_0_0_rgba(255,255,255,0.05)] border border-white/5 hover:border-white/10 text-base"
-                  placeholder={productType === 'edible' ? 'Enter product name...' : 'Enter strain name...'}
+                  placeholder={(productType === 'edible' || productType === 'gummy') ? 'Enter product name...' : 'Enter strain name...'}
                 />
               )}
             </div>
@@ -328,8 +332,8 @@ export const COAControls: React.FC<COAControlsProps> = ({
                 </select>
               </div>
               
-              {/* Edible Specific Fields - Only show when edible is selected */}
-              {productType === 'edible' && (
+              {/* Edible/Gummy Specific Fields - Only show when edible or gummy is selected */}
+              {(productType === 'edible' || productType === 'gummy') && (
                 <>
                   <div>
                     <label className="block text-xs font-medium text-neutral-400 mb-3 uppercase tracking-wider">
@@ -374,6 +378,24 @@ export const COAControls: React.FC<COAControlsProps> = ({
                       )}
                     </div>
                   </div>
+
+                  {/* Product Weight - Only for edibles (gummies use fixed 3.5g sample size) */}
+                  {productType === 'edible' && (
+                    <div>
+                      <label className="block text-xs font-medium text-neutral-400 mb-3 uppercase tracking-wider">
+                        Product Weight (g)
+                      </label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        min="0.1"
+                        value={edibleWeight / 1000}
+                        onChange={(e) => setEdibleWeight(Number(e.target.value) * 1000)}
+                        placeholder="Enter weight in grams"
+                        className="w-full px-5 py-4 bg-white/5 backdrop-blur-xl text-white placeholder-neutral-500 rounded-2xl focus:outline-none focus:bg-white/10 transition-all duration-300 shadow-[0_4px_12px_0_rgba(0,0,0,0.3),inset_0_1px_0_0_rgba(255,255,255,0.05)] border border-white/5 hover:border-white/10 text-base"
+                      />
+                    </div>
+                  )}
                 </>
               )}
             </div>

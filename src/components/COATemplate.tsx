@@ -21,23 +21,26 @@ interface COATemplateProps {
 
 // Pie Chart Component - Memoized
 const CannabinoidPieChart = memo(({ data }: { data: COAData }) => {
+  // Check if this is a potency test (edible/gummy) - only D9-THC detected at low levels
+  const isPotencyTest = data.sampleType === 'Cannabis Gummy' || data.sampleType === 'Cannabis Edible';
+
   // Calculate values for the pie chart
   const getChartData = () => {
     const thca = data.cannabinoids.find(c => c.name === 'THCa')?.percentWeight || 0;
     const d9thc = data.cannabinoids.find(c => c.name === 'Δ9-THC')?.percentWeight || 0;
     const cbd = data.cannabinoids.find(c => c.name === 'CBD')?.percentWeight || 0;
     const cbda = data.cannabinoids.find(c => c.name === 'CBDa')?.percentWeight || 0;
-    
+
     // Calculate total CBD using the formula
     const totalCBD = cbd + (cbda * DECARB_FACTOR);
-    
+
     // Get individual minor cannabinoids
     const cbg = data.cannabinoids.find(c => c.name === 'CBG')?.percentWeight || 0;
     const cbga = data.cannabinoids.find(c => c.name === 'CBGa')?.percentWeight || 0;
     const cbc = data.cannabinoids.find(c => c.name === 'CBC')?.percentWeight || 0;
     const cbn = data.cannabinoids.find(c => c.name === 'CBN')?.percentWeight || 0;
     const thcv = data.cannabinoids.find(c => c.name === 'THCV')?.percentWeight || 0;
-    
+
     // Calculate other cannabinoids (remaining ones not explicitly shown)
     const otherCannabinoids = data.cannabinoids
       .filter(c => !['THCa', 'Δ9-THC', 'CBD', 'CBDa', 'CBG', 'CBGa', 'CBC', 'CBN', 'THCV'].includes(c.name))
@@ -47,78 +50,90 @@ const CannabinoidPieChart = memo(({ data }: { data: COAData }) => {
         }
         return sum;
       }, 0);
-    
+
     const total = thca + d9thc + totalCBD + cbg + cbga + cbc + cbn + thcv + otherCannabinoids;
-    
+
     if (total === 0) return [];
-    
-    // Add slight variations to slice angles
-    const angleVariation = () => (Math.random() - 0.5) * 2; // -1 to 1 degree variation
-    
+
+    // For potency tests (gummies/edibles), show actual composition of sample (D9-THC as tiny sliver, rest as "Other")
+    // For regular products, show relative proportions of detected cannabinoids
+    const baseForPercentage = isPotencyTest ? 100 : total;
+
     // Build chart data - only include cannabinoids that are detected
     const chartData = [];
-    
+
     if (thca > 0) {
-      chartData.push({ 
-        name: 'THCa', 
-        value: thca, 
-        percentage: (thca / total * 100) + angleVariation(),
+      chartData.push({
+        name: 'THCa',
+        value: thca,
+        percentage: (thca / baseForPercentage * 100),
         displayValue: `${thca.toFixed(2)}%`,
-        color: '#10B981' 
+        color: '#10B981'
       });
     }
-    
+
     if (d9thc > 0) {
-      chartData.push({ 
-        name: 'D9 THC', 
-        value: d9thc, 
-        percentage: (d9thc / total * 100) + angleVariation(),
+      chartData.push({
+        name: 'D9 THC',
+        value: d9thc,
+        percentage: (d9thc / baseForPercentage * 100),
         displayValue: `${d9thc.toFixed(2)}%`,
-        color: '#F59E0B' 
+        color: '#F59E0B'
       });
     }
-    
+
     if (totalCBD > 0) {
-      chartData.push({ 
-        name: 'Total CBD', 
-        value: totalCBD, 
-        percentage: (totalCBD / total * 100) + angleVariation(),
+      chartData.push({
+        name: 'Total CBD',
+        value: totalCBD,
+        percentage: (totalCBD / baseForPercentage * 100),
         displayValue: `${totalCBD.toFixed(2)}%`,
-        color: '#3B82F6' 
+        color: '#3B82F6'
       });
     }
-    
+
     if (cbga > 0) {
-      chartData.push({ 
-        name: 'CBGa', 
-        value: cbga, 
-        percentage: (cbga / total * 100) + angleVariation(),
+      chartData.push({
+        name: 'CBGa',
+        value: cbga,
+        percentage: (cbga / baseForPercentage * 100),
         displayValue: `${cbga.toFixed(2)}%`,
-        color: '#8B5CF6' 
+        color: '#8B5CF6'
       });
     }
-    
+
     if (cbg > 0) {
-      chartData.push({ 
-        name: 'CBG', 
-        value: cbg, 
-        percentage: (cbg / total * 100) + angleVariation(),
+      chartData.push({
+        name: 'CBG',
+        value: cbg,
+        percentage: (cbg / baseForPercentage * 100),
         displayValue: `${cbg.toFixed(2)}%`,
-        color: '#EC4899' 
+        color: '#EC4899'
       });
     }
-    
+
     if (cbc > 0 || cbn > 0 || thcv > 0 || otherCannabinoids > 0) {
       const otherTotal = cbc + cbn + thcv + otherCannabinoids;
-      chartData.push({ 
-        name: 'Other', 
-        value: otherTotal, 
-        percentage: (otherTotal / total * 100) + angleVariation(),
+      chartData.push({
+        name: 'Other',
+        value: otherTotal,
+        percentage: (otherTotal / baseForPercentage * 100),
         displayValue: `${otherTotal.toFixed(2)}%`,
-        color: '#6B7280' 
+        color: '#6B7280'
       });
     }
-    
+
+    // For potency tests, add "Other" to show the non-cannabinoid portion of the sample
+    if (isPotencyTest && total < 100) {
+      chartData.push({
+        name: 'Other',
+        value: 100 - total,
+        percentage: 100 - total,
+        displayValue: `${(100 - total).toFixed(1)}%`,
+        color: '#E5E7EB' // Light gray for non-cannabinoid content
+      });
+    }
+
     return chartData;
   };
 
@@ -132,35 +147,72 @@ const CannabinoidPieChart = memo(({ data }: { data: COAData }) => {
     const centerY = 70;
     const radius = 50;
     let currentAngle = -90; // Start from top
-    
-    return chartData.map((item, index) => {
-      const angle = (item.percentage / 100) * 360;
+
+    // Use all chart data for the pie
+    const pieData = chartData;
+
+    // If only one slice at ~100%, draw a full circle instead of arc
+    if (pieData.length === 1 && pieData[0].percentage >= 99) {
+      return (
+        <circle
+          cx={centerX}
+          cy={centerY}
+          r={radius}
+          fill={pieData[0].color}
+          stroke="white"
+          strokeWidth="1.5"
+        />
+      );
+    }
+
+    // For potency tests, ensure small cannabinoid slices are visible with minimum angle
+    const minVisibleAngle = 8; // Minimum 8 degrees - small but visible sliver
+
+    // Sort so "Other" is drawn first (underneath), then smaller slices on top
+    const sortedPieData = [...pieData].sort((a, b) => {
+      if (a.name === 'Other') return -1;
+      if (b.name === 'Other') return 1;
+      return b.percentage - a.percentage; // Larger slices first
+    });
+
+    // Calculate angles with minimum visibility
+    const slicesWithAngles = sortedPieData.map(item => {
+      let angle = (item.percentage / 100) * 360;
+      // For very small slices (like D9-THC in potency tests), ensure minimum visibility
+      if (angle > 0 && angle < minVisibleAngle && pieData.length > 1 && item.name !== 'Other') {
+        angle = minVisibleAngle;
+      }
+      return { ...item, angle };
+    });
+
+    // Draw slices
+    return slicesWithAngles.map((item, index) => {
       const startAngleRad = (currentAngle * Math.PI) / 180;
-      const endAngleRad = ((currentAngle + angle) * Math.PI) / 180;
-      
-      const largeArcFlag = angle > 180 ? 1 : 0;
-      
+      const endAngleRad = ((currentAngle + item.angle) * Math.PI) / 180;
+
+      const largeArcFlag = item.angle > 180 ? 1 : 0;
+
       const x1 = centerX + radius * Math.cos(startAngleRad);
       const y1 = centerY + radius * Math.sin(startAngleRad);
       const x2 = centerX + radius * Math.cos(endAngleRad);
       const y2 = centerY + radius * Math.sin(endAngleRad);
-      
+
       const pathData = [
         `M ${centerX} ${centerY}`,
         `L ${x1} ${y1}`,
         `A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2}`,
         'Z'
       ].join(' ');
-      
-      currentAngle += angle;
-      
+
+      currentAngle += item.angle;
+
       return (
         <path
           key={index}
           d={pathData}
           fill={item.color}
           stroke="white"
-          strokeWidth="1.5"
+          strokeWidth="1"
           className="hover:opacity-80 transition-opacity"
         />
       );
@@ -186,11 +238,11 @@ const CannabinoidPieChart = memo(({ data }: { data: COAData }) => {
   const minorDetails = getMinorCannabinoidDetails();
 
   return (
-    <div>
+    <div style={{ minWidth: '200px' }}>
       <div className="flex items-center">
         {/* Pie Chart */}
-        <div className="relative">
-          <svg width="140" height="140" viewBox="0 0 140 140">
+        <div className="relative" style={{ width: '140px', height: '140px', flexShrink: 0 }}>
+          <svg width="140" height="140" viewBox="0 0 140 140" style={{ display: 'block' }}>
             {createPieSlices()}
           </svg>
         </div>
@@ -199,7 +251,7 @@ const CannabinoidPieChart = memo(({ data }: { data: COAData }) => {
         <div className="space-y-1.5 -ml-2">
           {chartData.map((item, index) => (
             <div key={index} className="flex items-center gap-2">
-              <div 
+              <div
                 className="w-2.5 h-2.5 rounded-sm"
                 style={{ backgroundColor: item.color }}
               ></div>
@@ -579,7 +631,7 @@ const COATemplate = forwardRef<HTMLDivElement, COATemplateProps>(({
               <div><span className="font-medium text-gray-900">Client:</span></div>
               <div className="font-medium text-gray-800">{data.clientName}</div>
               <div className="whitespace-pre-line text-gray-800">{data.clientAddress}</div>
-              {data.clientName === 'Flora Distribution Group' && (
+              {data.licenseNumber && (
                 <div><span className="font-medium text-gray-900">Lic #:</span> <span className="text-gray-800">{data.licenseNumber}</span></div>
               )}
             </div>
@@ -596,8 +648,8 @@ const COATemplate = forwardRef<HTMLDivElement, COATemplateProps>(({
               <h2 className="text-xs font-bold text-gray-900 mb-1">{data.sampleName}</h2>
               <div className="space-y-0.5 text-[10px] leading-tight">
                 <div><span className="font-medium text-gray-900">Sample ID:</span> <span className="text-gray-800">{data.sampleId}</span></div>
-                <div><span className="font-medium text-gray-900">{data.sampleType === 'Cannabis Edible' ? 'Product Name:' : 'Strain:'}</span> <span className="text-gray-800">{data.strain}</span></div>
-                <div><span className="font-medium text-gray-900">Matrix:</span> <span className="text-gray-800">{data.sampleType === 'Cannabis Edible' ? 'Infused Product' : 'Plant'}</span></div>
+                <div><span className="font-medium text-gray-900">{(data.sampleType === 'Cannabis Edible' || data.sampleType === 'Cannabis Gummy') ? 'Product Name:' : 'Strain:'}</span> <span className="text-gray-800">{data.strain}</span></div>
+                <div><span className="font-medium text-gray-900">Matrix:</span> <span className="text-gray-800">{(data.sampleType === 'Cannabis Edible' || data.sampleType === 'Cannabis Gummy') ? 'Infused Product' : (data.sampleType === 'Disposable Vaporizer' || data.sampleType === 'Cannabis Concentrate') ? 'Extract' : 'Plant'}</span></div>
                 <div><span className="font-medium text-gray-900">Type:</span> <span className="text-gray-800">{data.sampleType}</span></div>
                 <div><span className="font-medium text-gray-900">Sample Size:</span> <span className="text-gray-800">{data.sampleSize}</span></div>
               </div>
@@ -638,7 +690,7 @@ const COATemplate = forwardRef<HTMLDivElement, COATemplateProps>(({
                   <div><span className="font-medium text-gray-900">Client:</span></div>
                   <div className="font-medium text-gray-800">{data.clientName}</div>
                   <div className="whitespace-pre-line text-gray-800">{data.clientAddress}</div>
-                  {data.clientName === 'Flora Distribution Group' && (
+                  {data.licenseNumber && (
                     <div><span className="font-medium text-gray-900">Lic #:</span> <span className="text-gray-800">{data.licenseNumber}</span></div>
                   )}
                 </div>

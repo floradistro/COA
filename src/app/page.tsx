@@ -5,13 +5,13 @@ import { ProductType, CannabinoidProfile, Client, COAData } from '@/types';
 import { useCOAGeneration } from '@/hooks';
 import { useSupabaseUpload } from '@/hooks/useSupabaseUpload';
 import { supabaseData as supabase } from '@/lib/supabaseClient';
-import { 
+import {
   getTodayString,
   getUserFriendlyMessage,
   setNotificationCallback,
   generateEdibleCannabinoidProfile
 } from '@/utils';
-import { DEFAULT_SAMPLE_SIZE } from '@/constants/defaults';
+import { DEFAULT_SAMPLE_SIZE, PRODUCT_CONFIGS } from '@/constants/defaults';
 import { getEmployeeTitle } from '@/constants/labEmployees';
 import COATemplate from '@/components/COATemplate';
 import { COAControls } from '@/components/COAControls';
@@ -50,6 +50,7 @@ function HomeContent() {
     sampleSize: DEFAULT_SAMPLE_SIZE,
     productType: 'flower' as ProductType,
     edibleDosage: 10,
+    edibleWeight: 3500, // Weight in mg (default 3.5g = 3500mg for gummies)
     isMultiStrain: false,
     strainList: '',
     includeImage: false
@@ -105,13 +106,14 @@ function HomeContent() {
         // Auto-select first client if available and generate initial COA
         if (data && data.length > 0) {
           setSelectedClientId(data[0].id);
-          
-          // Update the initial COA with client data
+
+          // Update the initial COA with client data (including vendor_id for proper routing)
           setCOAData((prev: COAData) => ({
             ...prev,
             clientName: data[0].name,
             clientAddress: data[0].address,
-            licenseNumber: data[0].license_number
+            licenseNumber: data[0].license_number,
+            vendorId: data[0].vendor_id || undefined
           }));
         }
       } catch (error) {
@@ -184,7 +186,8 @@ function HomeContent() {
   const clientData = useMemo(() => selectedClient ? {
     clientName: selectedClient.name,
     clientAddress: selectedClient.address,
-    licenseNumber: selectedClient.license_number
+    licenseNumber: selectedClient.license_number,
+    vendorId: selectedClient.vendor_id
   } : undefined, [selectedClient]);
   
   // Safe instant update handlers - event-driven (no loops)
@@ -197,14 +200,17 @@ function HomeContent() {
         ...prev,
         clientName: client.name,
         clientAddress: client.address,
-        licenseNumber: client.license_number
+        licenseNumber: client.license_number,
+        vendorId: client.vendor_id || undefined
       }));
     }
   }, [clients, coaData?.sampleId, setCOAData]);
   
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const handleProductTypeChange = useCallback((type: ProductType) => {
-    setFormState(prev => ({ ...prev, productType: type }));
+    // Get the default profile for this product type
+    const defaultProfile = PRODUCT_CONFIGS[type].defaultProfile;
+    setFormState(prev => ({ ...prev, productType: type, selectedProfile: defaultProfile }));
     if (coaData && coaData.sampleId) {
       const currentStrain = formState.strain || coaData.strain || 'Sample Strain';
       generateNewCOA(currentStrain, formState.dateReceived, type, {
@@ -212,8 +218,9 @@ function HomeContent() {
         dateTested: formState.dateTested,
         dateTestedEnd: formState.dateTestedEnd
       }, formState.selectedLabEmployee, formState.sampleSize, formState.edibleDosage, clientData);
-      
-      setTimeout(() => updateProfile(formState.selectedProfile), 100);
+
+      // Use the product's default profile, not the previous form state profile
+      setTimeout(() => updateProfile(defaultProfile), 100);
     }
   }, [formState, coaData?.sampleId, clientData, generateNewCOA, updateProfile]);
   
@@ -261,8 +268,12 @@ function HomeContent() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const handleEdibleDosageChange = useCallback((dosage: number) => {
     setFormState(prev => ({ ...prev, edibleDosage: dosage }));
-    if (coaData && coaData.sampleId && formState.productType === 'edible') {
-      const edibleProfile = generateEdibleCannabinoidProfile(dosage, coaData.sampleSize);
+    if (coaData && coaData.sampleId && (formState.productType === 'edible' || formState.productType === 'gummy')) {
+      // For edibles, use custom weight; for gummies, use sample size
+      const weightToUse = formState.productType === 'edible'
+        ? `${formState.edibleWeight}mg`
+        : coaData.sampleSize;
+      const edibleProfile = generateEdibleCannabinoidProfile(dosage, weightToUse);
       setCOAData((prev: COAData) => ({
         ...prev,
         edibleDosage: dosage,
@@ -272,18 +283,43 @@ function HomeContent() {
         totalCannabinoids: edibleProfile.totalCannabinoids
       }));
     }
-  }, [coaData?.sampleId, coaData?.sampleSize, formState.productType, setCOAData]);
+  }, [coaData?.sampleId, coaData?.sampleSize, formState.productType, formState.edibleWeight, setCOAData]);
+
+  // Handle edible weight change (for edibles only, not gummies)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const handleEdibleWeightChange = useCallback((weightMg: number) => {
+    setFormState(prev => ({ ...prev, edibleWeight: weightMg }));
+    if (coaData && coaData.sampleId && formState.productType === 'edible') {
+      // Display weight in grams on COA, but use mg internally for calculation
+      const displayWeight = `${(weightMg / 1000).toFixed(1)}g`;
+      const edibleProfile = generateEdibleCannabinoidProfile(formState.edibleDosage, `${weightMg}mg`);
+      setCOAData((prev: COAData) => ({
+        ...prev,
+        sampleSize: displayWeight,
+        cannabinoids: edibleProfile.cannabinoids,
+        totalTHC: edibleProfile.totalTHC,
+        totalCBD: edibleProfile.totalCBD,
+        totalCannabinoids: edibleProfile.totalCannabinoids
+      }));
+    }
+  }, [coaData?.sampleId, formState.productType, formState.edibleDosage, setCOAData]);
   
   // Generate single COA
   const handleGenerateSingle = useCallback(() => {
     try {
+      // For edibles, use custom weight in grams for display; for gummies and other products, use sampleSize
+      const effectiveSampleSize = formState.productType === 'edible'
+        ? `${(formState.edibleWeight / 1000).toFixed(1)}g`
+        : formState.sampleSize;
+
       generateNewCOA(formState.strain || 'Sample Strain', formState.dateReceived, formState.productType, {
         dateCollected: formState.dateCollected,
         dateTested: formState.dateTested,
         dateTestedEnd: formState.dateTestedEnd
-      }, formState.selectedLabEmployee, formState.sampleSize, formState.edibleDosage, clientData);
-      
-      if (formState.selectedProfile !== 'high-thc') {
+      }, formState.selectedLabEmployee, effectiveSampleSize, formState.edibleDosage, clientData);
+
+      // Don't override profile for edibles/gummies - they use the potency test profile (D9-THC only)
+      if (formState.selectedProfile !== 'high-thc' && formState.productType !== 'edible' && formState.productType !== 'gummy') {
         setTimeout(() => updateProfile(formState.selectedProfile), 100);
       }
       
@@ -317,12 +353,17 @@ function HomeContent() {
         showNotification('warning', 'Please enter at least one strain name');
         return;
       }
-      
+
+      // For edibles, use custom weight in grams for display; for gummies and other products, use sampleSize
+      const effectiveSampleSize = formState.productType === 'edible'
+        ? `${(formState.edibleWeight / 1000).toFixed(1)}g`
+        : formState.sampleSize;
+
       await generateMultipleCOAs(strains, formState.dateReceived, formState.productType, formState.selectedProfile, {
         dateCollected: formState.dateCollected,
         dateTested: formState.dateTested,
         dateTestedEnd: formState.dateTestedEnd
-      }, formState.selectedLabEmployee, formState.sampleSize, formState.edibleDosage, clientData);
+      }, formState.selectedLabEmployee, effectiveSampleSize, formState.edibleDosage, clientData);
       
       // Set image mode on all generated COAs if enabled
       if (formState.includeImage) {
@@ -502,6 +543,7 @@ function HomeContent() {
         sampleSize: DEFAULT_SAMPLE_SIZE,
         productType: 'flower',
         edibleDosage: 10,
+        edibleWeight: 3500,
         isMultiStrain: false,
         strainList: '',
         includeImage: false
@@ -664,6 +706,8 @@ function HomeContent() {
           setStrainList={(value) => setFormState(prev => ({ ...prev, strainList: value }))}
           edibleDosage={formState.edibleDosage}
           setEdibleDosage={handleEdibleDosageChange}
+          edibleWeight={formState.edibleWeight}
+          setEdibleWeight={handleEdibleWeightChange}
           onGenerate={handleGenerateSingle}
           onGenerateBatch={handleGenerateBatch}
           isGeneratingBatch={isGeneratingBatch}

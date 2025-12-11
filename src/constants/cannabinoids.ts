@@ -34,6 +34,26 @@ export const CANNABINOID_RANGES = {
     d9thc: { min: 0.05, max: 0.29 },
     cbga: { min: 0.30, max: 1.20 },
     cbg: { min: 0.05, max: 0.30 }
+  },
+  disposableVape: {
+    thca: { min: 78, max: 87 },
+    d9thc: { min: 0.05, max: 0.29 },
+    cbga: { min: 0.10, max: 0.50 },
+    cbg: { min: 0.05, max: 0.20 }
+  },
+  concentrate: {
+    thca: { min: 80, max: 91 },
+    d9thc: { min: 0.05, max: 0.29 },
+    cbga: { min: 0.10, max: 0.50 },
+    cbg: { min: 0.05, max: 0.20 }
+  },
+  // Gummies are decarbed - D9-THC is the active compound, THCA is minimal/ND
+  // Based on typical gummy: 2-5g weight, 25-100mg THC = 0.5% to 5% D9-THC
+  gummy: {
+    thca: { min: 0, max: 0.1 },  // Very low/ND since it's decarbed
+    d9thc: { min: 1, max: 5 },   // Main active compound (e.g., 100mg in 3.5g = 2.86%)
+    cbga: { min: 0, max: 0.05 },
+    cbg: { min: 0, max: 0.05 }
   }
 };
 
@@ -116,8 +136,10 @@ export const PRODUCT_TYPE_MULTIPLIERS = {
   flower: 1.0,
   concentrate: 2.5,
   vaporizer: 3.0,
+  disposable: 3.0,
   edible: 0.1,
-  beverage: 0.05
+  beverage: 0.05,
+  gummy: 0.1  // Similar to edibles
 };
 
 // Test result statuses

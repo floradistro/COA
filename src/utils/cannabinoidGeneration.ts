@@ -306,13 +306,13 @@ export const generateTHCProfile = (
     }
     case 'decarbed': {
       const ranges = CANNABINOID_RANGES.decarbed;
-      thca = customRanges 
+      thca = customRanges
         ? randomInRange(customRanges.thcaMin, customRanges.thcaMax, baseSeed + 1)
         : randomInRange(ranges.thca.min, ranges.thca.max, baseSeed + 1);
       d9thc = customRanges
         ? randomInRange(customRanges.d9thcMin, customRanges.d9thcMax, baseSeed + 2)
         : randomInRange(ranges.d9thc.min, ranges.d9thc.max, baseSeed + 2);
-      
+
       // Add more variance to CBGa and CBG
       // CBGa: Sometimes ND (15% chance), otherwise varied
       if (Math.random() < 0.15) {
@@ -322,7 +322,7 @@ export const generateTHCProfile = (
         const cbgaVariance = (Math.random() - 0.5) * 0.35;
         cbga = Math.max(0.1, Math.min(1.5, cbgaBase + cbgaVariance));
       }
-      
+
       // CBG: Often ND (25% chance), otherwise varied
       if (Math.random() < 0.25) {
         cbg = 0;
@@ -331,6 +331,69 @@ export const generateTHCProfile = (
         const cbgVariance = (Math.random() - 0.5) * 0.12;
         cbg = Math.max(0.02, Math.min(0.45, cbgBase + cbgVariance));
       }
+      break;
+    }
+    case 'disposable-vape': {
+      const ranges = CANNABINOID_RANGES.disposableVape;
+      thca = customRanges
+        ? randomInRange(customRanges.thcaMin, customRanges.thcaMax, baseSeed + 1)
+        : randomInRange(ranges.thca.min, ranges.thca.max, baseSeed + 1);
+      d9thc = customRanges
+        ? randomInRange(customRanges.d9thcMin, customRanges.d9thcMax, baseSeed + 2)
+        : randomInRange(ranges.d9thc.min, ranges.d9thc.max, baseSeed + 2);
+
+      // Lower CBGa for extracts (sometimes ND)
+      if (Math.random() < 0.3) {
+        cbga = 0;
+      } else {
+        cbga = randomInRange(ranges.cbga.min, ranges.cbga.max, baseSeed + 3);
+      }
+
+      // Lower CBG for extracts (often ND)
+      if (Math.random() < 0.4) {
+        cbg = 0;
+      } else {
+        cbg = randomInRange(ranges.cbg.min, ranges.cbg.max, baseSeed + 4);
+      }
+      break;
+    }
+    case 'concentrate': {
+      const ranges = CANNABINOID_RANGES.concentrate;
+      thca = customRanges
+        ? randomInRange(customRanges.thcaMin, customRanges.thcaMax, baseSeed + 1)
+        : randomInRange(ranges.thca.min, ranges.thca.max, baseSeed + 1);
+      d9thc = customRanges
+        ? randomInRange(customRanges.d9thcMin, customRanges.d9thcMax, baseSeed + 2)
+        : randomInRange(ranges.d9thc.min, ranges.d9thc.max, baseSeed + 2);
+
+      // Lower CBGa for extracts (sometimes ND)
+      if (Math.random() < 0.3) {
+        cbga = 0;
+      } else {
+        cbga = randomInRange(ranges.cbga.min, ranges.cbga.max, baseSeed + 3);
+      }
+
+      // Lower CBG for extracts (often ND)
+      if (Math.random() < 0.4) {
+        cbg = 0;
+      } else {
+        cbg = randomInRange(ranges.cbg.min, ranges.cbg.max, baseSeed + 4);
+      }
+      break;
+    }
+    case 'gummy': {
+      // Gummies are decarbed - D9-THC is the main compound, THCA is minimal/ND
+      const ranges = CANNABINOID_RANGES.gummy;
+      thca = customRanges
+        ? randomInRange(customRanges.thcaMin, customRanges.thcaMax, baseSeed + 1)
+        : randomInRange(ranges.thca.min, ranges.thca.max, baseSeed + 1);
+      d9thc = customRanges
+        ? randomInRange(customRanges.d9thcMin, customRanges.d9thcMax, baseSeed + 2)
+        : randomInRange(ranges.d9thc.min, ranges.d9thc.max, baseSeed + 2);
+
+      // CBGa and CBG are typically ND or very low in gummies
+      cbga = Math.random() < 0.8 ? 0 : randomInRange(ranges.cbga.min, ranges.cbga.max, baseSeed + 3);
+      cbg = Math.random() < 0.8 ? 0 : randomInRange(ranges.cbg.min, ranges.cbg.max, baseSeed + 4);
       break;
     }
     default: {
@@ -573,7 +636,32 @@ export const generateTHCAComplianceProfile = (
     case 'decarbed': {
       const ranges = CANNABINOID_RANGES.decarbed;
       const baseSeed = (sampleIndex || 0) * 1000 + (Date.now() % 10000);
-      thca = customRanges 
+      thca = customRanges
+        ? randomInRange(customRanges.thcaMin, customRanges.thcaMax, baseSeed)
+        : randomInRange(ranges.thca.min, ranges.thca.max, baseSeed);
+      break;
+    }
+    case 'disposable-vape': {
+      const ranges = CANNABINOID_RANGES.disposableVape;
+      const baseSeed = (sampleIndex || 0) * 1000 + (Date.now() % 10000);
+      thca = customRanges
+        ? randomInRange(customRanges.thcaMin, customRanges.thcaMax, baseSeed)
+        : randomInRange(ranges.thca.min, ranges.thca.max, baseSeed);
+      break;
+    }
+    case 'concentrate': {
+      const ranges = CANNABINOID_RANGES.concentrate;
+      const baseSeed = (sampleIndex || 0) * 1000 + (Date.now() % 10000);
+      thca = customRanges
+        ? randomInRange(customRanges.thcaMin, customRanges.thcaMax, baseSeed)
+        : randomInRange(ranges.thca.min, ranges.thca.max, baseSeed);
+      break;
+    }
+    case 'gummy': {
+      // Gummies are decarbed - THCA is minimal, D9-THC is the main compound
+      const ranges = CANNABINOID_RANGES.gummy;
+      const baseSeed = (sampleIndex || 0) * 1000 + (Date.now() % 10000);
+      thca = customRanges
         ? randomInRange(customRanges.thcaMin, customRanges.thcaMax, baseSeed)
         : randomInRange(ranges.thca.min, ranges.thca.max, baseSeed);
       break;
@@ -585,7 +673,7 @@ export const generateTHCAComplianceProfile = (
       thca = randomInRange(ranges.thca.min, ranges.thca.max, baseSeed);
     }
   }
-  
+
   thca = parseFloat(thca.toFixed(2));
   
   // Calculate total THC (this will be > 0.3% due to THCA content, but D9 is compliant)
@@ -717,10 +805,16 @@ export const generateEdibleCannabinoidProfile = (
   // Parse sample size to get weight in mg
   // Sample size formats: "3.5g", "1000mg", "2.5 g", etc.
   const sampleSizeMg = parseSampleSizeToMg(sampleSize);
-  
-  // Calculate D9-THC percentage using the correct formula
+
+  // Calculate base D9-THC percentage using the correct formula
   // (THC mg / Sample Size mg) × 100
-  const d9thcPercent = (thcContentMg / sampleSizeMg) * 100;
+  const baseD9thcPercent = (thcContentMg / sampleSizeMg) * 100;
+
+  // Add realistic variance of ±2.5% of the base value (e.g., 0.286% becomes 0.272-0.292%)
+  const varianceFactor = 0.025; // 2.5% variance
+  const minPercent = baseD9thcPercent * (1 - varianceFactor);
+  const maxPercent = baseD9thcPercent * (1 + varianceFactor);
+  const d9thcPercent = minPercent + (Math.random() * (maxPercent - minPercent));
   
   // For edibles, only D9-THC is detected, all others are ND
   const cannabinoids: Cannabinoid[] = Object.values(CANNABINOID_NAMES).map(name => {

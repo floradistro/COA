@@ -246,6 +246,13 @@ function ClientsPageContent() {
         }
 
         // Insert client record
+        console.log('Inserting client record:', {
+          name: formData.name,
+          address: formData.address || null,
+          license_number: formData.license_number || null,
+          email: formData.email ? formData.email.toLowerCase().trim() : null
+        });
+
         const { data, error: insertError } = await supabase
           .from('clients')
           .insert([{
@@ -257,12 +264,25 @@ function ClientsPageContent() {
           .select()
           .single();
 
+        console.log('Insert result:', { data, insertError });
+
         if (insertError) {
+          console.error('Insert error:', insertError);
           throw insertError;
         }
 
+        if (!data) {
+          console.error('No data returned from insert');
+          throw new Error('Failed to create client - no data returned');
+        }
+
+        console.log('Adding client to local state:', data);
         // Add to local state
-        setClients(prev => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)));
+        setClients(prev => {
+          const updated = [...prev, data].sort((a, b) => a.name.localeCompare(b.name));
+          console.log('Updated clients list:', updated);
+          return updated;
+        });
         
         // Reset form
         setFormData({ name: '', address: '', license_number: '', email: '', password: '' });

@@ -1,24 +1,33 @@
-import { supabaseData as supabase } from './supabaseClient'
+import { supabaseVendor as supabase } from './supabaseClient'
 import { COAData } from '@/types'
 
-export async function uploadPdfToSupabase(filename: string, fileBuffer: Buffer, useProvidedFilename: boolean = false, coaData?: COAData): Promise<string> {
+// Default vendor ID (Flora Distro) - only used as fallback if no vendor_id provided
+const DEFAULT_VENDOR_ID = 'cd2e1122-d511-4edb-be5d-98ef274b4baf';
+
+export async function uploadPdfToSupabase(filename: string, fileBuffer: Buffer, useProvidedFilename: boolean = false, coaData?: COAData, vendorId?: string): Promise<string> {
   try {
     // Use provided filename if specified, otherwise add timestamp for uniqueness
     const finalFilename = useProvidedFilename ? filename : `${Date.now()}_${filename}`;
-    
+
+    // Use provided vendor ID, or warn and use default
+    const effectiveVendorId = vendorId || DEFAULT_VENDOR_ID;
+    if (!vendorId) {
+      console.warn('⚠️ No vendor_id provided, using default. COA may not appear in correct vendor portal.');
+    }
+
     console.log('=== UPLOAD DEBUG ===');
     console.log('Original filename:', filename);
     console.log('Final filename:', finalFilename);
-    console.log('Upload path:', `pdfs/${finalFilename}`);
-    console.log('Use provided filename:', useProvidedFilename);
-    
-    // Upload to Supabase (now private bucket)
+    console.log('Upload path:', `${effectiveVendorId}/${finalFilename}`);
+    console.log('Vendor ID:', effectiveVendorId);
+
+    // Upload to Supabase vendor-coas bucket (path: vendorId/filename)
     const { data, error } = await supabase.storage
-      .from('coas') // your bucket name
-      .upload(`pdfs/${finalFilename}`, fileBuffer, {
+      .from('vendor-coas')
+      .upload(`${effectiveVendorId}/${finalFilename}`, fileBuffer, {
         contentType: 'application/pdf',
         upsert: true,
-        cacheControl: '3600',
+        cacheControl: 'no-cache, no-store, must-revalidate',
       })
 
     if (error) {
@@ -63,78 +72,82 @@ export async function uploadPdfToSupabase(filename: string, fileBuffer: Buffer, 
     console.log('Upload successful:', data)
     console.log('Uploaded to path:', data?.path);
 
-    // Generate lab site viewer URL instead of using getPublicUrl
+    // Get public URL for the uploaded file
+    const { data: urlData } = supabase.storage
+      .from('vendor-coas')
+      .getPublicUrl(`${effectiveVendorId}/${finalFilename}`);
+
+    const fileUrl = urlData.publicUrl;
     const cleanFilename = finalFilename.replace('.pdf', '');
-    const viewerUrl = `https://www.quantixanalytics.com/coa/${cleanFilename}`;
+    const parts = cleanFilename.split('/');
+    const strainName = parts.length > 1 ? parts[parts.length - 1] : parts[0];
 
     console.log('=== URL GENERATION ===');
-    console.log('Storage path used for URL:', `pdfs/${finalFilename}`);
-    console.log('Generated lab site viewer URL:', viewerUrl);
-    console.log('Clean filename (without .pdf):', cleanFilename);
+    console.log('Public URL:', fileUrl);
+    console.log('Strain name:', strainName);
     console.log('=== END UPLOAD DEBUG ===');
-    
-    // Save COA metadata to database
+
+    // Save COA metadata to vendor_coas table
     if (coaData) {
       try {
-        const parts = cleanFilename.split('/');
-        const clientName = parts.length > 1 ? parts[0] : 'Uncategorized';
-        const strainName = parts.length > 1 ? parts[1] : parts[0];
+        // Build test_results JSONB matching vendor_coas schema
+        const testResults: Record<string, string | boolean | undefined> = {
+          thc: coaData.totalTHC?.toString(),
+          cbd: coaData.totalCBD?.toString(),
+          total_cannabinoids: coaData.totalCannabinoids?.toString(),
+        };
 
-        // Find THCA and Delta-9 THC from cannabinoids array
-        const thcaCannabinoid = coaData.cannabinoids.find(c => c.name === 'THCa');
-        const delta9Cannabinoid = coaData.cannabinoids.find(c => c.name === 'Δ9-THC');
-        const cbdaCannabinoid = coaData.cannabinoids.find(c => c.name === 'CBDa');
-        const cbgCannabinoid = coaData.cannabinoids.find(c => c.name === 'CBG');
-        const cbgaCannabinoid = coaData.cannabinoids.find(c => c.name === 'CBGa');
-        const cbnCannabinoid = coaData.cannabinoids.find(c => c.name === 'CBN');
-        const cbcCannabinoid = coaData.cannabinoids.find(c => c.name === 'CBC');
+        // Add individual cannabinoids
+        for (const c of coaData.cannabinoids) {
+          const key = c.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+          testResults[key] = c.percentWeight?.toString();
+        }
+
+        // Delete any existing record with the same filename to prevent duplicates
+        // This handles cases where old COA wasn't properly deleted
+        const { error: deleteError } = await supabase
+          .from('vendor_coas')
+          .delete()
+          .eq('vendor_id', effectiveVendorId)
+          .eq('file_name', finalFilename);
+
+        if (deleteError) {
+          console.log('Note: No existing record to delete or delete failed:', deleteError.message);
+        } else {
+          console.log('🗑️ Deleted existing COA record with same filename (if any)');
+        }
 
         const { error: metadataError } = await supabase
-          .from('coa_metadata')
-          .upsert({
-            file_path: cleanFilename,
-            client_name: clientName,
-            strain_name: strainName,
-            sample_id: coaData.sampleId,
-            batch_id: coaData.batchId,
-            sample_type: coaData.sampleType,
-            total_thc: coaData.totalTHC,
-            total_cbd: coaData.totalCBD,
-            total_cannabinoids: coaData.totalCannabinoids,
-            thca: thcaCannabinoid?.percentWeight || null,
-            delta9_thc: delta9Cannabinoid?.percentWeight || null,
-            cbda: cbdaCannabinoid?.percentWeight || null,
-            cbg: cbgCannabinoid?.percentWeight || null,
-            cbga: cbgaCannabinoid?.percentWeight || null,
-            cbn: cbnCannabinoid?.percentWeight || null,
-            cbc: cbcCannabinoid?.percentWeight || null,
-            date_collected: coaData.dateCollected,
-            date_received: coaData.dateReceived,
-            date_tested: coaData.dateTested,
-            date_reported: coaData.dateReported,
-            approval_date: coaData.approvalDate,
-            method_reference: coaData.methodReference,
-            lab_name: coaData.labName,
-            lab_director: coaData.labDirector,
-            client_address: coaData.clientAddress,
-            client_license: coaData.licenseNumber,
-            test_status: 'Complete'
+          .from('vendor_coas')
+          .insert({
+            vendor_id: effectiveVendorId,
+            file_name: finalFilename,
+            file_url: fileUrl,
+            file_size: fileBuffer.length,
+            file_type: 'application/pdf',
+            lab_name: coaData.labName || 'Quantix Analytics',
+            test_date: coaData.dateTested,
+            batch_number: coaData.batchId,
+            product_name_on_coa: strainName.replace(/_/g, ' '),
+            test_results: testResults,
+            is_active: true,
+            is_verified: false,
           });
 
         if (metadataError) {
-          console.error('Error saving COA metadata:', metadataError);
+          console.error('Error saving COA metadata:', metadataError.message);
         } else {
-          console.log('✅ Saved COA metadata to database');
+          console.log('✅ Saved COA metadata to vendor_coas table');
         }
       } catch (err) {
         console.error('Error in metadata save:', err);
       }
     }
-    
-    // Note: We cannot test the URL accessibility directly anymore since it requires
-    // the quantixanalytics.com backend to fetch from private Supabase
-    console.log('Note: COA will be accessible via quantixanalytics.com once their backend fetches it from private storage');
-    
+
+    // Return viewer URL for the COA
+    const viewerUrl = `https://www.quantixanalytics.com/coa/${cleanFilename}`;
+    console.log('Viewer URL:', viewerUrl);
+
     return viewerUrl
   } catch (error) {
     console.error('uploadPdfToSupabase error:', error)

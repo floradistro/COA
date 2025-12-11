@@ -38,11 +38,14 @@ export const usePDFExport = () => {
   // Render COA element to canvas
   const renderToCanvas = useCallback(async (element: HTMLElement): Promise<HTMLCanvasElement> => {
     const cleanup = prepareForPdfExport(element);
-    
+
     try {
       await waitForImages(element);
+      // Wait for SVGs (pie charts) to fully render - multiple frames for layout stability
       await new Promise(resolve => requestAnimationFrame(resolve));
-      
+      await new Promise(resolve => requestAnimationFrame(resolve));
+      await new Promise(resolve => setTimeout(resolve, 100)); // Extra delay for SVG rendering
+
       const canvas = await html2canvas(element, {
         ...EXPORT_CONFIG.image,
         logging: false,

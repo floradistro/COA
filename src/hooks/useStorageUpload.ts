@@ -9,10 +9,10 @@ import { COAData } from '@/types';
  * Handles uploading PDF files to cloud storage
  */
 export const useStorageUpload = () => {
-  const uploadPDF = useCallback(async (filename: string, pdfBuffer: Buffer, coaData?: COAData): Promise<string> => {
+  const uploadPDF = useCallback(async (filename: string, pdfBuffer: Buffer, coaData?: COAData, vendorId?: string): Promise<string> => {
     try {
       await ensureSupabaseReady();
-      const publicUrl = await uploadPdfToSupabase(filename, pdfBuffer, true, coaData);
+      const publicUrl = await uploadPdfToSupabase(filename, pdfBuffer, true, coaData, vendorId);
       return publicUrl;
     } catch (error) {
       logError(error, 'Upload PDF to storage');

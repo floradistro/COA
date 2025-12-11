@@ -68,17 +68,20 @@ export interface COAData {
   // QR Code
   qrCodeDataUrl?: string;
   publicUrl?: string;
-  
+
   // Image Mode
   includeImage?: boolean;
   productImageUrl?: string;
+
+  // Vendor linking (for correct COA routing to vendor portals)
+  vendorId?: string;
 }
 
 // Product types
-export type ProductType = 'flower' | 'concentrate' | 'vaporizer' | 'edible' | 'beverage';
+export type ProductType = 'flower' | 'concentrate' | 'vaporizer' | 'disposable' | 'edible' | 'beverage' | 'gummy';
 
 // Profile types
-export type CannabinoidProfile = 'high-thc' | 'medium-thc' | 'low-thc' | 'hemp' | 'decarbed';
+export type CannabinoidProfile = 'high-thc' | 'medium-thc' | 'low-thc' | 'hemp' | 'decarbed' | 'disposable-vape' | 'concentrate' | 'gummy';
 
 // Product configuration
 export interface ProductConfig {
@@ -199,6 +202,7 @@ export interface Client {
   address: string | null;
   license_number: string | null;
   email?: string | null;
+  vendor_id?: string | null; // Links to WhaleTools vendor backend
   created_at: string;
   updated_at: string;
 }
