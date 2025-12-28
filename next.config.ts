@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /* config options here */
+  allowedDevOrigins: ['https://dev.wh4le.net'],
   webpack: (config) => {
     // Handle PDF.js worker
     config.resolve.alias = {
