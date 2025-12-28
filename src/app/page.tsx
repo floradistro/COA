@@ -579,7 +579,7 @@ function HomeContent() {
   return (
     <div className="min-h-screen bg-neutral-800 relative">
       {/* Geometric Background */}
-      <GeometricBackground />
+      
       
       {/* Ambient gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-br from-neutral-900/10 via-transparent to-neutral-900/10 z-[1]" />
