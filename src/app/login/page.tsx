@@ -48,7 +48,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-neutral-800 flex items-center justify-center px-4 relative overflow-hidden">
       {/* Three.js Geometric Background */}
-      <GeometricBackground />
+      
       
       {/* Ambient gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-br from-neutral-900/30 via-neutral-800/50 to-neutral-900/30 z-[1]" />
