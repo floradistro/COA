@@ -42,7 +42,10 @@ export const metadata: Metadata = {
     title: "WhaleTools - Tools for Whales",
     description: "Tools for Whales - Advanced tools and resources for professionals who need powerful solutions.",
     images: ['/logowhaletools.png'],
-    creator: '@whaletools',
+  },
+  icons: {
+    icon: '/logowhaletools.png',
+    apple: '/logowhaletools.png',
   },
   robots: {
     index: true,
@@ -55,24 +58,6 @@ export const metadata: Metadata = {
       'max-snippet': -1,
     },
   },
-  icons: {
-    icon: [
-      { url: '/favicon.ico' },
-      { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
-      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
-    ],
-    apple: [
-      { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
-    ],
-    other: [
-      { rel: 'mask-icon', url: '/safari-pinned-tab.svg', color: '#0ea5e9' },
-    ],
-  },
-  manifest: '/site.webmanifest',
-  other: {
-    'msapplication-TileColor': '#262626',
-    'theme-color': '#262626',
-  },
 };
 
 export default function RootLayout({
@@ -81,15 +66,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <head>
-        <meta name="theme-color" content="#262626" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-      </head>
-      <body>
+    <html lang="en">
+      <body className="antialiased min-h-screen bg-black">
         <ErrorBoundary>
           <AuthProvider>
             <NotificationProvider>
