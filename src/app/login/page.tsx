@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import GeometricBackground from '@/components/OceanBackground'
+// Background animation removed for cleaner look
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
