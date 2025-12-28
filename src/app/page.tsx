@@ -577,7 +577,7 @@ function HomeContent() {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-800 relative">
+    <div className="min-h-screen bg-black relative">
       {/* Geometric Background */}
       
       
