@@ -20,7 +20,7 @@ import SupabaseStatus from '@/components/SupabaseStatus';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
-import GeometricBackground from '@/components/OceanBackground';
+// Geometric background removed for cleaner production look
 
 function HomeContent() {
   // Client-side only rendering to prevent hydration issues
