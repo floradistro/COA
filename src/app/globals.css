@@ -19,7 +19,7 @@
 }
 
 :root {
-  --background-forced: #000000;
+  --background: #000000;
   --foreground: #ffffff;
   
   /* Force RGB colors instead of oklch for html2canvas compatibility */
