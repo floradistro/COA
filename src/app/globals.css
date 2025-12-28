@@ -19,8 +19,8 @@
 }
 
 :root {
-  --background: #1a1a1a;
-  --foreground: #ededed;
+  --background: #000000;
+  --foreground: #ffffff;
   
   /* Force RGB colors instead of oklch for html2canvas compatibility */
   --color-gray-50: rgb(249, 250, 251);
