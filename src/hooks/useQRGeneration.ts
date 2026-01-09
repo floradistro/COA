@@ -16,8 +16,14 @@ export const useQRGeneration = () => {
     }
   }, []);
 
-  const generateViewerUrl = useCallback((filename: string): string => {
+  // Generate viewer URL with storeId in path for proper routing
+  const generateViewerUrl = useCallback((filename: string, storeId?: string): string => {
     const cleanFilename = filename.replace('.pdf', '');
+    // If storeId provided, use new format: /coa/{storeId}/{filename}
+    // Otherwise fall back to old format for backward compatibility
+    if (storeId) {
+      return `https://www.quantixanalytics.com/coa/${storeId}/${cleanFilename}`;
+    }
     return `https://www.quantixanalytics.com/coa/${cleanFilename}`;
   }, []);
 

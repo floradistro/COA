@@ -41,17 +41,15 @@ export const useSupabaseUpload = (componentRef?: React.RefObject<HTMLDivElement 
     try {
       setUploadProgress(20);
       
-      // Generate clean filename using client folder and strain name
-      const clientName = coaData.clientName || 'Uncategorized';
-      const cleanClientName = clientName.replace(/[^a-z0-9]/gi, '_');
+      // Generate clean filename - storeId determines the folder, no client subfolder needed
       const strainName = coaData.strain || coaData.sampleName;
       const cleanStrainName = strainName.replace(/[^a-z0-9]/gi, '_');
-      const uniqueFilename = `${cleanClientName}/${cleanStrainName}.pdf`;
+      const uniqueFilename = `${cleanStrainName}.pdf`;
       
       // If no QR code exists, generate one with the expected URL
       let updatedCOAData = coaData;
       if (!coaData.qrCodeDataUrl && updateCOAData) {
-        const expectedUrl = generateViewerUrl(uniqueFilename);
+        const expectedUrl = generateViewerUrl(uniqueFilename, coaData.storeId);
         const qrCodeDataUrl = await generateQRForURL(expectedUrl);
         
         updatedCOAData = {
@@ -81,8 +79,8 @@ export const useSupabaseUpload = (componentRef?: React.RefObject<HTMLDivElement 
       
       setUploadProgress(60);
       
-      // Upload PDF to storage with metadata (pass vendorId for correct routing)
-      const publicUrl = await uploadPDF(uniqueFilename, pdfBuffer, updatedCOAData, updatedCOAData.vendorId);
+      // Upload PDF to storage with metadata (pass storeId for correct routing)
+      const publicUrl = await uploadPDF(uniqueFilename, pdfBuffer, updatedCOAData, updatedCOAData.storeId);
       
       setUploadProgress(80);
       
@@ -175,15 +173,13 @@ export const useSupabaseUpload = (componentRef?: React.RefObject<HTMLDivElement 
             await new Promise(resolve => setTimeout(resolve, 1500));
           }
           
-          // Generate clean filename using client folder and strain name
-          const clientName = coaData.clientName || 'Uncategorized';
-          const cleanClientName = clientName.replace(/[^a-z0-9]/gi, '_');
+          // Generate clean filename - storeId determines the folder, no client subfolder needed
           const strainName = coaData.strain || coaData.sampleName;
           const cleanStrainName = strainName.replace(/[^a-z0-9]/gi, '_');
-          const uniqueFilename = `${cleanClientName}/${cleanStrainName}.pdf`;
+          const uniqueFilename = `${cleanStrainName}.pdf`;
           
           // Generate the expected lab site viewer URL
-          const expectedUrl = generateViewerUrl(uniqueFilename);
+          const expectedUrl = generateViewerUrl(uniqueFilename, coaData.storeId);
           const qrCodeDataUrl = await generateQRForURL(expectedUrl);
           
           // Update the COA data with QR code
@@ -197,9 +193,9 @@ export const useSupabaseUpload = (componentRef?: React.RefObject<HTMLDivElement 
           updateCurrentCOA(updatedCOAData);
           await new Promise(resolve => setTimeout(resolve, 300));
           
-          // Export to PDF and upload with metadata (pass vendorId for correct routing)
+          // Export to PDF and upload with metadata (pass storeId for correct routing)
           const pdfBuffer = await exportToPDF(element);
-          const publicUrl = await uploadPDF(uniqueFilename, pdfBuffer, updatedCOAData, updatedCOAData.vendorId);
+          const publicUrl = await uploadPDF(uniqueFilename, pdfBuffer, updatedCOAData, updatedCOAData.storeId);
           
           // Update the COA in the array if this is the current one
           if (coaDataArray[i].sampleId === currentCOAData.sampleId) {
@@ -287,13 +283,11 @@ export const useSupabaseUpload = (componentRef?: React.RefObject<HTMLDivElement 
   // Generate QR code for preview using a placeholder URL
   const generateQRCodeForPreview = useCallback(async (coaData: COAData, updateCOAData: (data: COAData) => void, generatedCOAs?: COAData[], updateGeneratedCOAs?: (coas: COAData[]) => void, currentIndex?: number): Promise<void> => {
     try {
-      // Generate clean filename using client folder and strain name
-      const clientName = coaData.clientName || 'Uncategorized';
-      const cleanClientName = clientName.replace(/[^a-z0-9]/gi, '_');
+      // Generate clean filename - storeId determines the folder, no client subfolder needed
       const strainName = coaData.strain || coaData.sampleName;
       const cleanStrainName = strainName.replace(/[^a-z0-9]/gi, '_');
-      const uniqueFilename = `${cleanClientName}/${cleanStrainName}.pdf`;
-      const previewUrl = generateViewerUrl(uniqueFilename);
+      const uniqueFilename = `${cleanStrainName}.pdf`;
+      const previewUrl = generateViewerUrl(uniqueFilename, coaData.storeId);
       
       // Generate QR code for the preview URL
       const qrCodeDataUrl = await generateQRForURL(previewUrl);

@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { ProductType, CannabinoidProfile, Client, COAData } from '@/types';
 import { useCOAGeneration } from '@/hooks';
 import { useSupabaseUpload } from '@/hooks/useSupabaseUpload';
-import { supabaseData as supabase } from '@/lib/supabaseClient';
+import { supabaseVendor } from '@/lib/supabaseClient';
 import {
   getTodayString,
   getUserFriendlyMessage,
@@ -91,39 +91,54 @@ function HomeContent() {
     setNotificationCallback((message) => showNotification('error', message));
   }, [showNotification]);
   
-  // Fetch clients from database
+  // Fetch stores from VENDOR database (stores ARE clients now)
   useEffect(() => {
     const fetchClients = async () => {
       try {
-        const { data, error } = await supabase
-          .from('clients')
-          .select('*')
-          .order('name', { ascending: true });
-        
-        if (error) throw error;
-        
-        setClients(data || []);
-        // Auto-select first client if available and generate initial COA
-        if (data && data.length > 0) {
-          setSelectedClientId(data[0].id);
+        const { data, error } = await supabaseVendor
+          .from('stores')
+          .select('id, store_name, email, status, address, city, state, zip, tax_id')
+          .eq('status', 'active')
+          .order('store_name', { ascending: true });
 
-          // Update the initial COA with client data (including vendor_id for proper routing)
+        if (error) throw error;
+
+        // Map stores to Client interface for compatibility
+        const clientsFromStores: Client[] = (data || []).map(store => ({
+          id: store.id,
+          name: store.store_name,
+          address: store.address
+            ? `${store.address}, ${store.city || ''}, ${store.state || ''} ${store.zip || ''}`.trim().replace(/,\s*,/g, ',').replace(/,\s*$/, '')
+            : null,
+          license_number: store.tax_id, // tax_id is used as license number
+          email: store.email,
+          store_id: store.id, // Store's own ID is the store_id for uploads
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }));
+
+        setClients(clientsFromStores);
+        // Auto-select first client if available and generate initial COA
+        if (clientsFromStores.length > 0) {
+          setSelectedClientId(clientsFromStores[0].id);
+
+          // Update the initial COA with client data (store_id = store's own ID)
           setCOAData((prev: COAData) => ({
             ...prev,
-            clientName: data[0].name,
-            clientAddress: data[0].address,
-            licenseNumber: data[0].license_number,
-            vendorId: data[0].vendor_id || undefined
+            clientName: clientsFromStores[0].name,
+            clientAddress: clientsFromStores[0].address,
+            licenseNumber: clientsFromStores[0].license_number,
+            storeId: clientsFromStores[0].id // Use store's ID directly
           }));
         }
       } catch (error) {
-        console.error('Error fetching clients:', error);
-        showNotification('error', 'Failed to load clients');
+        console.error('Error fetching stores:', error);
+        showNotification('error', 'Failed to load stores');
       } finally {
         setLoadingClients(false);
       }
     };
-    
+
     if (isClient) {
       fetchClients();
     }
@@ -187,7 +202,7 @@ function HomeContent() {
     clientName: selectedClient.name,
     clientAddress: selectedClient.address,
     licenseNumber: selectedClient.license_number,
-    vendorId: selectedClient.vendor_id
+    storeId: selectedClient.store_id
   } : undefined, [selectedClient]);
   
   // Safe instant update handlers - event-driven (no loops)
@@ -201,7 +216,7 @@ function HomeContent() {
         clientName: client.name,
         clientAddress: client.address,
         licenseNumber: client.license_number,
-        vendorId: client.vendor_id || undefined
+        storeId: client.store_id || undefined
       }));
     }
   }, [clients, coaData?.sampleId, setCOAData]);

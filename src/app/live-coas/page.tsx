@@ -3,10 +3,12 @@
 import React, { useState, useEffect } from 'react';
 import { supabaseVendor as supabase } from '@/lib/supabaseClient';
 import LoadingSpinner from '@/components/LoadingSpinner';
-
-// Flora Distro vendor ID
-const FLORA_DISTRO_VENDOR_ID = 'cd2e1122-d511-4edb-be5d-98ef274b4baf';
 import JSZip from 'jszip';
+
+interface Store {
+  id: string;
+  store_name: string;
+}
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import GeometricBackground from '@/components/OceanBackground';
 import Link from 'next/link';
@@ -21,7 +23,8 @@ interface COAFile {
     [key: string]: unknown;
   };
   viewerUrl: string;
-  clientFolder?: string;
+  clientFolder?: string;  // Now stores the store name
+  storeId?: string;       // The store UUID for operations
   strainName?: string;
   testDate?: string;
   batchNumber?: string;
@@ -47,181 +50,83 @@ function LiveCOAsPageContent() {
     setMounted(true);
   }, []);
 
-  // Fetch COA files from Supabase storage
+  // Fetch COA files from Supabase storage for ALL stores
   const fetchCOAFiles = async () => {
     try {
       setLoading(true);
       setError('');
 
-      // Fetch metadata from vendor_coas table
-      const { data: coaMetadata, error: metadataError } = await supabase
-        .from('vendor_coas')
-        .select('*')
-        .eq('vendor_id', FLORA_DISTRO_VENDOR_ID)
-        .eq('is_active', true);
+      // First, fetch all active stores
+      const { data: stores, error: storesError } = await supabase
+        .from('stores')
+        .select('id, store_name')
+        .eq('status', 'active');
 
-      if (metadataError) {
-        console.error('Error fetching COA metadata:', metadataError);
+      if (storesError) {
+        console.error('Error fetching stores:', storesError);
+        throw storesError;
       }
 
-      // Collect all product IDs to fetch product names
-      const productIds = new Set<string>();
-      if (coaMetadata) {
-        for (const meta of coaMetadata) {
-          if (meta.product_id) {
-            productIds.add(meta.product_id);
-          }
-        }
+      if (!stores || stores.length === 0) {
+        setCOAFiles([]);
+        setClientFolders([]);
+        setLoading(false);
+        return;
       }
 
-      // Fetch product names
-      const productNameMap = new Map<string, string>();
-      if (productIds.size > 0) {
-        const { data: products, error: productsError } = await supabase
-          .from('products')
-          .select('id, name')
-          .in('id', Array.from(productIds));
-
-        if (productsError) {
-          console.error('Error fetching products:', productsError);
-        } else if (products) {
-          for (const product of products) {
-            productNameMap.set(product.id, product.name);
-          }
-        }
-      }
-
-      // Create a lookup map by file_name
-      const metadataMap = new Map<string, { test_date?: string; batch_number?: string; lab_name?: string; product_name_on_coa?: string; product_id?: string; product_name?: string }>();
-      if (coaMetadata) {
-        for (const meta of coaMetadata) {
-          if (meta.file_name) {
-            metadataMap.set(meta.file_name, {
-              test_date: meta.test_date,
-              batch_number: meta.batch_number,
-              lab_name: meta.lab_name,
-              product_name_on_coa: meta.product_name_on_coa,
-              product_id: meta.product_id,
-              product_name: meta.product_id ? productNameMap.get(meta.product_id) : undefined,
-            });
-          }
-        }
-      }
-
-      // First, list all folders in vendor's directory
-      const { data: folders, error: folderError } = await supabase.storage
-        .from('vendor-coas')
-        .list(FLORA_DISTRO_VENDOR_ID, {
-          limit: 1000,
-          offset: 0,
-          sortBy: { column: 'name', order: 'asc' }
-        });
-
-      if (folderError) {
-        if (folderError.message?.includes('not authorized') || folderError.message?.includes('Invalid JWT')) {
-          throw new Error(
-            'Access denied to private storage. Please ensure:\n' +
-            '1. You are properly authenticated\n' +
-            '2. Your credentials have read access to the bucket\n' +
-            '3. RLS policies allow listing files'
-          );
-        }
-        throw folderError;
-      }
+      console.log('Found stores:', stores.map(s => s.store_name));
 
       const allCOAFiles: COAFile[] = [];
       const clientFolderNames: string[] = [];
 
-      if (folders) {
-        console.log('Raw folders list:', folders);
+      // Fetch COAs from each store's folder
+      for (const store of stores) {
+        try {
+          // List files directly in the store's folder (new flat structure)
+          const { data: files, error: listError } = await supabase.storage
+            .from('vendor-coas')
+            .list(store.id, {
+              limit: 1000,
+              offset: 0,
+              sortBy: { column: 'updated_at', order: 'desc' }
+            });
 
-        // Filter only directories (folders don't have id and are not files)
-        const folderNames = folders
-          .filter(item => item.id === null && !item.name.includes('.'))
-          .map(item => item.name);
+          if (listError) {
+            console.error(`Error listing files for ${store.store_name}:`, listError);
+            continue;
+          }
 
-        console.log('Client folder names found:', folderNames);
-        clientFolderNames.push(...folderNames);
+          if (files && files.length > 0) {
+            // Filter only PDF files (ignore folders)
+            const pdfFiles = files.filter(file => file.name.endsWith('.pdf'));
+            console.log(`${store.store_name}: ${pdfFiles.length} COAs`);
 
-        // Fetch files from each folder
-        for (const folderName of folderNames) {
-          try {
-            const { data: files, error: fileError } = await supabase.storage
-              .from('vendor-coas')
-              .list(`${FLORA_DISTRO_VENDOR_ID}/${folderName}`, {
-                limit: 1000,
-                offset: 0,
-                sortBy: { column: 'created_at', order: 'desc' }
+            if (pdfFiles.length > 0) {
+              clientFolderNames.push(store.store_name);
+
+              const storeCOAFiles: COAFile[] = pdfFiles.map(file => {
+                const strainName = file.name.replace('.pdf', '').replace(/_/g, ' ');
+                // Use storeId/filename for viewer URL
+                const fullPath = `${store.id}/${file.name.replace('.pdf', '')}`;
+
+                return {
+                  id: file.id || `${store.id}/${file.name}`,
+                  name: file.name,
+                  created_at: file.updated_at || file.created_at || new Date().toISOString(),
+                  updated_at: file.updated_at || new Date().toISOString(),
+                  metadata: file.metadata,
+                  viewerUrl: `https://www.quantixanalytics.com/coa/${fullPath}`,
+                  clientFolder: store.store_name,
+                  storeId: store.id,
+                  strainName: strainName,
+                };
               });
 
-            if (fileError) {
-              console.error(`Error fetching files from ${folderName}:`, fileError);
-              continue;
+              allCOAFiles.push(...storeCOAFiles);
             }
-
-            if (files) {
-              console.log(`Files in ${folderName}:`, files.length);
-              const folderFiles: COAFile[] = files
-                .filter(file => file.name.endsWith('.pdf'))
-                .map(file => {
-                  const strainName = file.name.replace('.pdf', '');
-                  const fullPath = `${folderName}/${file.name.replace('.pdf', '')}`;
-                  // Look up metadata by various filename formats
-                  const fileKey = `${folderName}/${file.name}`;
-                  const meta = metadataMap.get(fileKey) || metadataMap.get(file.name);
-                  return {
-                    id: file.id || `${folderName}/${file.name}`,
-                    name: file.name,
-                    created_at: file.created_at || new Date().toISOString(),
-                    updated_at: file.updated_at || new Date().toISOString(),
-                    metadata: file.metadata,
-                    viewerUrl: `https://www.quantixanalytics.com/coa/${fullPath}`,
-                    clientFolder: folderName,
-                    strainName: strainName,
-                    testDate: meta?.test_date,
-                    batchNumber: meta?.batch_number,
-                    labName: meta?.lab_name,
-                    productId: meta?.product_id,
-                    productName: meta?.product_name,
-                  };
-                });
-
-              allCOAFiles.push(...folderFiles);
-            }
-          } catch (err) {
-            console.error(`Error processing folder ${folderName}:`, err);
           }
-        }
-
-        // Check for files in root pdfs/ folder (legacy/uncategorized files with timestamp prefix)
-        const rootFiles = folders.filter(item => item.id !== null && item.name.endsWith('.pdf'));
-        console.log('Legacy root files found:', rootFiles.length);
-        
-        if (rootFiles.length > 0) {
-          const rootCOAFiles: COAFile[] = rootFiles.map(file => {
-            const cleanFilename = file.name.replace('.pdf', '');
-            // Extract strain name from old format: timestamp_COA_StrainName_SampleID
-            let displayName = cleanFilename;
-            const coaMatch = cleanFilename.match(/_COA_(.+?)_QA\d+$/);
-            if (coaMatch) {
-              displayName = coaMatch[1].replace(/_/g, ' ');
-            }
-            
-            return {
-              id: file.id || file.name,
-              name: file.name, // Keep the FULL original filename with timestamp
-              created_at: file.created_at || new Date().toISOString(),
-              updated_at: file.updated_at || new Date().toISOString(),
-              metadata: file.metadata,
-              viewerUrl: `https://www.quantixanalytics.com/coa/${cleanFilename}`,
-              clientFolder: 'Legacy Files', // Mark as legacy instead of uncategorized
-              strainName: displayName
-            };
-          });
-          allCOAFiles.push(...rootCOAFiles);
-          if (!clientFolderNames.includes('Legacy Files')) {
-            clientFolderNames.push('Legacy Files');
-          }
+        } catch (err) {
+          console.error(`Error processing store ${store.store_name}:`, err);
         }
       }
 
@@ -301,15 +206,10 @@ function LiveCOAsPageContent() {
     try {
       setDeletingFiles(prev => new Set([...prev, coa.id]));
 
-      // Construct the correct file path based on how files are stored
-      let filePath: string;
-      if (coa.clientFolder && coa.clientFolder !== 'Uncategorized' && coa.clientFolder !== 'Legacy Files') {
-        // Files in client folders: vendorId/ClientName/StrainName.pdf
-        filePath = `${FLORA_DISTRO_VENDOR_ID}/${coa.clientFolder}/${coa.name}`;
-      } else {
-        // Legacy files: vendorId/filename.pdf
-        filePath = `${FLORA_DISTRO_VENDOR_ID}/${coa.name}`;
-      }
+      // Construct the correct file path: storeId/filename.pdf
+      const filePath = coa.storeId
+        ? `${coa.storeId}/${coa.name}`
+        : coa.name;
 
       console.log('=== DELETE ATTEMPT START ===');
       console.log('Attempting to delete file at path:', filePath);
@@ -320,59 +220,40 @@ function LiveCOAsPageContent() {
         strainName: coa.strainName 
       });
 
-      const { data: deleteData, error: deleteError } = await supabase.storage
-        .from('vendor-coas')
-        .remove([filePath]);
+      // Use API route with service role key for deletion
+      const response = await fetch('/api/storage/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          bucket: 'vendor-coas',
+          paths: [filePath]
+        })
+      });
 
-      console.log('Delete response data:', deleteData);
-      console.log('Delete response error:', deleteError);
+      const result = await response.json();
+      console.log('Delete response:', result);
 
-      if (deleteError) {
-        console.error('❌ DELETE FAILED - Error details:', deleteError);
-        console.error('Error message:', deleteError.message);
-        
-        if (deleteError.message?.includes('not authorized') || deleteError.message?.includes('Invalid JWT')) {
-          throw new Error(
-            'Access denied: You do not have permission to delete files from private storage. Please ensure your credentials have delete access to the bucket.'
-          );
-        }
-        throw new Error(`Failed to delete file: ${deleteError.message}`);
+      if (!response.ok) {
+        console.error('❌ DELETE FAILED:', result.error);
+        throw new Error(result.error || 'Failed to delete file');
       }
 
       console.log('✅ Storage delete executed without error');
-      console.log('Delete result data:', JSON.stringify(deleteData));
+      console.log('Delete result data:', JSON.stringify(result));
 
-      // Also delete from vendor_coas database table
-      // file_name in DB could be: "Banana_Kush.pdf", "1234567890_Banana_Kush.pdf",
-      // or "Flora_Distribution_Group_LLC/Banana_Kush.pdf"
-      // Try multiple match strategies
-      const storageFileName = coa.name;
-      const fileNameNoTimestamp = storageFileName.replace(/^\d+_/, '');
-      const fileNameWithFolder = coa.clientFolder ? `${coa.clientFolder}/${storageFileName}` : null;
-      const fileNameWithFolderNoTimestamp = coa.clientFolder ? `${coa.clientFolder}/${fileNameNoTimestamp}` : null;
+      // Also delete from store_coas database table if storeId exists
+      if (coa.storeId) {
+        const { error: dbDeleteError } = await supabase
+          .from('store_coas')
+          .delete()
+          .eq('store_id', coa.storeId)
+          .eq('file_name', coa.name);
 
-      console.log('Attempting DB delete with file names:', {
-        storageFileName,
-        fileNameNoTimestamp,
-        fileNameWithFolder,
-        fileNameWithFolderNoTimestamp
-      });
-
-      // Try to delete by any matching file_name pattern
-      const possibleNames = [storageFileName, fileNameNoTimestamp];
-      if (fileNameWithFolder) possibleNames.push(fileNameWithFolder);
-      if (fileNameWithFolderNoTimestamp) possibleNames.push(fileNameWithFolderNoTimestamp);
-
-      const { error: dbDeleteError } = await supabase
-        .from('vendor_coas')
-        .delete()
-        .eq('vendor_id', FLORA_DISTRO_VENDOR_ID)
-        .in('file_name', possibleNames);
-
-      if (dbDeleteError) {
-        console.error('Error deleting from database:', dbDeleteError);
-      } else {
-        console.log('✅ Database record deleted');
+        if (dbDeleteError) {
+          console.error('Error deleting from database:', dbDeleteError);
+        } else {
+          console.log('✅ Database record deleted');
+        }
       }
 
       console.log('=== DELETE ATTEMPT END ===');
@@ -415,48 +296,50 @@ function LiveCOAsPageContent() {
       setLoading(true);
 
       const filePaths = filteredCOAs.map(coa => {
-        if (coa.clientFolder && coa.clientFolder !== 'Uncategorized' && coa.clientFolder !== 'Legacy Files') {
-          return `${FLORA_DISTRO_VENDOR_ID}/${coa.clientFolder}/${coa.name}`;
-        }
-        return `${FLORA_DISTRO_VENDOR_ID}/${coa.name}`;
+        return coa.storeId ? `${coa.storeId}/${coa.name}` : coa.name;
       });
 
       console.log('Attempting to delete multiple files:', filePaths);
 
-      const { error: deleteError } = await supabase.storage
-        .from('vendor-coas')
-        .remove(filePaths);
+      // Use API route with service role key for deletion
+      const response = await fetch('/api/storage/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          bucket: 'vendor-coas',
+          paths: filePaths
+        })
+      });
 
-      if (deleteError) {
-        if (deleteError.message?.includes('not authorized') || deleteError.message?.includes('Invalid JWT')) {
-          throw new Error(
-            'Access denied: You do not have permission to delete files from private storage. Please ensure your credentials have delete access to the bucket.'
-          );
-        }
-        throw new Error(`Failed to delete files: ${deleteError.message}`);
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to delete files');
       }
 
-      // Also delete from vendor_coas database table
-      // Build all possible filename variations for matching
-      const fileNames: string[] = [];
+      // Also delete from store_coas database table
+      // Delete from store_coas database table per store
+      const storeGroups = new Map<string, string[]>();
       filteredCOAs.forEach(coa => {
-        fileNames.push(coa.name);
-        fileNames.push(coa.name.replace(/^\d+_/, ''));
-        if (coa.clientFolder) {
-          fileNames.push(`${coa.clientFolder}/${coa.name}`);
-          fileNames.push(`${coa.clientFolder}/${coa.name.replace(/^\d+_/, '')}`);
+        if (coa.storeId) {
+          if (!storeGroups.has(coa.storeId)) {
+            storeGroups.set(coa.storeId, []);
+          }
+          storeGroups.get(coa.storeId)!.push(coa.name);
         }
       });
-      const { error: dbDeleteError } = await supabase
-        .from('vendor_coas')
-        .delete()
-        .eq('vendor_id', FLORA_DISTRO_VENDOR_ID)
-        .in('file_name', fileNames);
 
-      if (dbDeleteError) {
-        console.error('Error deleting from database:', dbDeleteError);
-      } else {
-        console.log('✅ Database records deleted');
+      for (const [storeId, fileNames] of storeGroups) {
+        const { error: dbDeleteError } = await supabase
+          .from('store_coas')
+          .delete()
+          .eq('store_id', storeId)
+          .in('file_name', fileNames);
+
+        if (dbDeleteError) {
+          console.error(`Error deleting from database for store ${storeId}:`, dbDeleteError);
+        } else {
+          console.log(`✅ Database records deleted for store ${storeId}`);
+        }
       }
 
       // Remove from local state
@@ -493,48 +376,49 @@ function LiveCOAsPageContent() {
       setLoading(true);
 
       const filePaths = selectedCOAObjects.map(coa => {
-        if (coa.clientFolder && coa.clientFolder !== 'Uncategorized' && coa.clientFolder !== 'Legacy Files') {
-          return `${FLORA_DISTRO_VENDOR_ID}/${coa.clientFolder}/${coa.name}`;
-        }
-        return `${FLORA_DISTRO_VENDOR_ID}/${coa.name}`;
+        return coa.storeId ? `${coa.storeId}/${coa.name}` : coa.name;
       });
 
       console.log('Attempting to delete selected files:', filePaths);
 
-      const { error: deleteError } = await supabase.storage
-        .from('vendor-coas')
-        .remove(filePaths);
+      // Use API route with service role key for deletion
+      const response = await fetch('/api/storage/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          bucket: 'vendor-coas',
+          paths: filePaths
+        })
+      });
 
-      if (deleteError) {
-        if (deleteError.message?.includes('not authorized') || deleteError.message?.includes('Invalid JWT')) {
-          throw new Error(
-            'Access denied: You do not have permission to delete files from private storage.'
-          );
-        }
-        throw new Error(`Failed to delete files: ${deleteError.message}`);
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to delete files');
       }
 
-      // Also delete from vendor_coas database table
-      // Build all possible filename variations for matching
-      const fileNames: string[] = [];
+      // Delete from store_coas database table per store
+      const storeGroups = new Map<string, string[]>();
       selectedCOAObjects.forEach(coa => {
-        fileNames.push(coa.name);
-        fileNames.push(coa.name.replace(/^\d+_/, ''));
-        if (coa.clientFolder) {
-          fileNames.push(`${coa.clientFolder}/${coa.name}`);
-          fileNames.push(`${coa.clientFolder}/${coa.name.replace(/^\d+_/, '')}`);
+        if (coa.storeId) {
+          if (!storeGroups.has(coa.storeId)) {
+            storeGroups.set(coa.storeId, []);
+          }
+          storeGroups.get(coa.storeId)!.push(coa.name);
         }
       });
-      const { error: dbDeleteError } = await supabase
-        .from('vendor_coas')
-        .delete()
-        .eq('vendor_id', FLORA_DISTRO_VENDOR_ID)
-        .in('file_name', fileNames);
 
-      if (dbDeleteError) {
-        console.error('Error deleting from database:', dbDeleteError);
-      } else {
-        console.log('✅ Database records deleted');
+      for (const [storeId, fileNames] of storeGroups) {
+        const { error: dbDeleteError } = await supabase
+          .from('store_coas')
+          .delete()
+          .eq('store_id', storeId)
+          .in('file_name', fileNames);
+
+        if (dbDeleteError) {
+          console.error(`Error deleting from database for store ${storeId}:`, dbDeleteError);
+        } else {
+          console.log(`✅ Database records deleted for store ${storeId}`);
+        }
       }
 
       // Remove from local state
@@ -597,13 +481,10 @@ function LiveCOAsPageContent() {
       // Download each selected COA and add to zip
       for (const coa of selectedCOAObjects) {
         try {
-          // Construct the correct file path based on how files are stored
-          let filePath: string;
-          if (coa.clientFolder && coa.clientFolder !== 'Uncategorized' && coa.clientFolder !== 'Legacy Files') {
-            filePath = `${FLORA_DISTRO_VENDOR_ID}/${coa.clientFolder}/${coa.name}`;
-          } else {
-            filePath = `${FLORA_DISTRO_VENDOR_ID}/${coa.name}`;
-          }
+          // Construct the correct file path: storeId/filename.pdf
+          const filePath = coa.storeId
+            ? `${coa.storeId}/${coa.name}`
+            : coa.name;
 
           console.log('Downloading file from path:', filePath);
 
